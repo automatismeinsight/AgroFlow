@@ -282,7 +282,7 @@ namespace AideAuDiagnostic.TiaExplorer
                 }
                 //Si aucun élément n'est trouver ou qu'un élément commence par un "/", on ajoute un commentaire
                 if (lsDataCollection.Count == 0 || bTest == false)
-                {
+                { 
                     lsSourceFC.Add(@"//");
                     lsSourceFC.Add(@"// AUCUNE SOURCE LTU DETECTEE");
                     lsSourceFC.Add(@"//");

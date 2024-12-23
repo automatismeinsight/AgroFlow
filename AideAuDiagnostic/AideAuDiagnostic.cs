@@ -457,7 +457,7 @@ namespace AideAuDiagnostic
             return bRet;
         }
         //**************************  Génération du code dans la CPU S7-1500  **************************//
-        private bool StartGeneratePLCProgramInPLCS71500(ref string errorText)
+        private bool StartGeneratePLCProgramInPLCS71500(ref string serrorText)
         {
             bool bRet;
             string sErrorInterne = string.Empty;
@@ -471,7 +471,7 @@ namespace AideAuDiagnostic
                 bRet = oPlcGenerateTiaCode.GenerateTiaCodeForS71500_R(oPLC_ProjectDefinitions.sPLCS71500HTargetStationName, ref iCmptEntree, ref sErrorInterne);
                 if (bRet == false)
                 {
-                    errorText = string.Format(@"Error station {0} : {1}", oPLC_ProjectDefinitions.sPLCS71500HTargetStationName, sErrorInterne);
+                    serrorText = string.Format(@"Error station {0} : {1}", oPLC_ProjectDefinitions.sPLCS71500HTargetStationName, sErrorInterne);
                 }
 
                 UpdateInfo(string.Format(@"Nombre d'entreé générer : {0}", iCmptEntree));
