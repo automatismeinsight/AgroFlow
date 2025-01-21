@@ -79,9 +79,12 @@ namespace AideAuDiagnostic.TiaExplorer
                 try
                 {
                     oTiaSelection.dTiaProcessList.Add(Path.GetFileNameWithoutExtension(tiaprocess.ProjectPath.Name), new HMATiaPortalProcess(tiaprocess));
+                    Console.WriteLine("Recuperation du nom ");
                 }
                 catch
-                {; }
+                {
+                    Console.WriteLine("Erreur Nom Projet");
+                }
             }
 
             // Affichage de la boite de dialogue
@@ -924,6 +927,11 @@ namespace AideAuDiagnostic.TiaExplorer
         {
             this.oTiaPortalProcess = oTiaPortalProcess;
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", Path.GetFileNameWithoutExtension(oTiaPortalProcess.ProjectPath.FullName));
+        }
     }
     // Classe de représentation d'un device dans un projet TIA Portal
     public class HMATiaPortalDevice
@@ -939,6 +947,12 @@ namespace AideAuDiagnostic.TiaExplorer
         public HMATiaPortalDevice(Device oDevice)
         {
             this.oTiaPortalDevice = oDevice;
+        }
+
+        // Pour ajout dans la combobox de sélection des devices Tia Portal
+        public override string ToString()
+        {
+            return string.Format("{0}", oTiaPortalDevice.Name);
         }
     }
 }
