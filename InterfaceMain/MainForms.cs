@@ -14,7 +14,7 @@ namespace InterfaceMain
         public bool adminConnected = false;
         public readonly ReturnLogForms returnLogForms = new ReturnLogForms(); // Create an instance of the ReturnLogForms class
         
-        List<string> userFunctions = new List<string> { "Aide au Diagnostic", "TEST" }; // List of functions for the user
+        List<string> userFunctions = new List<string> { "Aide au Diagnostic", "Création de Projet" }; // List of functions for the user
         List<string> adminFunctions = new List<string> { "AdminItem1", "AdminItem2" }; // List of functions for the admin
 
         public MainForms()
@@ -77,6 +77,9 @@ namespace InterfaceMain
                 case "AideAuDiagnostic":
                     // Passez les références au constructeur
                     selectedControl = new AideAuDiagnostic.AideAuDiagnostic();
+                    break;
+                case "CréationDeProjet":
+                    selectedControl = new CreationDeProjet.CreationDeProjet();
                     break;
                 default:
                     GbFunctions.Text = "Fonction";
