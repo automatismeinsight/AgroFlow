@@ -28,32 +28,59 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.button1 = new System.Windows.Forms.Button();
+            this.bpGeneration = new System.Windows.Forms.Button();
+            this.gbCreation = new System.Windows.Forms.GroupBox();
+            this.txtInputName = new System.Windows.Forms.TextBox();
+            this.gbCreation.SuspendLayout();
             this.SuspendLayout();
             // 
-            // button1
+            // bpGeneration
             // 
-            this.button1.Location = new System.Drawing.Point(54, 50);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(408, 90);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.bpGeneration.Enabled = false;
+            this.bpGeneration.Location = new System.Drawing.Point(394, 193);
+            this.bpGeneration.Name = "bpGeneration";
+            this.bpGeneration.Size = new System.Drawing.Size(153, 63);
+            this.bpGeneration.TabIndex = 0;
+            this.bpGeneration.Text = "bpGeneration";
+            this.bpGeneration.UseVisualStyleBackColor = true;
+            this.bpGeneration.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // gbCreation
+            // 
+            this.gbCreation.Controls.Add(this.txtInputName);
+            this.gbCreation.Controls.Add(this.bpGeneration);
+            this.gbCreation.Location = new System.Drawing.Point(22, 26);
+            this.gbCreation.Name = "gbCreation";
+            this.gbCreation.Size = new System.Drawing.Size(577, 270);
+            this.gbCreation.TabIndex = 1;
+            this.gbCreation.TabStop = false;
+            this.gbCreation.Text = "gbCreation";
+            // 
+            // txtInputName
+            // 
+            this.txtInputName.Location = new System.Drawing.Point(22, 31);
+            this.txtInputName.Name = "txtInputName";
+            this.txtInputName.Size = new System.Drawing.Size(225, 20);
+            this.txtInputName.TabIndex = 2;
+            this.txtInputName.TextChanged += new System.EventHandler(this.txtInputName_TextChanged);
             // 
             // CreationDeProjet
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.gbCreation);
             this.Name = "CreationDeProjet";
-            this.Size = new System.Drawing.Size(588, 183);
+            this.Size = new System.Drawing.Size(630, 314);
+            this.gbCreation.ResumeLayout(false);
+            this.gbCreation.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button bpGeneration;
+        private System.Windows.Forms.GroupBox gbCreation;
+        private System.Windows.Forms.TextBox txtInputName;
     }
 }

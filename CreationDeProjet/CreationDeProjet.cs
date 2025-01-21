@@ -30,7 +30,7 @@ namespace CreationDeProjet
 
                 // Chemin où le projet sera sauvegardé
                 string projectPath = @"D:\SBD\TIAMyProject";
-                string projectName = "MyNewProject1";
+                string projectName = txtInputName.Text;
 
                 DirectoryInfo directoryInfo = new DirectoryInfo(projectPath);
 
@@ -47,6 +47,11 @@ namespace CreationDeProjet
             {
                 MessageBox.Show($"Erreur lors de la création du projet : {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void txtInputName_TextChanged(object sender, EventArgs e)
+        {
+            bpGeneration.Enabled = !string.IsNullOrEmpty(txtInputName.Text);
         }
     }
 }
