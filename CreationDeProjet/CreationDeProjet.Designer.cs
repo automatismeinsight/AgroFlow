@@ -29,58 +29,83 @@
         private void InitializeComponent()
         {
             this.bpGeneration = new System.Windows.Forms.Button();
-            this.gbCreation = new System.Windows.Forms.GroupBox();
             this.txtInputName = new System.Windows.Forms.TextBox();
-            this.gbCreation.SuspendLayout();
+            this.lbErrorName = new System.Windows.Forms.Label();
+            this.txtInputPath = new System.Windows.Forms.TextBox();
+            this.lbErrorPath = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // bpGeneration
             // 
             this.bpGeneration.Enabled = false;
-            this.bpGeneration.Location = new System.Drawing.Point(394, 193);
+            this.bpGeneration.Location = new System.Drawing.Point(256, 129);
             this.bpGeneration.Name = "bpGeneration";
             this.bpGeneration.Size = new System.Drawing.Size(153, 63);
             this.bpGeneration.TabIndex = 0;
             this.bpGeneration.Text = "bpGeneration";
             this.bpGeneration.UseVisualStyleBackColor = true;
-            this.bpGeneration.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // gbCreation
-            // 
-            this.gbCreation.Controls.Add(this.txtInputName);
-            this.gbCreation.Controls.Add(this.bpGeneration);
-            this.gbCreation.Location = new System.Drawing.Point(22, 26);
-            this.gbCreation.Name = "gbCreation";
-            this.gbCreation.Size = new System.Drawing.Size(577, 270);
-            this.gbCreation.TabIndex = 1;
-            this.gbCreation.TabStop = false;
-            this.gbCreation.Text = "gbCreation";
+            this.bpGeneration.Click += new System.EventHandler(this.bpGeneration_Click);
             // 
             // txtInputName
             // 
-            this.txtInputName.Location = new System.Drawing.Point(22, 31);
+            this.txtInputName.Location = new System.Drawing.Point(15, 17);
             this.txtInputName.Name = "txtInputName";
             this.txtInputName.Size = new System.Drawing.Size(225, 20);
             this.txtInputName.TabIndex = 2;
             this.txtInputName.TextChanged += new System.EventHandler(this.txtInputName_TextChanged);
             // 
+            // lbErrorName
+            // 
+            this.lbErrorName.AutoSize = true;
+            this.lbErrorName.ForeColor = System.Drawing.Color.Red;
+            this.lbErrorName.Location = new System.Drawing.Point(12, 40);
+            this.lbErrorName.Name = "lbErrorName";
+            this.lbErrorName.Size = new System.Drawing.Size(170, 13);
+            this.lbErrorName.TabIndex = 3;
+            this.lbErrorName.Text = "Erreur dans le nom, espace interdit";
+            this.lbErrorName.Visible = false;
+            // 
+            // txtInputPath
+            // 
+            this.txtInputPath.Location = new System.Drawing.Point(15, 67);
+            this.txtInputPath.Name = "txtInputPath";
+            this.txtInputPath.Size = new System.Drawing.Size(225, 20);
+            this.txtInputPath.TabIndex = 4;
+            this.txtInputPath.Click += new System.EventHandler(this.txtInputPath_Click);
+            // 
+            // lbErrorPath
+            // 
+            this.lbErrorPath.AutoSize = true;
+            this.lbErrorPath.ForeColor = System.Drawing.Color.Red;
+            this.lbErrorPath.Location = new System.Drawing.Point(12, 90);
+            this.lbErrorPath.Name = "lbErrorPath";
+            this.lbErrorPath.Size = new System.Drawing.Size(126, 13);
+            this.lbErrorPath.TabIndex = 5;
+            this.lbErrorPath.Text = "Erreur, le chemin est vide";
+            this.lbErrorPath.Visible = false;
+            // 
             // CreationDeProjet
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.gbCreation);
+            this.Controls.Add(this.lbErrorPath);
+            this.Controls.Add(this.txtInputPath);
+            this.Controls.Add(this.lbErrorName);
+            this.Controls.Add(this.txtInputName);
+            this.Controls.Add(this.bpGeneration);
             this.Name = "CreationDeProjet";
-            this.Size = new System.Drawing.Size(630, 314);
-            this.gbCreation.ResumeLayout(false);
-            this.gbCreation.PerformLayout();
+            this.Size = new System.Drawing.Size(412, 195);
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
         #endregion
 
         private System.Windows.Forms.Button bpGeneration;
-        private System.Windows.Forms.GroupBox gbCreation;
         private System.Windows.Forms.TextBox txtInputName;
+        private System.Windows.Forms.Label lbErrorName;
+        private System.Windows.Forms.TextBox txtInputPath;
+        private System.Windows.Forms.Label lbErrorPath;
     }
 }

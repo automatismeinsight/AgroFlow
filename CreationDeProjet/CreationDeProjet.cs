@@ -21,16 +21,46 @@ namespace CreationDeProjet
 
         private TiaPortal tiaPortal;
         private Project tiaProject;
-        private void button1_Click(object sender, EventArgs e)
+       
+        //Ajout du nom du projet sans espace
+        private void txtInputName_TextChanged(object sender, EventArgs e)
+        { 
+            lbErrorName.Visible = txtInputName.Text.Contains(" ");
+        }
+
+        //Choix du chemin ou le projet sera crée
+        private void txtInputPath_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
+            {
+                folderDialog.Description = "Veuillez sélectionner un dossier.";
+                folderDialog.ShowNewFolderButton = true;
+                folderDialog.RootFolder = Environment.SpecialFolder.MyComputer;
+
+                if (folderDialog.ShowDialog() == DialogResult.OK && !string.IsNullOrWhiteSpace(folderDialog.SelectedPath))
+                {
+                    txtInputPath.Text = folderDialog.SelectedPath;
+                    lbErrorPath.Visible = false;
+                    bpGeneration.Enabled = !string.IsNullOrEmpty(txtInputName.Text) && !txtInputName.Text.Contains(" ") && !string.IsNullOrEmpty(txtInputPath.Text);
+                }
+                else
+                {
+                    lbErrorPath.Visible = true;
+                }
+            }
+        }
+
+        //Génération du projet
+        private void bpGeneration_Click(object sender, EventArgs e)
         {
             try
             {
-                // Vérifiez si TIA Portal est déjà en cours d'exécution
+                //Vérifiez si TIA Portal est déjà en cours d'exécution
                 tiaPortal = new TiaPortal(TiaPortalMode.WithUserInterface);
 
-                // Chemin où le projet sera sauvegardé
-                string projectPath = @"D:\SBD\TIAMyProject";
+                //Configuration du nom et du chemin du projet
                 string projectName = txtInputName.Text;
+                string projectPath = txtInputPath.Text;
 
                 DirectoryInfo directoryInfo = new DirectoryInfo(projectPath);
 
@@ -39,19 +69,14 @@ namespace CreationDeProjet
                     directoryInfo.Create();
                 }
 
-                // Créez le projet
+                //Créez le projet
                 tiaProject = tiaPortal.Projects.Create(directoryInfo, projectName);
-                MessageBox.Show($"Projet '{projectName}' créé avec succès à : {projectPath}", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erreur lors de la création du projet : {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ;
             }
         }
 
-        private void txtInputName_TextChanged(object sender, EventArgs e)
-        {
-            bpGeneration.Enabled = !string.IsNullOrEmpty(txtInputName.Text);
-        }
     }
 }
