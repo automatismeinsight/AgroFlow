@@ -38,7 +38,7 @@
             // bpGeneration
             // 
             this.bpGeneration.Enabled = false;
-            this.bpGeneration.Location = new System.Drawing.Point(256, 129);
+            this.bpGeneration.Location = new System.Drawing.Point(256, 24);
             this.bpGeneration.Name = "bpGeneration";
             this.bpGeneration.Size = new System.Drawing.Size(153, 63);
             this.bpGeneration.TabIndex = 0;
