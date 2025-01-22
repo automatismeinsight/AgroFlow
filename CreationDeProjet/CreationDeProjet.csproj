@@ -66,6 +66,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TIAGenerator.cs" />
     <EmbeddedResource Include="CreationDeProjet.resx">
       <DependentUpon>CreationDeProjet.cs</DependentUpon>
     </EmbeddedResource>
