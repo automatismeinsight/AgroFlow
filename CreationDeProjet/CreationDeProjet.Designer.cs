@@ -33,6 +33,8 @@
             this.lbErrorName = new System.Windows.Forms.Label();
             this.txtInputPath = new System.Windows.Forms.TextBox();
             this.lbErrorPath = new System.Windows.Forms.Label();
+            this.BpStation = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // bpGeneration
@@ -84,10 +86,31 @@
             this.lbErrorPath.Text = "Erreur, le chemin est vide";
             this.lbErrorPath.Visible = false;
             // 
+            // BpStation
+            // 
+            this.BpStation.Location = new System.Drawing.Point(54, 129);
+            this.BpStation.Name = "BpStation";
+            this.BpStation.Size = new System.Drawing.Size(127, 45);
+            this.BpStation.TabIndex = 6;
+            this.BpStation.Text = "AddStation";
+            this.BpStation.UseVisualStyleBackColor = true;
+            this.BpStation.Click += new System.EventHandler(this.BpStation_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(282, 145);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(35, 13);
+            this.label1.TabIndex = 7;
+            this.label1.Text = "label1";
+            // 
             // CreationDeProjet
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.BpStation);
             this.Controls.Add(this.lbErrorPath);
             this.Controls.Add(this.txtInputPath);
             this.Controls.Add(this.lbErrorName);
@@ -107,5 +130,7 @@
         private System.Windows.Forms.Label lbErrorName;
         private System.Windows.Forms.TextBox txtInputPath;
         private System.Windows.Forms.Label lbErrorPath;
+        private System.Windows.Forms.Button BpStation;
+        private System.Windows.Forms.Label label1;
     }
 }

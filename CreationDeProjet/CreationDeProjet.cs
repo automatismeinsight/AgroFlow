@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CreationDeProjet.GenerateObject;
 using Siemens.Engineering;
 using Siemens.Engineering.HW;
 using Siemens.Engineering.HW.Features;
@@ -25,6 +26,7 @@ namespace CreationDeProjet
         private TiaPortal oTiaPortal;
         private Project oTiaProject;
         private TIAGenerator oTIAGenerator = new TIAGenerator();
+        AddStation oAddStation = new AddStation();
 
         //Ajout du nom du projet sans espace
         private void txtInputName_TextChanged(object sender, EventArgs e)
@@ -78,5 +80,9 @@ namespace CreationDeProjet
             
         }
 
+        private void BpStation_Click(object sender, EventArgs e)
+        {
+            oAddStation.ShowDialog();
+        }
     }
 }
