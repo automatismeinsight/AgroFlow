@@ -217,21 +217,21 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 try
                 {
-                    //Recherche du folder BLK_JUMP dans la racine du projet
+                    // Parcourt tous les groupes existants
                     foreach (PlcBlockUserGroup oBlockUserFolder in oThisPlc.BlockGroup.Groups)
                     {
-                        //Test si le folder correspond a BLK_JUMP
-                        if (oBlockUserFolder.Name.ToUpper() == sRootOPCUAFolder.ToUpper())
+                        if (oBlockUserFolder.Name.Equals(sRootOPCUAFolder, StringComparison.OrdinalIgnoreCase))
                         {
                             oGrpOPCUA = oBlockUserFolder;
                             bRootFound = true;
-                            break;
+                            break; // Sort de la boucle si trouvé
                         }
-                        //Si le folder n'est pas trouvé, on le crée
-                        if (bRootFound == false)
-                        {
-                            oGrpOPCUA = oThisPlc.BlockGroup.Groups.Create(sRootOPCUAFolder);
-                        }
+                    }
+
+                    // Crée le groupe SEULEMENT SI non trouvé après avoir parcouru tous les éléments
+                    if (!bRootFound)
+                    {
+                        oGrpOPCUA = oThisPlc.BlockGroup.Groups.Create(sRootOPCUAFolder);
                     }
                 }
                 catch (Exception e)
