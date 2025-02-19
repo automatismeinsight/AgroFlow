@@ -1,9 +1,11 @@
 ﻿using InterfaceLoginTest;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows.Forms;
 
 
@@ -61,7 +63,7 @@ namespace InterfaceMain
         // Event handler for form closed event
         private void MainForms_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Application.Exit();
+            Environment.Exit(0);
         }
 
         // ...
@@ -198,6 +200,7 @@ namespace InterfaceMain
         // Event handler for close button click
         private void CloseIconButton_Click(object sender, EventArgs e)
         {
+            GbFunctions.Controls.Clear();
             Application.Exit();
         }
 

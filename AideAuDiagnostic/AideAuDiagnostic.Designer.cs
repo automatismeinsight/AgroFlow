@@ -65,7 +65,7 @@
             this.gBTarget.Size = new System.Drawing.Size(254, 174);
             this.gBTarget.TabIndex = 0;
             this.gBTarget.TabStop = false;
-            this.gBTarget.Text = "S7-1500 Target";
+            this.gBTarget.Text = "Appareil Cible";
             // 
             // GIFChargement
             // 
@@ -86,7 +86,7 @@
             this.bPSelectStation.Name = "bPSelectStation";
             this.bPSelectStation.Size = new System.Drawing.Size(92, 31);
             this.bPSelectStation.TabIndex = 6;
-            this.bPSelectStation.Text = "Select PLC S7-1500 station";
+            this.bPSelectStation.Text = "Sélection de la cible";
             this.bPSelectStation.UseVisualStyleBackColor = true;
             this.bPSelectStation.Click += new System.EventHandler(this.bPSelectStation_Click);
             // 
@@ -114,9 +114,9 @@
             this.lBStation.Location = new System.Drawing.Point(8, 72);
             this.lBStation.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lBStation.Name = "lBStation";
-            this.lBStation.Size = new System.Drawing.Size(104, 13);
+            this.lBStation.Size = new System.Drawing.Size(103, 13);
             this.lBStation.TabIndex = 3;
-            this.lBStation.Text = "PLC S7-1500 station";
+            this.lBStation.Text = "Station sélectionnée";
             // 
             // lBProjet
             // 
@@ -138,7 +138,7 @@
             this.gBExport.Size = new System.Drawing.Size(125, 78);
             this.gBExport.TabIndex = 1;
             this.gBExport.TabStop = false;
-            this.gBExport.Text = "Fonction sBackJump";
+            this.gBExport.Text = "Génération du bloc";
             // 
             // bPExport
             // 
@@ -147,7 +147,7 @@
             this.bPExport.Name = "bPExport";
             this.bPExport.Size = new System.Drawing.Size(110, 47);
             this.bPExport.TabIndex = 2;
-            this.bPExport.Text = "FC Block Export / Blocks Analyze / FC Import";
+            this.bPExport.Text = "Générer";
             this.bPExport.UseVisualStyleBackColor = true;
             this.bPExport.Click += new System.EventHandler(this.bPExport_Click);
             // 

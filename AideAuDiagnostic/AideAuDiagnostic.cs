@@ -321,6 +321,7 @@ namespace AideAuDiagnostic
                 break;
             }
             // Affichage du nom du projet selectionné
+            if(bRet == false) UpdateInfo("Erreur lors du chargement de station : " + sError);
             txBProjet.Text = oExploreTiaPLC.oTiainterface.m_oTiaProject.Name;
             return bRet;
         }
@@ -552,7 +553,6 @@ namespace AideAuDiagnostic
 
 
         #endregion
-
         /* 
         // Test Chargement dynamique des références
        private void InitializeAssemblies()
