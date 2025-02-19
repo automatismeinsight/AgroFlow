@@ -149,6 +149,10 @@
       <Project>{caffc2fd-ca95-45dd-ab84-cf6f6f1e956d}</Project>
       <Name>AideAuDiagnostic</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ReceptionDeProjet\ReceptionDeProjet.csproj">
+      <Project>{f060c7b2-e0de-4bad-9a52-ac2ecc5d3a22}</Project>
+      <Name>ReceptionDeProjet</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SharedLibrary\SharedLibrary.csproj">
       <Project>{8e7dc22d-5a63-47e4-bce7-5b3901315576}</Project>
       <Name>SharedLibrary</Name>

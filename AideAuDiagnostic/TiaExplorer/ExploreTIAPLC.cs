@@ -68,6 +68,8 @@ namespace AideAuDiagnostic.TiaExplorer
 
             sError = string.Empty;
 
+            Console.WriteLine("Falg1");
+
             TiaPortalProjectSelection oTiaSelection = new TiaPortalProjectSelection();
 
             // Récupération de la liste des instances de projets Tia Portal en cours
@@ -180,6 +182,46 @@ namespace AideAuDiagnostic.TiaExplorer
             }
 
             return bRet;
+        }
+
+        public List<(string Name, string IPAddress)> GetPlcDevicesInfo()
+        {
+            List<(string, string)> plcInfoList = new List<(string, string)>();
+
+            try
+            {
+                foreach (Device device in oTiainterface.m_oTiaProject.Devices)
+                {
+                    if (device.TypeIdentifier.StartsWith("PLC")) // Vérifie si c'est un automate
+                    {
+                        string deviceName = device.Name;
+                        string ipAddress = "Non défini";
+
+                        var networkInterface = device.GetService<NetworkInterface>();
+                        if (networkInterface != null)
+                        {
+                            foreach (var subnet in networkInterface.Subnets)
+                            {
+                                foreach (var node in subnet.Nodes)
+                                {
+                                    if (node is DeviceItem deviceItem && deviceItem.IoSystem != null)
+                                    {
+                                        ipAddress = deviceItem.GetAttribute("Address").ToString();
+                                    }
+                                }
+                            }
+                        }
+
+                        plcInfoList.Add((deviceName, ipAddress));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Erreur lors de la récupération des informations des PLC : " + ex.Message);
+            }
+
+            return plcInfoList;
         }
 
         #endregion
