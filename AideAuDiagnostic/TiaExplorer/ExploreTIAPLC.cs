@@ -1,8 +1,12 @@
-﻿using AideAuDiagnostic.TiaExplorer;
-using OpennessV16;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Windows.Forms;
+using System.Xml;
+using AideAuDiagnostic.TiaExplorer;
 using GlobalsOPCUA;
+using OpennessV16;
 using Siemens.Engineering;
 using Siemens.Engineering.Compiler;
 using Siemens.Engineering.HW;
@@ -13,12 +17,6 @@ using Siemens.Engineering.SW.Blocks.Interface;
 using Siemens.Engineering.SW.ExternalSources;
 using Siemens.Engineering.SW.Tags;
 using Siemens.Engineering.SW.Types;
-using System.Xml;
-using System;
-using System.Windows.Forms;
-using System.IO.Packaging;
-using Siemens.Engineering.Hmi.Tag;
-using System.Linq;
 
 namespace AideAuDiagnostic.TiaExplorer
 {
@@ -67,8 +65,6 @@ namespace AideAuDiagnostic.TiaExplorer
             bool bCriticalError = false;
 
             sError = string.Empty;
-
-            Console.WriteLine("Falg1");
 
             TiaPortalProjectSelection oTiaSelection = new TiaPortalProjectSelection();
 
@@ -184,6 +180,7 @@ namespace AideAuDiagnostic.TiaExplorer
             return bRet;
         }
 
+        // This method retrieves PLC device information from the project.
         public List<(string Name, string IPAddress)> GetPlcDevicesInfo()
         {
             List<(string, string)> plcInfoList = new List<(string, string)>();
@@ -192,28 +189,57 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 foreach (Device device in oTiainterface.m_oTiaProject.Devices)
                 {
-                    if (device.TypeIdentifier.StartsWith("PLC")) // Vérifie si c'est un automate
-                    {
-                        string deviceName = device.Name;
-                        string ipAddress = "Non défini";
+                    string deviceName = device.Name;
+                    string ipAddress = "Non défini";
+                    bool foundIt = false;
+                    NetworkInterface networkIf = null;
+                    int idx1 = 0, idx2 = 0;
 
-                        var networkInterface = device.GetService<NetworkInterface>();
-                        if (networkInterface != null)
+                    // Itérer sur les DeviceItems pour trouver l'interface réseau
+                    for (idx1 = 0; idx1 < device.DeviceItems.Count; idx1++)
+                    {
+                        DeviceItem di1 = device.DeviceItems.ElementAt(idx1);
+                        // Vérifier les enfants de ce DeviceItem
+                        for (idx2 = 0; idx2 < di1.DeviceItems.Count; idx2++)
                         {
-                            foreach (var subnet in networkInterface.Subnets)
+                            DeviceItem di2 = di1.DeviceItems.ElementAt(idx2);
+                            // Tenter de récupérer le service NetworkInterface
+                            networkIf = ((IEngineeringServiceProvider)di2).GetService<NetworkInterface>();
+                            if (networkIf != null)
                             {
-                                foreach (var node in subnet.Nodes)
-                                {
-                                    if (node is DeviceItem deviceItem && deviceItem.IoSystem != null)
-                                    {
-                                        ipAddress = deviceItem.GetAttribute("Address").ToString();
-                                    }
-                                }
+                                foundIt = true;
+                                break;
                             }
                         }
-
-                        plcInfoList.Add((deviceName, ipAddress));
+                        if (foundIt)
+                        {
+                            Console.WriteLine("Interface réseau trouvée pour le device {0} aux indices {1}, {2}", deviceName, idx1, idx2);
+                            break;
+                        }
                     }
+
+                    // Si l'interface réseau est trouvée, récupérer l'IP à partir du premier node
+                    if (foundIt && networkIf != null && networkIf.Nodes.Count > 0)
+                    {
+                        var node = networkIf.Nodes.ElementAt(0);
+                        if (node != null)
+                        {
+                            var addressAttribute = node.GetAttribute("Address");
+                            if (addressAttribute != null)
+                            {
+                                ipAddress = addressAttribute.ToString();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Impossible de localiser le node.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Interface (Profinet) non trouvée pour le device {0}.", deviceName);
+                    }
+                    plcInfoList.Add((deviceName, ipAddress));
                 }
             }
             catch (Exception ex)

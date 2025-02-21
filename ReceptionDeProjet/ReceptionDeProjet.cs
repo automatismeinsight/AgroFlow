@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.IO;
 using AideAuDiagnostic.TiaExplorer;
 using GlobalsOPCUA;
+using ClosedXML.Excel;
+using PdfSharp.Pdf;
+using PdfSharp.Drawing;
+using PdfSharp.Drawing.Layout;
 
 namespace ReceptionDeProjet
 {
@@ -24,6 +22,15 @@ namespace ReceptionDeProjet
         private readonly Dictionary<Tuple<int, int>, object> dData = new Dictionary<Tuple<int, int>, object>();
         //Liste des instructions pour le FC
         private readonly List<string> lsDataCollection = new List<string>();
+
+        //Liste des devices dans le Cdc
+        private readonly Dictionary<Tuple<int, int>, string> dDevicesCdc = new Dictionary<Tuple<int, int>, string>();
+        //Liste des devices dans le Projet
+        private readonly Dictionary<Tuple<int, int>, string> dDevicesProjet = new Dictionary<Tuple<int, int>, string>();
+
+        // Dictionnaires pour stocker les paires (Nom -> IP)
+        Dictionary<string, string> devicesCdc = new Dictionary<string, string>();
+        Dictionary<string, string> devicesProjet = new Dictionary<string, string>();
 
         public ReceptionDeProjet()
         {
@@ -51,6 +58,7 @@ namespace ReceptionDeProjet
             }
 
             sCdcFilePath += filePath;
+            UpdateInfo($"Fichier {sCdcFilePath.Split('\\').Last()} chargé");
         }
 
         private void BpSelectProject_Click(object sender, EventArgs e)
@@ -91,6 +99,94 @@ namespace ReceptionDeProjet
             return bRet;
         }
 
+        private void BpVerification_Click(object sender, EventArgs e)
+        {
+            int i = 1;
+            var plcInfoList = oExploreTiaPLC.GetPlcDevicesInfo();
+
+            UpdateInfo("-");
+            UpdateInfo("Device trouvé : ");
+            foreach (var plc in plcInfoList)
+            {
+                UpdateInfo($"Nom: {plc.Name}, IP: {plc.IPAddress}");
+                dDevicesProjet.Add(new Tuple<int, int>(i, 1), plc.Name);
+                dDevicesProjet.Add(new Tuple<int, int>(i, 2), plc.IPAddress);
+                i++;
+            }
+            UpdateInfo("-");
+            CompareProject();
+        }
+
+        private void CompareProject()
+        {
+            int iNbDevice = 0;
+            var plcInfoList = oExploreTiaPLC.GetPlcDevicesInfo();
+            ReadExcel(ref iNbDevice);
+
+            // Reconstruction du dictionnaire depuis dDevicesCdc (Excel)
+            for (int i = 2; i <= iNbDevice + 1; i++)  // Démarre à 2 car iNbDevice vient d'Excel (1ère ligne ignorée)
+            {
+                if (dDevicesCdc.TryGetValue(System.Tuple.Create(i, 1), out string deviceName) &&
+                    dDevicesCdc.TryGetValue(System.Tuple.Create(i, 2), out string deviceIP))
+                {
+                    devicesCdc[deviceName] = deviceIP;
+                }
+            }
+
+            // Reconstruction du dictionnaire depuis dDevicesProjet (projet)
+            foreach (var plc in plcInfoList)
+            {
+                devicesProjet[plc.Name] = plc.IPAddress;
+            }
+
+            // Comparaison des devices par Nom
+            foreach (var kvp in devicesCdc)
+            {
+                string deviceName = kvp.Key;
+                string ipCdc = kvp.Value;
+
+                if (devicesProjet.TryGetValue(deviceName, out string ipProjet))
+                {
+                    if (!ipCdc.Equals(ipProjet))
+                    {
+                        UpdateInfo($"⚠ Différence détectée pour {deviceName} : {ipCdc} (Cdc) ≠ {ipProjet} (Projet)");
+                    }
+                }
+                else
+                {
+                    UpdateInfo($"❌ Le device {deviceName} est dans le fichier de référence mais absent du projet.");
+                }
+            }
+
+            // Vérifier les devices présents dans le projet mais absents du fichier de référence
+            foreach (var kvp in devicesProjet)
+            {
+                string deviceName = kvp.Key;
+                if (!devicesCdc.ContainsKey(deviceName))
+                {
+                    UpdateInfo($"❌ Le device {deviceName} est dans le projet mais absent du fichier de référence.");
+                }
+            }
+        }
+
+        private void ReadExcel(ref int iNbDevice)
+        {
+            using (XLWorkbook wb = new XLWorkbook(sCdcFilePath))
+            {
+                var ws = wb.Worksheets.First();
+                var range = ws.RangeUsed();
+
+                for (int i = 2; i < range.RowCount() + 1; i++)
+                {
+                    iNbDevice++;
+                    for (int j = 1; j < range.ColumnCount() + 1; j++)
+                    {
+                        dDevicesCdc.Add(new Tuple<int, int>(i, j), ws.Cell(i, j).Value.ToString());
+                    }
+                }
+                UpdateInfo("Fichier lu avec succès");
+            }
+        }
 
         public void UpdateInfo(string sMessage)
         {
@@ -100,7 +196,7 @@ namespace ReceptionDeProjet
 
             if (sMessage == "-")
             {
-                sFullMessage = "----------------------------------------------------------------\n";
+                sFullMessage = "----------------------------------------------------------------------------------------------------------------------\n";
             }
             else
             {
@@ -114,13 +210,98 @@ namespace ReceptionDeProjet
             txBInformations.ScrollToCaret();
         }
 
-        private void BpVerification_Click(object sender, EventArgs e)
+        private void BpPdfExport_Click(object sender, EventArgs e)
         {
-            var plcInfoList = oExploreTiaPLC.GetPlcDevicesInfo();
-            foreach (var plc in plcInfoList)
+            string filename = getFilePath();
+
+            if (!string.IsNullOrEmpty(filename))
             {
-                Console.WriteLine($"Nom: {plc.Name}, IP: {plc.IPAddress}");
+                // Création du document PDF
+                PdfDocument document = new PdfDocument();
+                document.Info.Title = "Comparaison des Devices et IPs";
+                PdfPage page = document.AddPage();
+                XGraphics gfx = XGraphics.FromPdfPage(page);
+                XFont titleFont = new XFont("Verdana", 16, XFontStyle.Bold);
+                XFont headerFont = new XFont("Verdana", 12, XFontStyle.Bold);
+                XFont bodyFont = new XFont("Verdana", 10, XFontStyle.Regular);
+
+                int y = 30; // Position verticale initiale
+
+                // Titre
+                gfx.DrawString("Comparaison des Devices et IPs", titleFont, XBrushes.Black, new XPoint(40, y));
+                y += 30;
+
+                // Largeur des colonnes
+                int col1Width = 200;
+                int col2Width = 150;
+                int rowHeight = 20;
+
+                // Dessiner tableau des devices du CDC
+                gfx.DrawString("Devices du CDC", headerFont, XBrushes.Black, new XPoint(40, y));
+                y += 20;
+
+                gfx.DrawRectangle(XPens.Black, 40, y, col1Width, rowHeight);
+                gfx.DrawRectangle(XPens.Black, 40 + col1Width, y, col2Width, rowHeight);
+                gfx.DrawString("Nom du Device", bodyFont, XBrushes.Black, new XPoint(50, y + 15));
+                gfx.DrawString("Adresse IP", bodyFont, XBrushes.Black, new XPoint(50 + col1Width, y + 15));
+                y += rowHeight;
+
+
+
+                foreach (var kvp in devicesCdc)
+                {
+                    gfx.DrawRectangle(XPens.Black, 40, y, col1Width, rowHeight);
+                    gfx.DrawRectangle(XPens.Black, 40 + col1Width, y, col2Width, rowHeight);
+                    gfx.DrawString(kvp.Key, bodyFont, XBrushes.Black, new XPoint(50, y + 15));
+                    gfx.DrawString(kvp.Value, bodyFont, XBrushes.Black, new XPoint(50 + col1Width, y + 15));
+                    y += rowHeight;
+                }
+
+                y += 30; // Espacement entre les tableaux
+
+                // Dessiner tableau des devices du projet
+                gfx.DrawString("Devices du Projet", headerFont, XBrushes.Black, new XPoint(40, y));
+                y += 20;
+
+                gfx.DrawRectangle(XPens.Black, 40, y, col1Width, rowHeight);
+                gfx.DrawRectangle(XPens.Black, 40 + col1Width, y, col2Width, rowHeight);
+                gfx.DrawString("Nom du Device", bodyFont, XBrushes.Black, new XPoint(50, y + 15));
+                gfx.DrawString("Adresse IP", bodyFont, XBrushes.Black, new XPoint(50 + col1Width, y + 15));
+                y += rowHeight;
+
+                foreach (var kvp in devicesProjet)
+                {
+                    gfx.DrawRectangle(XPens.Black, 40, y, col1Width, rowHeight);
+                    gfx.DrawRectangle(XPens.Black, 40 + col1Width, y, col2Width, rowHeight);
+                    gfx.DrawString(kvp.Key, bodyFont, XBrushes.Black, new XPoint(50, y + 15));
+                    gfx.DrawString(kvp.Value, bodyFont, XBrushes.Black, new XPoint(50 + col1Width, y + 15));
+                    y += rowHeight;
+                }
+
+                // Sauvegarde du PDF
+                document.Save(filename);
+                UpdateInfo("Le PDF a été exporté avec succès.");
             }
+        }
+
+        public string getFilePath()
+        {
+            
+            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+           
+            saveFileDialog1.InitialDirectory = @"C:\";
+            saveFileDialog1.Title = $"ExportPDF";
+            saveFileDialog1.CheckPathExists = true;
+            saveFileDialog1.DefaultExt = ".pdf";
+            saveFileDialog1.Filter = "PDF files (*.pdf) |  *.pdf";
+            saveFileDialog1.FilterIndex = 2;
+            saveFileDialog1.RestoreDirectory = true;
+            
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                return saveFileDialog1.FileName;
+            }
+            return "";
         }
     }
 }
