@@ -280,6 +280,7 @@ namespace ReceptionDeProjet
 
                 // Sauvegarde du PDF
                 document.Save(filename);
+                UpdateInfo("-");
                 UpdateInfo("Le PDF a été exporté avec succès.");
             }
         }
