@@ -171,14 +171,18 @@ namespace ReceptionDeProjet
 
         private void ReadExcel(ref int iNbDevice)
         {
+            
             using (XLWorkbook wb = new XLWorkbook(sCdcFilePath))
             {
+                // Récupère la première feuille
                 var ws = wb.Worksheets.First();
                 var range = ws.RangeUsed();
 
+                // Parcours des lignes
                 for (int i = 2; i < range.RowCount() + 1; i++)
                 {
                     iNbDevice++;
+                    // Parcours des colonnes
                     for (int j = 1; j < range.ColumnCount() + 1; j++)
                     {
                         dDevicesCdc.Add(new Tuple<int, int>(i, j), ws.Cell(i, j).Value.ToString());
@@ -287,9 +291,10 @@ namespace ReceptionDeProjet
 
         public string getFilePath()
         {
-            
+            // Création de la fenêtre de dialogue pour enregistrer le fichier
             SaveFileDialog saveFileDialog1 = new SaveFileDialog();
-           
+
+            // Configuration de la fenêtre de dialogue
             saveFileDialog1.InitialDirectory = @"C:\";
             saveFileDialog1.Title = $"ExportPDF";
             saveFileDialog1.CheckPathExists = true;
