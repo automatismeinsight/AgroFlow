@@ -61,7 +61,7 @@ namespace InterfaceMain
         // Event handler for form closed event
         private void MainForms_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Application.Exit();
+            Environment.Exit(0);
         }
 
         // ...
