@@ -29,8 +29,8 @@ namespace ReceptionDeProjet
         private readonly Dictionary<Tuple<int, int>, string> dDevicesProjet = new Dictionary<Tuple<int, int>, string>();
 
         // Dictionnaires pour stocker les paires (Nom -> IP)
-        Dictionary<string, string> devicesCdc = new Dictionary<string, string>();
-        Dictionary<string, string> devicesProjet = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> devicesCdc = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> devicesProjet = new Dictionary<string, string>();
 
         public ReceptionDeProjet()
         {
@@ -216,7 +216,7 @@ namespace ReceptionDeProjet
 
         private void BpPdfExport_Click(object sender, EventArgs e)
         {
-            string filename = getFilePath();
+            string filename = GetFilePath();
 
             if (!string.IsNullOrEmpty(filename))
             {
@@ -289,20 +289,21 @@ namespace ReceptionDeProjet
             }
         }
 
-        public string getFilePath()
+        public string GetFilePath()
         {
             // Création de la fenêtre de dialogue pour enregistrer le fichier
-            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+            SaveFileDialog saveFileDialog1 = new SaveFileDialog
+            {
+                // Configuration de la fenêtre de dialogue
+                InitialDirectory = @"C:\",
+                Title = $"ExportPDF",
+                CheckPathExists = true,
+                DefaultExt = ".pdf",
+                Filter = "PDF files (*.pdf) |  *.pdf",
+                FilterIndex = 2,
+                RestoreDirectory = true
+            };
 
-            // Configuration de la fenêtre de dialogue
-            saveFileDialog1.InitialDirectory = @"C:\";
-            saveFileDialog1.Title = $"ExportPDF";
-            saveFileDialog1.CheckPathExists = true;
-            saveFileDialog1.DefaultExt = ".pdf";
-            saveFileDialog1.Filter = "PDF files (*.pdf) |  *.pdf";
-            saveFileDialog1.FilterIndex = 2;
-            saveFileDialog1.RestoreDirectory = true;
-            
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 return saveFileDialog1.FileName;
