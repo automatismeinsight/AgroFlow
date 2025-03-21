@@ -8,6 +8,7 @@ using ClosedXML.Excel;
 using PdfSharp.Pdf;
 using PdfSharp.Drawing;
 using PdfSharp.Drawing.Layout;
+using System.Windows.Input;
 
 namespace ReceptionDeProjet
 {
@@ -17,6 +18,7 @@ namespace ReceptionDeProjet
 
         // Objet interface Tia Portal
         public ExploreTiaPLC oExploreTiaPLC;
+        public CompareTIA oCompareTiaPLC;
         // Paramètres généraux pour l'application
         public static PLC_ProjectDefinitions oPLC_ProjectDefinitions = new PLC_ProjectDefinitions();
         private readonly Dictionary<Tuple<int, int>, object> dData = new Dictionary<Tuple<int, int>, object>();
@@ -32,11 +34,14 @@ namespace ReceptionDeProjet
         private readonly Dictionary<string, string> devicesCdc = new Dictionary<string, string>();
         private readonly Dictionary<string, string> devicesProjet = new Dictionary<string, string>();
 
+        List<Automate> oDevicesProject = new List<Automate>();
+
         public ReceptionDeProjet()
         {
             InitializeComponent();
 
             oExploreTiaPLC = new ExploreTiaPLC(oPLC_ProjectDefinitions, dData, lsDataCollection);
+            oCompareTiaPLC = new CompareTIA();
         }
 
         private void BpCdcLoad_Click(object sender, EventArgs e)
@@ -101,20 +106,30 @@ namespace ReceptionDeProjet
 
         private void BpVerification_Click(object sender, EventArgs e)
         {
-            int i = 1;
-            var plcInfoList = oExploreTiaPLC.GetPlcDevicesInfo();
+            string sError = null;
+            oDevicesProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
 
             UpdateInfo("-");
             UpdateInfo("Device trouvé : ");
-            foreach (var plc in plcInfoList)
+            foreach (Automate plc in oDevicesProject)
             {
-                UpdateInfo($"Nom: {plc.Name}, IP: {plc.IPAddress}");
-                dDevicesProjet.Add(new Tuple<int, int>(i, 1), plc.Name);
-                dDevicesProjet.Add(new Tuple<int, int>(i, 2), plc.IPAddress);
-                i++;
+                UpdateInfo("");
+                UpdateInfo($"Nom: {plc.Name}");
+                UpdateInfo($"Reference: {plc.Reference}");
+                UpdateInfo($"Firmware: {plc.Firmware}");
+                UpdateInfo($"WatchDog: {plc.WatchDog}");
+                UpdateInfo($"ControlAccess: {plc.ControlAccess}");
+                UpdateInfo($"WebServer: {plc.WebServer}");
+                UpdateInfo($"Restart: {plc.Restart}");
+                UpdateInfo($"CadenceM0: {plc.CadenceM0}");
+                UpdateInfo($"CadenceM1: {plc.CadenceM1}");
+                UpdateInfo($"LocalHour: {plc.LocalHour}");
+                UpdateInfo($"HourChange: {plc.HourChange}");
+                UpdateInfo($"MMCLife: {plc.MMCLife}");
+                UpdateInfo($"ScreenWrite: {plc.ScreenWrite}");
             }
             UpdateInfo("-");
-            CompareProject();
+            //CompareProject();
         }
 
         private void CompareProject()

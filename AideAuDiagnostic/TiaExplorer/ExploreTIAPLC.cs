@@ -5,12 +5,16 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Xml;
 using AideAuDiagnostic.TiaExplorer;
+using DocumentFormat.OpenXml.Wordprocessing;
 using GlobalsOPCUA;
 using OpennessV16;
 using Siemens.Engineering;
 using Siemens.Engineering.Compiler;
+using Siemens.Engineering.Hmi.Screen;
+using Siemens.Engineering.HmiUnified.UI.Controls;
 using Siemens.Engineering.HW;
 using Siemens.Engineering.HW.Features;
+using Siemens.Engineering.Online;
 using Siemens.Engineering.SW;
 using Siemens.Engineering.SW.Blocks;
 using Siemens.Engineering.SW.Blocks.Interface;
@@ -189,57 +193,47 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 foreach (Device device in oTiainterface.m_oTiaProject.Devices)
                 {
+                    DeviceItem mainModule = null;
                     string deviceName = device.Name;
-                    string ipAddress = "Non défini";
-                    bool foundIt = false;
-                    NetworkInterface networkIf = null;
-                    int idx1 = 0, idx2 = 0;
-
-                    // Itérer sur les DeviceItems pour trouver l'interface réseau
-                    for (idx1 = 0; idx1 < device.DeviceItems.Count; idx1++)
+                    string watchdogTime = "Non défini";
+                       
+                    //Vérifie que le device n'est pas vide
+                    if (device.DeviceItems.Count > 1)
                     {
-                        DeviceItem di1 = device.DeviceItems.ElementAt(idx1);
-                        // Vérifier les enfants de ce DeviceItem
-                        for (idx2 = 0; idx2 < di1.DeviceItems.Count; idx2++)
+                        //Recherche de la CPU
+                        foreach(DeviceItem item in device.DeviceItems)
                         {
-                            DeviceItem di2 = di1.DeviceItems.ElementAt(idx2);
-                            // Tenter de récupérer le service NetworkInterface
-                            networkIf = ((IEngineeringServiceProvider)di2).GetService<NetworkInterface>();
-                            if (networkIf != null)
+                            if (item.GetAttribute("Name").ToString().Contains("AP")) mainModule = item;
+                        }
+
+                        try
+                        {
+                            if (mainModule != null)
                             {
-                                foundIt = true;
-                                break;
+                                // Approche alternative pour obtenir les informations de protection
+                                try
+                                {
+                                    
+                                 
+                                    
+                                    
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Erreur lors de l'accès aux propriétés de sécurité: {ex.Message}");
+                                }
                             }
-                        }
-                        if (foundIt)
-                        {
-                            Console.WriteLine("Interface réseau trouvée pour le device {0} aux indices {1}, {2}", deviceName, idx1, idx2);
-                            break;
-                        }
                     }
-
-                    // Si l'interface réseau est trouvée, récupérer l'IP à partir du premier node
-                    if (foundIt && networkIf != null && networkIf.Nodes.Count > 0)
-                    {
-                        var node = networkIf.Nodes.ElementAt(0);
-                        if (node != null)
+                        catch
                         {
-                            var addressAttribute = node.GetAttribute("Address");
-                            if (addressAttribute != null)
-                            {
-                                ipAddress = addressAttribute.ToString();
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Impossible de localiser le node.");
+                            Console.WriteLine($"Erreur module vide");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Interface (Profinet) non trouvée pour le device {0}.", deviceName);
+                        Console.WriteLine("Le device est vide");
                     }
-                    plcInfoList.Add((deviceName, ipAddress));
+                        plcInfoList.Add((deviceName, watchdogTime));
                 }
             }
             catch (Exception ex)
