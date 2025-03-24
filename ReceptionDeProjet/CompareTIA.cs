@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO.Packaging;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
@@ -24,7 +25,8 @@ namespace ReceptionDeProjet
         protected string sCdcFilePath = null;
         List<Automate> oDevicesCdc = new List<Automate>();
         List<Automate> oDevicesProject = new List<Automate>();
-        public CompareTIA() {
+        public CompareTIA()
+        {
             //bool bRet = ReadExcel();
         }
 
@@ -101,6 +103,15 @@ namespace ReceptionDeProjet
                         // Analyse et récupération des blocs OB
                         AnalyzeObBlocks(mainModule, automate);
 
+                        // Calcul des statistiques
+                        CalculStatPLC(automate);
+
+                        // Vérification de la présence de PID dans OB1
+                        PIDOB1(automate);
+
+                        // Protection des blocs
+                        BlockProtection(mainModule, automate);
+
                         // Affichage de debug
                         DebugObBlocks(automate);
 
@@ -168,89 +179,207 @@ namespace ReceptionDeProjet
         {
             foreach (var block in GetAllBlocksFromCPU(mainModule))
             {
-                switch (block.GetType().ToString())
+                if (block.GetType().ToString() == "Siemens.Engineering.SW.Blocks.FC")
                 {
-                    case "Siemens.Engineering.SW.Blocks.FC":
-                        var vFcNumber = int.Parse(block.GetAttribute("Number").ToString());
-                        var vFcbject = new MyOB
+                    Console.WriteLine($"FC : {block.GetAttribute("Name")}");
+                    var vFcNumber = int.Parse(block.GetAttribute("Number").ToString());
+                    var vFcObject = new MyFC
+                    {
+                        sName = block.GetAttribute("Name").ToString(),
+                        iID = vFcNumber,
+                        sType = "FC",
+                    };
+
+                    // Recherche des références par croisement
+                    var crossRefServiceFC = block.GetService<CrossReferenceService>() as CrossReferenceService;
+                    var crossRefResultFC = crossRefServiceFC?.GetCrossReferences(CrossReferenceFilter.AllObjects);
+                    var sourceObjectFC = crossRefResultFC?.Sources?.FirstOrDefault(s => s.Name == block.Name);
+
+                    if (sourceObjectFC?.References == null)
+                    {
+                        automate.AddFc(vFcObject);
+                        continue;
+                    }
+
+                    foreach (var referenceObject in sourceObjectFC.References)
+                    {
+                        var refType = referenceObject.GetAttribute("TypeName").ToString();
+                        var refAddress = referenceObject.GetAttribute("Address").ToString();
+
+                        foreach (var location in referenceObject.Locations)
                         {
-                            Name = block.GetAttribute("Name").ToString(),
-                            ID = vFcNumber
-                        };
-                        break;
-                    case "Siemens.Engineering.SW.Blocks.OB":
-                        var obNumber = int.Parse(block.GetAttribute("Number").ToString());
-                        var obObject = new MyOB
-                        {
-                            Name = block.GetAttribute("Name").ToString(),
-                            ID = obNumber
-                        };
-
-                        // Recherche des références par croisement
-                        var crossRefService = block.GetService<CrossReferenceService>() as CrossReferenceService;
-                        var crossRefResult = crossRefService?.GetCrossReferences(CrossReferenceFilter.AllObjects);
-                        var sourceObject = crossRefResult?.Sources?.FirstOrDefault(s => s.Name == block.Name);
-
-                        if (sourceObject?.References == null)
-                        {
-                            automate.AddOb(obObject);
-                            continue;
-                        }
-
-                        foreach (var referenceObject in sourceObject.References)
-                        {
-                            var refType = referenceObject.GetAttribute("TypeName").ToString();
-                            var refAddress = referenceObject.GetAttribute("Address").ToString();
-
-                            // Choix du type selon la référence
-                            if (refType != "Instruction" && !refAddress.Contains("FC") && !refAddress.Contains("FB"))
-                                continue;
-
-                            var blockType = refType == "Instruction" ? "Instruction"
-                                            : refAddress.Contains("FC") ? "FC"
-                                            : refAddress.Contains("FB") ? "FB"
-                                            : null;
-
-                            if (blockType == null) continue;
-
-                            var myBloc = new MyBloc
+                            if(!(location.GetAttribute("ReferenceType").ToString() == "UsedBy"))
                             {
-                                Type = blockType,
-                                Name = blockType == "Instruction"
-                                    ? referenceObject.GetAttribute("Name").ToString().Split(' ')[0]
-                                    : referenceObject.GetAttribute("Name").ToString()
-                            };
+                                // Choix du type selon la référence
+                                if (refType != "Instruction" && !refAddress.Contains("FC") && !refAddress.Contains("FB"))
+                                    continue;
 
-                            if (myBloc.Type == "FC")
-                            {
-                                MyBloc myBlocFC = null;
-                                myBloc.AddBloc(myBlocFC);
+                                var blockType = refType == "Instruction" ? "Instruction"
+                                                : refAddress.Contains("FC") ? "FC"
+                                                : refAddress.Contains("FB") ? "FB"
+                                                : null;
+                                if (blockType == null) continue;
 
+                                var myBloc = new MyBloc
+                                {
+                                    sType = blockType,
+                                    sName = blockType == "Instruction"
+                                        ? referenceObject.GetAttribute("Name").ToString().Split(' ')[0]
+                                        : referenceObject.GetAttribute("Name").ToString(),
+                                };
+                                vFcObject.AddBloc(myBloc);
+                                vFcObject.iNbBloc++;
+                                if (myBloc.sName.StartsWith("LTU", StringComparison.OrdinalIgnoreCase)) vFcObject.iNbLTU++;
                             }
-                            obObject.AddBloc(myBloc);
                         }
-                        obObject.Ltu100 = CalculerPourcentageDeBlocsLTU(obObject);
-                        automate.AddOb(obObject);
-                        break;
-                    default:
-                        break;
-                }                
+                    }
+                    automate.AddFc(vFcObject);
+                }
             }
+
+            foreach (MyFC fc in automate.oFCs)
+            {
+                var blocsACopier = fc.oInternalBlocs.ToList(); // Copie de la liste avant itération
+
+                foreach (MyBloc bloc in blocsACopier)
+                {
+                    if (bloc.sType == "FC")
+                    {
+                        foreach (MyFC fcInternal in automate.oFCs)
+                        {
+                            if (fcInternal.sName == bloc.sName)
+                            {
+                                fc.AddBloc(fcInternal);
+                                fc.iNbLTU += fcInternal.iNbLTU;
+                                fc.iNbBloc += fcInternal.iNbBloc;
+                                fc.oInternalBlocs.Remove(bloc); // Modification autorisée car on itère sur une copie
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (var block in GetAllBlocksFromCPU(mainModule))
+            {
+                if (block.GetType().ToString() == "Siemens.Engineering.SW.Blocks.OB")
+                {
+                    var obNumber = int.Parse(block.GetAttribute("Number").ToString());
+                    var vObObject = new MyOB
+                    {
+                        sName = block.GetAttribute("Name").ToString(),
+                        iID = obNumber
+                    };
+
+                    // Recherche des références par croisement
+                    var crossRefService = block.GetService<CrossReferenceService>() as CrossReferenceService;
+                    var crossRefResult = crossRefService?.GetCrossReferences(CrossReferenceFilter.AllObjects);
+                    var sourceObject = crossRefResult?.Sources?.FirstOrDefault(s => s.Name == block.Name);
+
+                    if (sourceObject?.References == null)
+                    {
+                        automate.AddOb(vObObject);
+                        continue;
+                    }
+
+                    foreach (var referenceObject in sourceObject.References)
+                    {
+                        var refType = referenceObject.GetAttribute("TypeName").ToString();
+                        var refAddress = referenceObject.GetAttribute("Address").ToString();
+
+                        // Choix du type selon la référence
+                        if (refType != "Instruction" && !refAddress.Contains("FC") && !refAddress.Contains("FB"))
+                            continue;
+
+                        var blockType = refType == "Instruction" ? "Instruction"
+                                        : refAddress.Contains("FC") ? "FC"
+                                        : refAddress.Contains("FB") ? "FB"
+                                        : null;
+
+                        if (blockType == null) continue;
+
+                        var myBloc = new MyBloc
+                        {
+                            sType = blockType,
+                            sName = blockType == "Instruction"
+                                ? referenceObject.GetAttribute("Name").ToString().Split(' ')[0]
+                                : referenceObject.GetAttribute("Name").ToString(),
+                        };
+
+                        if (myBloc.sType == "FC")
+                        {
+                            Console.WriteLine($"Bloc FC : {myBloc.sName}");
+                            foreach (var fc in automate.oFCs)
+                            {
+                                if (fc.sName == myBloc.sName)
+                                {
+                                    Console.WriteLine($"Bloc FC interne : {fc.sName}");
+                                    vObObject.AddBloc(fc);
+                                }
+                            }
+
+                        }
+                        else vObObject.AddBloc(myBloc);
+                    }
+                    vObObject.Ltu100 = CalculerPourcentageDeBlocsLTU(vObObject);
+                    automate.AddOb(vObObject);
+                }
+            }
+        }
+        private void CalculStatPLC(Automate automate)
+        {
+            //% LTU
+            int iNbLTU = 0;
+            int iNbBloc = 0;
+            int iTotalBlocOB1 = 0;
+            foreach (MyOB myOB in automate.oOBs)
+            {
+                iNbLTU += myOB.iNbLTU;
+                iNbBloc += myOB.iNbBloc;
+                if (myOB.iID == 1) iTotalBlocOB1 = myOB.iNbBloc;
+            }
+            automate.StandardLTU =(iNbLTU*100)/ iNbBloc;
+
+            // Bloc OB1
+            automate.BlocOb1 = (iTotalBlocOB1*100)/ iNbBloc;
         }
         private void DebugObBlocks(Automate automate)
         {
-            // Exemple d'affichage de debug
+            var sb = new StringBuilder();
+
+            // Parcours des OBs
             foreach (var myObTest in automate.oOBs)
             {
+                sb.AppendLine($">OB{myObTest.iID} : {myObTest.sName}");
+
+                // Appel de la fonction récursive pour afficher les blocs
                 foreach (var myBlocTest in myObTest.oBlocList)
                 {
-                    foreach (var myBlocTest2 in myBlocTest.oBlocList)
-                    {
-                        Console.WriteLine($"OB : {myObTest.Name}, Bloc : {myBlocTest.Name}, Bloc2 : {myBlocTest2.Name}");
-                    }
-                    Console.WriteLine($"OB : {myObTest.Name}, Bloc : {myBlocTest.Name}");
+                    AppendBlocInfo(sb, myBlocTest, 1);
                 }
-                Console.WriteLine($"%LTU dans l'OB{myObTest.ID} = {myObTest.Ltu100}");
+
+                sb.AppendLine($"%LTU dans l'OB{myObTest.iID} = {myObTest.Ltu100}");
+            }
+
+            Console.WriteLine(sb.ToString());
+            Console.WriteLine($"Pourcentage de blocs LTU dans l'automate : {automate.StandardLTU}%");
+            Console.WriteLine($"Pourcentage de blocs OB1 dans l'automate : {automate.BlocOb1}%");
+            Console.WriteLine($"Nombre de blocs protégés : {automate.ProtectedBlocs.Count}");
+        }
+        // Fonction récursive pour afficher les blocs et sous-blocs
+        private void AppendBlocInfo(StringBuilder sb, MyBloc myBloc, int niveau)
+        {
+            string indentation = new string('\t', niveau);
+            sb.AppendLine($"{indentation}>---{myBloc.sType} : {myBloc.sName}");
+
+            if (myBloc is MyFC fcBloc)
+            {
+                // Création d'une copie avant l'itération
+                var internalBlocs = fcBloc.oInternalBlocs.ToList();
+
+                foreach (var subBloc in internalBlocs)
+                {
+                    AppendBlocInfo(sb, subBloc, niveau + 1);
+                }
             }
         }
         public List<PlcBlock> GetAllBlocksFromCPU(DeviceItem cpuDeviceItem)
@@ -292,16 +421,53 @@ namespace ReceptionDeProjet
                 GatherBlocksFromGroup(subGroup, allBlocks);
             }
         }
-
         public double CalculerPourcentageDeBlocsLTU(MyOB myOb)
         {
             if (myOb == null || myOb.oBlocList == null || myOb.oBlocList.Count == 0) return 0.0;
             // Compter le nombre de blocs dont le nom commence par "LTU"
-            int totalBlocs = myOb.oBlocList.Count;
-            int ltuCount = myOb.oBlocList.Count(b => b.Name.StartsWith("LTU", StringComparison.OrdinalIgnoreCase));
+            int totalBlocs = 0; // myOb.oBlocList.Count;
+            int ltuCount = 0; // myOb.oBlocList.Count(b => b.sName.StartsWith("LTU", StringComparison.OrdinalIgnoreCase));
+
+            foreach (var bloc in myOb.oBlocList)
+            {
+                totalBlocs++;
+                if (bloc.sName.StartsWith("LTU", StringComparison.OrdinalIgnoreCase)) ltuCount++;
+                if (bloc.sType == "FC")
+                {
+                    totalBlocs += ((MyFC)bloc).iNbBloc;
+                    ltuCount += ((MyFC)bloc).iNbLTU;
+                }
+            }
+
+            myOb.iNbLTU = ltuCount;
+            myOb.iNbBloc = totalBlocs;
 
             // Calculer le pourcentage
             return (double)ltuCount / totalBlocs * 100.0;
+        }
+        private void PIDOB1(Automate automate)
+        {
+            foreach (MyOB myOb in automate.oOBs)
+            {
+                if (myOb.iID == 1)
+                {
+                    foreach (MyBloc myBloc in myOb.oBlocList)
+                    {
+                        if (myBloc.sName == "PID")
+                        {
+                            automate.OB1PID = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        private void BlockProtection(DeviceItem mainModule, Automate automate)
+        {
+            foreach(var block in GetAllBlocksFromCPU(mainModule))
+            {
+                if (bool.Parse(block.GetAttribute("IsKnowHowProtected").ToString())) automate.AddProtectedBloc(block.GetAttribute("Name").ToString());
+            }
         }
     }
 
@@ -333,6 +499,8 @@ namespace ReceptionDeProjet
         private bool bHourChange = true;
         private bool bCPUTimeSet = true;
         public List<MyOB> oOBs;
+        public List<MyFC> oFCs;
+        public List<string> ProtectedBlocs;
         private bool bProgramProtection = false;
         private bool bCPUDefault = false;
         private bool bOB1PID = false;
@@ -342,8 +510,11 @@ namespace ReceptionDeProjet
         private int iWorkDataMemory = 80;
         private int iInstantVar = 7;
         #endregion
-        public Automate() {
+        public Automate()
+        {
             oOBs = new List<MyOB>();
+            oFCs = new List<MyFC>();
+            ProtectedBlocs = new List<string>();
         }
 
         #region GETTER & SETTER
@@ -384,54 +555,65 @@ namespace ReceptionDeProjet
         {
             oOBs.Add(oOb);
         }
+
+        public void AddFc(MyFC oFc)
+        {
+            oFCs.Add(oFc);
+        }
+
+        public void AddProtectedBloc(string blocName)
+        {
+            ProtectedBlocs.Add(blocName);
+        }
         #endregion
     }
 
-    public class MyOB
+    // Classe de base : MyBloc
+    public class MyBloc
     {
-        private int iID;
-        private string sName;
-        private int iNbNetwork;
-        private double iLtu100;
-        public List<MyBloc> oBlocList;
-        public List<MyBloc> oBlocListFC;
+        public string sName { get; set; }
+        public string sType { get; set; }
+        public int iNetwork { get; set; }
+    }
+
+    // Classe MyOB qui hérite de MyBloc
+    public class MyOB : MyBloc
+    {
+        public int iID { get; set; }
+        public int iNbNetwork { get; set; }
+        public double Ltu100 { get; set; }
+        public int iNbLTU { get; set; }
+        public int iNbBloc { get; set; }
+        public List<MyBloc> oBlocList { get; set; }
+
         public MyOB()
         {
             oBlocList = new List<MyBloc>();
-            oBlocListFC = new List<MyBloc>();
         }
 
-        public int ID { get => iID; set => iID = value; }
-        public int NbNetwork { get => iNbNetwork; set => iNbNetwork = value; }
-        public string Name { get => sName; set => sName = value; }
-        public double Ltu100 { get => iLtu100; set => iLtu100 = value; }
-        public void AddBloc(MyBloc obloc)
+        public void AddBloc(MyBloc bloc)
         {
-            oBlocList.Add(obloc);
-        }
-        public void AddBlocFC(MyBloc obloc)
-        {
-            oBlocListFC.Add(obloc);
+            oBlocList.Add(bloc);
         }
     }
 
-    public class MyBloc
+    // Classe MyFC qui hérite de MyBloc
+    public class MyFC : MyBloc
     {
-        private string sName;
-        private int iNetwork;
-        private string iType;
-        public List<MyBloc> oBlocList;
+        public int iID { get; set; }
+        public int iNbLTU { get; set; }
+        public int iNbBloc { get; set; }
+        public List<MyBloc> oInternalBlocs { get; set; }
+        
 
-        public MyBloc()
+        public MyFC()
         {
-            if(iType == "FC") oBlocList = new List<MyBloc>();
+            oInternalBlocs = new List<MyBloc>();
         }
-        public string Name { get => sName; set => sName = value; }
-        public int Network { get => iNetwork; set => iNetwork = value; }
-        public string Type { get => iType; set => iType = value; }
-        public void AddBloc(MyBloc obloc)
+
+        public void AddBloc(MyBloc bloc)
         {
-            oBlocList.Add(obloc);
+            oInternalBlocs.Add(bloc);
         }
     }
 }
