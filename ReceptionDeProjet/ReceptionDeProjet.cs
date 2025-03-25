@@ -98,7 +98,7 @@ namespace ReceptionDeProjet
         private void BpVerification_Click(object sender, EventArgs e)
         {
             string sError = null;
-            oDevicesProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
+            //oDevicesProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
 
             UpdateInfo("-");
             UpdateInfo("Device trouvé : ");
