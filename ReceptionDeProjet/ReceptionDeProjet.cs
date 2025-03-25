@@ -98,7 +98,7 @@ namespace ReceptionDeProjet
         private void BpVerification_Click(object sender, EventArgs e)
         {
             string sError = null;
-            //oDevicesProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
+            //git oDevicesProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
 
             UpdateInfo("-");
             UpdateInfo("Device trouvé : ");
@@ -136,7 +136,7 @@ namespace ReceptionDeProjet
                     var ws = wb.Worksheet(1); // Get the first worksheet in the workbook
                     var range = ws.RangeUsed(); // Get the range of cells used in the worksheet
 
-                    UpdateInfo($"Nombre de lignes : {range.RowCount()}");
+                    UpdateInfo($"Nombre de colone : {range.ColumnCount()}");
                 }
             }
             catch (Exception ex)
