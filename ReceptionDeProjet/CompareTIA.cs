@@ -22,56 +22,8 @@ namespace ReceptionDeProjet
 {
     public class CompareTIA
     {
-        protected string sCdcFilePath = null;
-        List<Automate> oDevicesCdc = new List<Automate>();
-        List<Automate> oDevicesProject = new List<Automate>();
         public CompareTIA()
-        {
-            //bool bRet = ReadExcel();
-        }
-
-        private bool ReadExcel(ref int iNbDevice)
-        {
-            try
-            {
-                using (XLWorkbook wb = new XLWorkbook(sCdcFilePath))
-                {
-                    // Récupère la première feuille
-                    var ws = wb.Worksheets.First();
-                    var range = ws.RangeUsed();
-
-                    // Parcours des lignes
-                    for (int i = 2; i < range.RowCount() + 1; i++)
-                    {
-                        iNbDevice++;
-
-                        var automate = new Automate
-                        {
-                            // Variable parametrable
-                            Name = ws.Cell(i, 0).Value.ToString(),
-                            Reference = ws.Cell(i, 1).Value.ToString(),
-                            Firmware = ws.Cell(i, 2).Value.ToString(),
-                            WatchDog = (int)ws.Cell(i, 3).Value.GetNumber(),
-                            Ntp = (int)ws.Cell(i, 4).Value.GetNumber(),
-                            ControlAccess = ParseBooleanValue(ws.Cell(i, 5).Value.ToString()),
-                            ApiHmiCom = ParseBooleanValue(ws.Cell(i, 6).Value.ToString()),
-                            OnlineAccess = ParseBooleanValue(ws.Cell(i, 7).Value.ToString())
-                        };
-                        oDevicesCdc.Add(automate);
-                    }
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return true;
-            }
-        }
-        private bool ParseBooleanValue(string value)
-        {
-            return bool.TryParse(value, out bool result) && result;
-        }
+        { }
         public List<Automate> GetPlcDevicesInfo(HMATIAOpenness_V16 tiaInterface, string sError)
         {
             var resultAutomates = new List<Automate>();
@@ -388,12 +340,7 @@ namespace ReceptionDeProjet
 
             // Récupération du conteneur de software pour accéder aux blocs
             var softwareContainer = cpuDeviceItem.GetService<SoftwareContainer>() as SoftwareContainer;
-            var plcSoftware = softwareContainer?.Software as PlcSoftware;
-
-            if (plcSoftware == null)
-            {
-                throw new Exception("Impossible de récupérer PlcSoftware pour la CPU spécifiée.");
-            }
+            var plcSoftware = softwareContainer?.Software as PlcSoftware ?? throw new Exception("Impossible de récupérer PlcSoftware pour la CPU spécifiée.");
 
             // 1) Récupérer tout ce qui est dans la racine
             allBlocks.AddRange(plcSoftware.BlockGroup.Blocks);

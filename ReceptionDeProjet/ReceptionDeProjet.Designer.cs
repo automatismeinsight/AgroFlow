@@ -30,7 +30,6 @@
         {
             this.BpSelectProject = new System.Windows.Forms.Button();
             this.BpVerification = new System.Windows.Forms.Button();
-            this.BpPdfExport = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
@@ -81,16 +80,6 @@
             this.BpVerification.Text = "Compare";
             this.BpVerification.UseVisualStyleBackColor = true;
             this.BpVerification.Click += new System.EventHandler(this.BpVerification_Click);
-            // 
-            // BpPdfExport
-            // 
-            this.BpPdfExport.Location = new System.Drawing.Point(100, 89);
-            this.BpPdfExport.Name = "BpPdfExport";
-            this.BpPdfExport.Size = new System.Drawing.Size(75, 23);
-            this.BpPdfExport.TabIndex = 5;
-            this.BpPdfExport.Text = "Export PDF";
-            this.BpPdfExport.UseVisualStyleBackColor = true;
-            this.BpPdfExport.Click += new System.EventHandler(this.BpPdfExport_Click);
             // 
             // tabPage2
             // 
@@ -161,7 +150,6 @@
             // 
             this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Controls.Add(this.BpCdcLoad);
-            this.tabPage1.Controls.Add(this.BpPdfExport);
             this.tabPage1.Controls.Add(this.BpSelectProject);
             this.tabPage1.Controls.Add(this.BpVerification);
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
@@ -342,7 +330,6 @@
         #endregion
         private System.Windows.Forms.Button BpSelectProject;
         private System.Windows.Forms.Button BpVerification;
-        private System.Windows.Forms.Button BpPdfExport;
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.Button BpCdcLoad;
