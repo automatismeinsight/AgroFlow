@@ -100,7 +100,21 @@ namespace ReceptionDeProjet
         {
             string sError = null;
             oTiaProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
-
+            UpdateInfo("-");
+            // Affiche les informations du projet
+            if (oTiaProject == null) {
+                UpdateInfo("Erreur lors de la récupération des informations du projet");
+                return;
+            }
+            UpdateInfo("Informations du projet : ");
+            UpdateInfo($"Nom : {oTiaProject.sName}");
+            UpdateInfo($"Chemin : {oTiaProject.sProjectPath}");
+            UpdateInfo($"Version : {oTiaProject.sVersion}");
+            UpdateInfo($"Date de création : {oTiaProject.sDateCreation}");
+            UpdateInfo($"Langue : {oTiaProject.sLanguage}");
+            UpdateInfo($"Taille : {oTiaProject.sSize}");
+            UpdateInfo($"Simulation : {oTiaProject.sSimulation}");
+            UpdateInfo($"Nombre d'automates : {oTiaProject.oAutomates.Count}");
             UpdateInfo("-");
             UpdateInfo("Device trouvé : ");
             foreach (Automate plc in oTiaProject.oAutomates)
@@ -150,10 +164,23 @@ namespace ReceptionDeProjet
             {
                 using (XLWorkbook wb = new XLWorkbook(sCdcFilePath))
                 {
-                    int currentRow = 2; // Start at row 2
+                    // Infos Projet
                     var ws = wb.Worksheet(1); // Get the first worksheet in the workbook
                     var range = ws.RangeUsed(); // Get the range of cells used in the worksheet
 
+                    ws.Cell(2, 1).Value = oTiaProject.sName;
+                    ws.Cell(2, 2).Value = oTiaProject.sProjectPath;
+                    ws.Cell(2, 3).Value = oTiaProject.sVersion;
+                    ws.Cell(2, 4).Value = oTiaProject.sDateCreation;
+                    ws.Cell(2, 5).Value = oTiaProject.sLanguage;
+                    ws.Cell(2, 6).Value = oTiaProject.sSize;
+                    ws.Cell(2, 7).Value = oTiaProject.sSimulation;
+                    ws.Cell(2, 8).Value = oTiaProject.oAutomates.Count;
+
+                    // Infos automates
+                    int currentRow = 2; // Start at row 2
+                    ws = wb.Worksheet(2); // Get the first worksheet in the workbook
+                    range = ws.RangeUsed(); // Get the range of cells used in the worksheet
 
                     foreach (Automate plc in oTiaProject.oAutomates)
                     {
@@ -173,24 +200,25 @@ namespace ReceptionDeProjet
                         ws.Cell(currentRow, 13).Value = plc.sVlanX2;
                         ws.Cell(currentRow, 14).Value = plc.sMMCLife;
                         ws.Cell(currentRow, 15).Value = plc.sWatchDog;
-                        ws.Cell(currentRow, 17).Value = plc.sRestart;
-                        ws.Cell(currentRow, 18).Value = plc.sCadenceM0;
-                        ws.Cell(currentRow, 19).Value = plc.sCadenceM1;
-                        ws.Cell(currentRow, 20).Value = plc.sProgramProtection;
-                        ws.Cell(currentRow, 21).Value = plc.sWebServer;
-                        ws.Cell(currentRow, 22).Value = plc.sControlAccess;
-                        ws.Cell(currentRow, 23).Value = plc.sApiHmiCom;
-                        ws.Cell(currentRow, 24).Value = plc.sOnlineAccess;
-                        ws.Cell(currentRow, 25).Value = plc.sScreenWrite;
-                        ws.Cell(currentRow, 26).Value = plc.sInstantVar;
-                        ws.Cell(currentRow, 27).Value = plc.iStandardLTU;
-                        ws.Cell(currentRow, 16).Value = plc.sOB1PID;
+                        ws.Cell(currentRow, 16).Value = plc.sRestart;
+                        ws.Cell(currentRow, 17).Value = plc.sCadenceM0;
+                        ws.Cell(currentRow, 18).Value = plc.sCadenceM1;
+                        ws.Cell(currentRow, 19).Value = plc.sProgramProtection;
+                        ws.Cell(currentRow, 20).Value = plc.sWebServer;
+                        ws.Cell(currentRow, 21).Value = plc.sControlAccess;
+                        ws.Cell(currentRow, 22).Value = plc.sApiHmiCom;
+                        ws.Cell(currentRow, 23).Value = plc.sOnlineAccess;
+                        ws.Cell(currentRow, 24).Value = plc.sScreenWrite;
+                        ws.Cell(currentRow, 25).Value = plc.sInstantVar;
+                        ws.Cell(currentRow, 26).Value = plc.iStandardLTU;
+                        ws.Cell(currentRow, 27).Value = plc.sOB1PID;
                         ws.Cell(currentRow, 28).Value = plc.iBlocOb1;
                         ws.Cell(currentRow, 29).Value = plc.iBlocOb35;
                         currentRow++; // Go to the next row
                     }
                     wb.Save(); //Save file
                 }
+                UpdateInfo("Exportation des données vers Excel terminée");
             }
             catch (Exception ex)
             {

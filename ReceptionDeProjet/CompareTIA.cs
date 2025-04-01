@@ -29,12 +29,24 @@ namespace ReceptionDeProjet
         { }
         public Project GetPlcDevicesInfo(HMATIAOpenness_V16 tiaInterface, string sError)
         {
+            // Création de l'objet Project
             var resultProject = new Project
             {
                 sName = tiaInterface.m_oTiaProject.Name,
+                sProjectPath = tiaInterface.m_oTiaProject.Path.ToString(),
+                sSimulation = tiaInterface.m_oTiaProject.GetAttribute("IsSimulationDuringBlockCompilationEnabled").ToString(),
+                sDateCreation = tiaInterface.m_oTiaProject.GetAttribute("CreationTime").ToString(),
+                sSize = tiaInterface.m_oTiaProject.GetAttribute("Size").ToString()
             };
 
+            //Ajout de la version
+            string sVersionTemp = resultProject.sProjectPath.Split('p').Last();
 
+            //Ajout de la langue
+            Siemens.Engineering.LanguageAssociation languageAssociation = (Siemens.Engineering.LanguageAssociation)tiaInterface.m_oTiaProject.LanguageSettings.GetAttribute("ActiveLanguages");
+            resultProject.sLanguage = languageAssociation.FirstOrDefault().Culture.ToString();
+
+            //Ajout des devices
             try
             {
                 foreach (var device in tiaInterface.m_oTiaProject.Devices)
@@ -255,6 +267,11 @@ namespace ReceptionDeProjet
                         }
                     }
                     automate.AddFc(vFcObject);
+                }
+            
+                if(block.GetType().ToString() == "Siemens.Engineering.SW.Blocks.InstanceDB")
+                {
+
                 }
             }
 
@@ -558,10 +575,12 @@ namespace ReceptionDeProjet
     {
         public string sName { get; set; }
         public string sProjectPath { get; set; }
-
         public string sVersion { get; set; }
+        public string sDateCreation { get; set; }
         public string sLanguage { get; set; }
-        public string sIsProtected { get; set; }
+        public string sSize { get; set; }
+        public string sSimulation { get; set; }
+
 
         //Liste des automates
         public List<Automate> oAutomates;
@@ -715,6 +734,12 @@ namespace ReceptionDeProjet
         {
             oInternalBlocs.Add(bloc);
         }
+    }
+
+    public class MyDB : MyOB
+    {
+        public string sLastInst { get; set; }
+        public string sFirstInst { get; set; }
     }
 
     public class HMI
