@@ -581,6 +581,8 @@ namespace ReceptionDeProjet
         public string sSize { get; set; }
         public string sSimulation { get; set; }
 
+        //Liste des réseaux et liaisons
+
 
         //Liste des automates
         public List<Automate> oAutomates;
@@ -609,7 +611,13 @@ namespace ReceptionDeProjet
             oSCADAs.Add(scada);
         }
     }
-    
+    public class Connexion
+    {
+        public string sName { get; set; }
+        public string sEndPoint { get; set; }
+        public string sPartener { get; set; }
+        public string sType { get; set; }
+    }
     public class Automate
     {
         #region VARIABLES
