@@ -9,6 +9,7 @@ using PdfSharp.Pdf;
 using PdfSharp.Drawing;
 using PdfSharp.Drawing.Layout;
 using System.Windows.Input;
+using DocumentFormat.OpenXml.Presentation;
 
 namespace ReceptionDeProjet
 {
@@ -25,7 +26,7 @@ namespace ReceptionDeProjet
         //Liste des instructions pour le FC
         private readonly List<string> lsDataCollection = new List<string>();
 
-        List<Automate> oDevicesProject = new List<Automate>();
+        Project oTiaProject = new Project();
 
         public ReceptionDeProjet()
         {
@@ -65,7 +66,7 @@ namespace ReceptionDeProjet
 
             if (GetTiaProject(ref sProjectName) == true)
             {
-                UpdateInfo(string.Format(@"Le projet cible : {0} est bien sélectionné", sProjectName));
+                UpdateInfo(string.Format($"Le projet cible : {sProjectName} est bien sélectionné"));
                 
             }
             else
@@ -77,7 +78,7 @@ namespace ReceptionDeProjet
 
         private bool GetTiaProject(ref string sProjectName)
         {
-            bool bRet = true;
+            bool bRet = false;
             string sError = string.Empty;
 
             sProjectName = string.Empty;
@@ -86,9 +87,9 @@ namespace ReceptionDeProjet
             if (oExploreTiaPLC.GetTiaPortalProjectIsSelected() == false)
             {
                 // Sélection du projet Tia Portal
-                if (oExploreTiaPLC.ChooseTiaProject(ref sError) == false)
+                if (oExploreTiaPLC.ChooseTiaProject(ref sError) == true)
                 {
-                    bRet = false;
+                    bRet = true;
                     sProjectName = oExploreTiaPLC.oTiainterface.m_oTiaProject.Name;
                 }
             }
@@ -98,26 +99,42 @@ namespace ReceptionDeProjet
         private void BpVerification_Click(object sender, EventArgs e)
         {
             string sError = null;
-            //git oDevicesProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
+            oTiaProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
 
             UpdateInfo("-");
             UpdateInfo("Device trouvé : ");
-            foreach (Automate plc in oDevicesProject)
+            foreach (Automate plc in oTiaProject.oAutomates)
             {
                 UpdateInfo("");
-                UpdateInfo($"Nom: {plc.Name}");
-                UpdateInfo($"Reference: {plc.Reference}");
-                UpdateInfo($"Firmware: {plc.Firmware}");
-                UpdateInfo($"WatchDog: {plc.WatchDog}");
-                UpdateInfo($"ControlAccess: {plc.ControlAccess}");
-                UpdateInfo($"WebServer: {plc.WebServer}");
-                UpdateInfo($"Restart: {plc.Restart}");
-                UpdateInfo($"CadenceM0: {plc.CadenceM0}");
-                UpdateInfo($"CadenceM1: {plc.CadenceM1}");
-                UpdateInfo($"LocalHour: {plc.LocalHour}");
-                UpdateInfo($"HourChange: {plc.HourChange}");
-                UpdateInfo($"MMCLife: {plc.MMCLife}");
-                UpdateInfo($"ScreenWrite: {plc.ScreenWrite}");
+                UpdateInfo($"Name: {plc.sName}");
+                UpdateInfo($"Gamme: {plc.sGamme}");
+                UpdateInfo($"Reference: {plc.sReference}");
+                UpdateInfo($"Firmware: {plc.sFirmware}");
+                UpdateInfo($"NtpServer1: {plc.sNtpServer1}");
+                UpdateInfo($"NtpServer2: {plc.sNtpServer2}");
+                UpdateInfo($"NtpServer3: {plc.sNtpServer3}");
+                UpdateInfo($"LocalHour: {plc.sLocalHour}");
+                UpdateInfo($"HourChange: {plc.sHourChange}");
+                UpdateInfo($"InterfaceX1: {plc.sInterfaceX1}");
+                UpdateInfo($"VlanX1: {plc.sVlanX1}");
+                UpdateInfo($"InterfaceX2: {plc.sInterfaceX2}");
+                UpdateInfo($"VlanX2: {plc.sVlanX2}");
+                UpdateInfo($"MMCLife: {plc.sMMCLife}");
+                UpdateInfo($"WatchDog: {plc.sWatchDog}");
+                UpdateInfo($"Restart: {plc.sRestart}");
+                UpdateInfo($"CadenceM0: {plc.sCadenceM0}");
+                UpdateInfo($"CadenceM1: {plc.sCadenceM1}");
+                UpdateInfo($"ProgramProtection: {plc.sProgramProtection}");
+                UpdateInfo($"WebServer: {plc.sWebServer}");
+                UpdateInfo($"ControlAccess: {plc.sControlAccess}");
+                UpdateInfo($"ApiHmiCom: {plc.sApiHmiCom}");
+                UpdateInfo($"OnlineAccess: {plc.sOnlineAccess}");
+                UpdateInfo($"ScreenWrite: {plc.sScreenWrite}");
+                UpdateInfo($"InstantVar: {plc.sInstantVar}");
+                UpdateInfo($"StandardLTU: {plc.iStandardLTU}");
+                UpdateInfo($"OB1PID: {plc.sOB1PID}");
+                UpdateInfo($"BlocOb1: {plc.iBlocOb1}");
+                UpdateInfo($"BlocOb35: {plc.iBlocOb35}");
             }
             UpdateInfo("-");
             //CompareProject();
@@ -133,16 +150,87 @@ namespace ReceptionDeProjet
             {
                 using (XLWorkbook wb = new XLWorkbook(sCdcFilePath))
                 {
+                    int currentRow = 2; // Start at row 2
                     var ws = wb.Worksheet(1); // Get the first worksheet in the workbook
                     var range = ws.RangeUsed(); // Get the range of cells used in the worksheet
 
-                    UpdateInfo($"Nombre de colone : {range.ColumnCount()}");
+
+                    foreach (Automate plc in oTiaProject.oAutomates)
+                    {
+
+                        ws.Cell(currentRow, 1).Value = plc.sName;
+                        ws.Cell(currentRow, 2).Value = plc.sGamme;
+                        ws.Cell(currentRow, 3).Value = plc.sReference;
+                        ws.Cell(currentRow, 4).Value = plc.sFirmware;
+                        ws.Cell(currentRow, 5).Value = plc.sNtpServer1;
+                        ws.Cell(currentRow, 6).Value = plc.sNtpServer2;
+                        ws.Cell(currentRow, 7).Value = plc.sNtpServer3;
+                        ws.Cell(currentRow, 8).Value = plc.sLocalHour;
+                        ws.Cell(currentRow, 9).Value = plc.sHourChange;
+                        ws.Cell(currentRow, 10).Value = plc.sInterfaceX1;
+                        ws.Cell(currentRow, 11).Value = plc.sVlanX1;
+                        ws.Cell(currentRow, 12).Value = plc.sInterfaceX2;
+                        ws.Cell(currentRow, 13).Value = plc.sVlanX2;
+                        ws.Cell(currentRow, 14).Value = plc.sMMCLife;
+                        ws.Cell(currentRow, 15).Value = plc.sWatchDog;
+                        ws.Cell(currentRow, 17).Value = plc.sRestart;
+                        ws.Cell(currentRow, 18).Value = plc.sCadenceM0;
+                        ws.Cell(currentRow, 19).Value = plc.sCadenceM1;
+                        ws.Cell(currentRow, 20).Value = plc.sProgramProtection;
+                        ws.Cell(currentRow, 21).Value = plc.sWebServer;
+                        ws.Cell(currentRow, 22).Value = plc.sControlAccess;
+                        ws.Cell(currentRow, 23).Value = plc.sApiHmiCom;
+                        ws.Cell(currentRow, 24).Value = plc.sOnlineAccess;
+                        ws.Cell(currentRow, 25).Value = plc.sScreenWrite;
+                        ws.Cell(currentRow, 26).Value = plc.sInstantVar;
+                        ws.Cell(currentRow, 27).Value = plc.iStandardLTU;
+                        ws.Cell(currentRow, 16).Value = plc.sOB1PID;
+                        ws.Cell(currentRow, 28).Value = plc.iBlocOb1;
+                        ws.Cell(currentRow, 29).Value = plc.iBlocOb35;
+                        currentRow++; // Go to the next row
+                    }
+                    wb.Save(); //Save file
                 }
             }
             catch (Exception ex)
             {
                 UpdateInfo($"Erreur lors de l'exportation des données vers Excel : {ex.Message}");
             }
+        }
+
+        public void ResetPlcTitleExcel(XLWorkbook wb, int sheet)
+        {
+            var ws = wb.Worksheet(sheet);
+
+            ws.Cell(1, 1).Value = "sName";
+            ws.Cell(1, 1).Value = "sGamme";
+            ws.Cell(1, 2).Value = "sReference";
+            ws.Cell(1, 3).Value = "sFirmware";
+            ws.Cell(1, 4).Value = "sNtpServer1";
+            ws.Cell(1, 5).Value = "sNtpServer2";
+            ws.Cell(1, 6).Value = "sNtpServer3";
+            ws.Cell(1, 7).Value = "sLocalHour";
+            ws.Cell(1, 8).Value = "sHourChange";
+            ws.Cell(1, 10).Value = "sInterfaceX1";
+            ws.Cell(1, 11).Value = "sVlanX1";
+            ws.Cell(1, 12).Value = "sInterfaceX2";
+            ws.Cell(1, 13).Value = "sVlanX2";
+            ws.Cell(1, 14).Value = "sMMCLife";
+            ws.Cell(1, 15).Value = "sWatchDog";
+            ws.Cell(1, 17).Value = "sRestart";
+            ws.Cell(1, 18).Value = "sCadenceM0";
+            ws.Cell(1, 19).Value = "sCadenceM1";
+            ws.Cell(1, 21).Value = "sProgramProtection";
+            ws.Cell(1, 22).Value = "sWebServer";
+            ws.Cell(1, 23).Value = "sControlAccess";
+            ws.Cell(1, 24).Value = "sApiHmiCom";
+            ws.Cell(1, 25).Value = "sOnlineAccess";
+            ws.Cell(1, 26).Value = "sScreenWrite";
+            ws.Cell(1, 31).Value = "sInstantVar";
+            ws.Cell(1, 32).Value = "iStandardLTU";
+            ws.Cell(1, 20).Value = "sOB1PID";
+            ws.Cell(1, 33).Value = "iBlocOb1";
+            ws.Cell(1, 33).Value = "iBlocOb35";
         }
 
         public void UpdateInfo(string sMessage)

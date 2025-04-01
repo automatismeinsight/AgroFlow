@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.UI;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Presentation;
@@ -15,8 +16,10 @@ using OpennessV16;
 using Siemens.Engineering.CrossReference;
 using Siemens.Engineering.HW;
 using Siemens.Engineering.HW.Features;
+using Siemens.Engineering.Online;
 using Siemens.Engineering.SW;
 using Siemens.Engineering.SW.Blocks;
+using System.Globalization;
 
 namespace ReceptionDeProjet
 {
@@ -24,9 +27,13 @@ namespace ReceptionDeProjet
     {
         public CompareTIA()
         { }
-        public List<Automate> GetPlcDevicesInfo(HMATIAOpenness_V16 tiaInterface, string sError)
+        public Project GetPlcDevicesInfo(HMATIAOpenness_V16 tiaInterface, string sError)
         {
-            var resultAutomates = new List<Automate>();
+            var resultProject = new Project
+            {
+                sName = tiaInterface.m_oTiaProject.Name,
+            };
+
 
             try
             {
@@ -46,7 +53,6 @@ namespace ReceptionDeProjet
                         Console.WriteLine("Erreur module vide");
                         continue;
                     }
-
                     // Création de l'objet Automate et récupération des propriétés
                     try
                     {
@@ -64,29 +70,33 @@ namespace ReceptionDeProjet
                         // Protection des blocs
                         BlockProtection(mainModule, automate);
 
+                        // Interface réseau
+                        InterfaceNetwork(mainModule, automate);
+
                         // Affichage de debug
                         DebugObBlocks(automate);
 
-                        resultAutomates.Add(automate);
+                        resultProject.AddAutomate(automate);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Erreur lors de l'accès aux propriétés de sécurité: {ex.Message}");
+                        Console.WriteLine($"Erreur lors de l'accès aux propriétés de sécurité: {ex.Message} {device.Name}");
                     }
                 }
+                
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Erreur lors de la récupération des informations des PLC : {ex.Message}");
             }
 
-            return resultAutomates;
+            return resultProject;
         }
         private DeviceItem FindMainModule(Device device)
         {
             foreach (var item in device.DeviceItems)
             {
-                if (item.GetAttribute("Name").ToString().Contains("AP"))
+                if (item.GetAttribute("Classification").ToString() == "CPU")
                 {
                     return item;
                 }
@@ -95,37 +105,96 @@ namespace ReceptionDeProjet
         }
         private Automate CreateAutomateFromModule(DeviceItem mainModule)
         {
+            string gamme = FindGamme(mainModule);
+            string[] gammesAutorisees = { "S7-1200", "S7-1500", "ET200SP" };
+
+            if (!gammesAutorisees.Any(g => gamme.Contains(g)))
+            {
+                Console.WriteLine("Le device n'est pas dans la gamme");
+
+                var automateBis = new Automate
+                {
+                    sName = mainModule.GetAttribute("Name").ToString(),
+                    sGamme = gamme + " | Hors gamme",
+                };
+                return automateBis;
+            }
+
             var automate = new Automate
             {
-                Name = mainModule.GetAttribute("Name").ToString(),
-                Reference = mainModule.GetAttribute("OrderNumber").ToString(),
-                Firmware = mainModule.GetAttribute("FirmwareVersion").ToString(),
-                WatchDog = int.Parse(mainModule.GetAttribute("CycleMaximumCycleTime").ToString()),
-                // Vérifier si "ControlAccess" doit utiliser une autre propriété selon le contexte
-                ControlAccess = mainModule.GetAttribute("CycleMaximumCycleTime").ToString() == "PlcAccessControlConfiguration",
-                WebServer = (bool)mainModule.GetAttribute("WebserverActivate"),
-                Restart = int.Parse(mainModule.GetAttribute("StartupActionAfterPowerOn").ToString()) == 3,
-                CadenceM0 = (bool)mainModule.GetAttribute("SystemMemoryByte"),
-                CadenceM1 = (bool)mainModule.GetAttribute("ClockMemoryByte"),
-                LocalHour = int.Parse(mainModule.GetAttribute("TimeOfDayLocalTimeZone").ToString()) == 25,
-                HourChange = (bool)mainModule.GetAttribute("TimeOfDayActivateDaylightSavingTime")
+                sName = mainModule.GetAttribute("Name").ToString(),
+                sGamme = gamme,
+                sReference = mainModule.GetAttribute("OrderNumber").ToString(),
+                sFirmware = mainModule.GetAttribute("FirmwareVersion").ToString(),
+                sWatchDog = mainModule.GetAttribute("CycleMaximumCycleTime").ToString(),
+                sWebServer = mainModule.GetAttribute("WebserverActivate").ToString(),
+                sRestart = mainModule.GetAttribute("StartupActionAfterPowerOn").ToString(),
+                sCadenceM0 = mainModule.GetAttribute("SystemMemoryByte").ToString(),
+                sCadenceM1 = mainModule.GetAttribute("ClockMemoryByte").ToString(),
+                sLocalHour = mainModule.GetAttribute("TimeOfDayLocalTimeZone").ToString(),
+                sHourChange = mainModule.GetAttribute("TimeOfDayActivateDaylightSavingTime").ToString()
             };
+
+            PlcAccessControlConfigurationProvider provider = mainModule.GetService<PlcAccessControlConfigurationProvider>();
+            if (provider != null)
+            {
+                var configuration = provider.GetAttribute("PlcAccessControlConfiguration");
+                automate.sControlAccess = configuration.ToString();
+            }else automate.sControlAccess = "Option non disponible";
+
 
             // Analyse des sous-éléments (MMC, écran, etc.)
             foreach (var item in mainModule.DeviceItems)
-            {
-                var itemName = item.GetAttribute("Name").ToString();
-                if (itemName.Contains("Dispositif de lecture"))
                 {
-                    automate.MMCLife = int.Parse(item.GetAttribute("DiagnosticsAgingSimaticMemoryCardThreshold").ToString());
+                    var itemName = item.GetAttribute("Name").ToString();
+                    if (itemName.Contains("Dispositif de lecture") || itemName.Contains("Card reader"))
+                    {
+                        if (item.GetAttribute("DiagnosticsAgingSimaticMemoryCard").ToString() == "True")
+                        {
+                            automate.sMMCLife = item.GetAttribute("DiagnosticsAgingSimaticMemoryCardThreshold").ToString();
+                        }
+                        else automate.sMMCLife = "Option desactivé";
+                    }
+                    else if (itemName.Contains("Ecran") || itemName.Contains("display"))
+                    {
+                        automate.sScreenWrite = item.GetAttribute("DisplayWriteAccess").ToString();
+                    }
                 }
-                else if (itemName.Contains("Ecran"))
-                {
-                    automate.ScreenWrite = (bool)item.GetAttribute("DisplayWriteAccess");
-                }
-            }
+
+            automate.sOnlineAccess = TestOnlineAccess(mainModule);
 
             return automate;
+        }
+        private string FindGamme(DeviceItem mainModule)
+        {
+            string sGamme = "Non trouvé";
+            
+            Device parent = (Device)mainModule.Parent;
+            sGamme = parent.GetAttribute("TypeName").ToString();
+            Console.WriteLine($"Gamme : {sGamme}"); 
+
+            return sGamme;
+        }
+        private string TestOnlineAccess(DeviceItem mainModule)
+        {
+            try
+            {
+                OnlineProvider onlineProvider = mainModule.GetService<OnlineProvider>();
+                if (onlineProvider == null) return "False"; 
+                if (onlineProvider.Configuration.IsConfigured)
+                {
+                    onlineProvider.GoOnline();
+                }
+                onlineProvider.GoOffline();
+                return "True";
+            }
+            catch (Exception e)
+            {
+                OnlineProvider onlineProvider = mainModule.GetService<OnlineProvider>();
+                onlineProvider.GoOffline();
+                Console.WriteLine($"Erreur lors de la récupération de l'OnlineAccess : {e.Message}");
+                return "False";
+            }
         }
         private void AnalyzeObBlocks(DeviceItem mainModule, Automate automate)
         {
@@ -283,16 +352,25 @@ namespace ReceptionDeProjet
             int iNbLTU = 0;
             int iNbBloc = 0;
             int iTotalBlocOB1 = 0;
+            int iTotalBlocOB35 = 0;
             foreach (MyOB myOB in automate.oOBs)
             {
                 iNbLTU += myOB.iNbLTU;
                 iNbBloc += myOB.iNbBloc;
                 if (myOB.iID == 1) iTotalBlocOB1 = myOB.iNbBloc;
+                if (myOB.iID == 35) iTotalBlocOB35 = myOB.iNbBloc;
             }
-            automate.StandardLTU =(iNbLTU*100)/ iNbBloc;
-
-            // Bloc OB1
-            automate.BlocOb1 = (iTotalBlocOB1*100)/ iNbBloc;
+            if (iNbBloc == 0)
+            {
+                automate.iStandardLTU = 0;
+                automate.iBlocOb1 = 0;
+                automate.iBlocOb35 = 0;
+            }
+            else {
+                automate.iStandardLTU = (iNbLTU * 100) / iNbBloc;
+                automate.iBlocOb1 = (iTotalBlocOB1 * 100) / iNbBloc;
+                automate.iBlocOb35 = (iTotalBlocOB35 * 100) / iNbBloc;
+            } 
         }
         private void DebugObBlocks(Automate automate)
         {
@@ -313,8 +391,8 @@ namespace ReceptionDeProjet
             }
 
             Console.WriteLine(sb.ToString());
-            Console.WriteLine($"Pourcentage de blocs LTU dans l'automate : {automate.StandardLTU}%");
-            Console.WriteLine($"Pourcentage de blocs OB1 dans l'automate : {automate.BlocOb1}%");
+            Console.WriteLine($"Pourcentage de blocs LTU dans l'automate : {automate.iStandardLTU}%");
+            Console.WriteLine($"Pourcentage de blocs OB1 dans l'automate : {automate.iBlocOb1}%");
             Console.WriteLine($"Nombre de blocs protégés : {automate.ProtectedBlocs.Count}");
         }
         // Fonction récursive pour afficher les blocs et sous-blocs
@@ -377,6 +455,7 @@ namespace ReceptionDeProjet
 
             foreach (var bloc in myOb.oBlocList)
             {
+                
                 totalBlocs++;
                 if (bloc.sName.StartsWith("LTU", StringComparison.OrdinalIgnoreCase)) ltuCount++;
                 if (bloc.sType == "FC")
@@ -390,19 +469,21 @@ namespace ReceptionDeProjet
             myOb.iNbBloc = totalBlocs;
 
             // Calculer le pourcentage
-            return (double)ltuCount / totalBlocs * 100.0;
+            if(totalBlocs == 0) return 0.0;
+            else return (double)ltuCount / totalBlocs * 100.0;
         }
         private void PIDOB1(Automate automate)
         {
+            automate.sOB1PID = "Aucun bloc PID trouvé";
             foreach (MyOB myOb in automate.oOBs)
             {
                 if (myOb.iID == 1)
                 {
                     foreach (MyBloc myBloc in myOb.oBlocList)
                     {
-                        if (myBloc.sName == "PID")
+                        if (myBloc.sName.Contains("PID"))
                         {
-                            automate.OB1PID = true;
+                            automate.sOB1PID = myBloc.sName;
                             break;
                         }
                     }
@@ -411,51 +492,153 @@ namespace ReceptionDeProjet
         }
         private void BlockProtection(DeviceItem mainModule, Automate automate)
         {
-            foreach(var block in GetAllBlocksFromCPU(mainModule))
+            automate.sProgramProtection = "Aucune protection trouvée";
+            foreach (var block in GetAllBlocksFromCPU(mainModule))
             {
                 if (bool.Parse(block.GetAttribute("IsKnowHowProtected").ToString())) automate.AddProtectedBloc(block.GetAttribute("Name").ToString());
             }
         }
+        private void InterfaceNetwork(DeviceItem mainModule, Automate automate)
+        {
+            foreach(var item in mainModule.DeviceItems)
+            {
+                if (item.GetAttribute("Name").ToString().Contains("PROFINET"))
+                {
+                    if (item.GetAttribute("Name").ToString().Contains("1"))
+                    {
+                        var networkInterface = item.GetService<NetworkInterface>();
+                        if (networkInterface?.GetAttribute("TimeSynchronizationNtp").ToString() == "True")
+                        {
+                            automate.sNtpServer1 = networkInterface?.GetAttribute("TimeSynchronizationServer1").ToString();
+                            automate.sNtpServer2 = networkInterface?.GetAttribute("TimeSynchronizationServer2").ToString();
+                            automate.sNtpServer3 = networkInterface?.GetAttribute("TimeSynchronizationServer3").ToString();
+                        }
+                        else
+                        {
+                            automate.sNtpServer1 = "Option désactivée";
+                            automate.sNtpServer2 = "Option désactivée";
+                            automate.sNtpServer3 = "Option désactivée";
+                        }
+
+                        var node = networkInterface.Nodes.FirstOrDefault();
+
+                        automate.sInterfaceX1 = node?.GetAttribute("Address").ToString();
+                        if (node?.GetAttribute("ConnectedSubnet") != null)
+                        {
+                            automate.sVlanX1 = node?.GetAttribute("ConnectedSubnet").ToString();
+                        }
+                        else
+                        {
+                            automate.sVlanX1 = "Pas de VLAN";
+
+                        }
+                    }
+
+                    else if (item.GetAttribute("Name").ToString().Contains("2"))
+                    {
+                        var networkInterface = item.GetService<NetworkInterface>();
+                        automate.sInterfaceX2 = networkInterface?.Nodes.FirstOrDefault()?.GetAttribute("Address").ToString();
+                        if (networkInterface?.Nodes.FirstOrDefault()?.GetAttribute("ConnectedSubnet") != null)
+                        {
+
+                            automate.sVlanX2 = networkInterface?.Nodes.FirstOrDefault()?.GetAttribute("ConnectedSubnet").ToString();
+                        }
+                        else
+                        {
+                            automate.sVlanX2 = "Pas de VLAN";
+                        }
+                    }
+                }                
+            }
+        }
     }
 
+
+    public class Project
+    {
+        public string sName { get; set; }
+        public string sProjectPath { get; set; }
+
+        public string sVersion { get; set; }
+        public string sLanguage { get; set; }
+        public string sIsProtected { get; set; }
+
+        //Liste des automates
+        public List<Automate> oAutomates;
+        public List<HMI> oHMIs;
+        public List<SCADA> oSCADAs;
+
+        public Project()
+        {
+            oAutomates = new List<Automate>();
+            oHMIs = new List<HMI>();
+            oSCADAs = new List<SCADA>();
+        }
+
+        public void AddAutomate(Automate automate)
+        {
+            oAutomates.Add(automate);
+        }
+
+        public void AddHMI(HMI hmi)
+        {
+            oHMIs.Add(hmi);
+        }
+
+        public void AddSCADA(SCADA scada)
+        {
+            oSCADAs.Add(scada);
+        }
+    }
+    
     public class Automate
     {
         #region VARIABLES
-        // Variables Paramétrables
-        private string sName;
-        private string sReference;
-        private string sFirmware;
-        private int iWatchDog;
-        private int iNtp;
-        private int iStandtardLTU; // Idem ???
-        private int iBLocOb1; // Input ???
-        private bool bControlAccess;
-        private bool bApiHmiCom;
-        private bool bOnlineAccess;
+        //Variable d'identification
+        public string sName { get; set; }
+        public string sGamme { get; set; }
+        public string sReference { get; set; }
+        public string sFirmware { get; set; }
 
-        // Variables fixes 
-        private string sInterfaceX1;
-        private string sInterfaceX2;
-        private string sDiagnosticTampon;
-        private bool bWebServer = true;
-        private bool bRestart = true;
-        private bool bCadenceM0 = true;
-        private bool bCadenceM1 = true;
-        private bool bScreenWrite = false;
-        private bool bLocalHour = true;
-        private bool bHourChange = true;
-        private bool bCPUTimeSet = true;
+        //Variable d'heure
+        public string sNtpServer1 { get; set; }
+        public string sNtpServer2 { get; set; }
+        public string sNtpServer3 { get; set; }
+
+        public string sLocalHour { get; set; }
+        public string sHourChange { get; set; }
+
+        //Variable réseau
+        public string sInterfaceX1 { get; set; }
+        public string sVlanX1 { get; set; }
+        public string sInterfaceX2 { get; set; }
+        public string sVlanX2 { get; set; }
+
+        //Variable systéme
+        public string sMMCLife { get; set; }
+        public string sWatchDog { get; set; }
+        public string sRestart { get; set; }
+        public string sCadenceM0 { get; set; }
+        public string sCadenceM1 { get; set; }
+
+        //Variables d'accès au programme
+        public string sProgramProtection { get; set; }
+        public string sWebServer { get; set; }
+        public string sControlAccess { get; set; }
+        public string sApiHmiCom { get; set; } 
+        public string sOnlineAccess { get; set; }
+        public string sScreenWrite { get; set; }
+        public string sInstantVar { get; set; }
+
+        //Statistiques
+        public int iStandardLTU { get; set; }
+        public string sOB1PID { get; set; }
+        public int iBlocOb1 { get; set; }   
+        public int iBlocOb35 { get; set; }
+
         public List<MyOB> oOBs;
         public List<MyFC> oFCs;
         public List<string> ProtectedBlocs;
-        private bool bProgramProtection = false;
-        private bool bCPUDefault = false;
-        private bool bOB1PID = false;
-        private int iMMCLife = 80;
-        private int iLoadMemory = 80;
-        private int iWorkCodeMemory = 80;
-        private int iWorkDataMemory = 80;
-        private int iInstantVar = 7;
         #endregion
         public Automate()
         {
@@ -465,38 +648,8 @@ namespace ReceptionDeProjet
         }
 
         #region GETTER & SETTER
-        // Variables Paramétrables
-        public string Name { get => sName; set => sName = value; }
-        public string Reference { get => sReference; set => sReference = value; }
-        public string Firmware { get => sFirmware; set => sFirmware = value; }
-        public int WatchDog { get => iWatchDog; set => iWatchDog = value; }
-        public int Ntp { get => iNtp; set => iNtp = value; }
-        public int StandardLTU { get => iStandtardLTU; set => iStandtardLTU = value; }
-        public int BlocOb1 { get => iBLocOb1; set => iBLocOb1 = value; }
-        public bool ControlAccess { get => bControlAccess; set => bControlAccess = value; }
-        public bool ApiHmiCom { get => bApiHmiCom; set => bApiHmiCom = value; }
-        public bool OnlineAccess { get => bOnlineAccess; set => bOnlineAccess = value; }
+        
 
-        // Variables fixes
-        public string InterfaceX1 { get => sInterfaceX1; set => sInterfaceX1 = value; }
-        public string InterfaceX2 { get => sInterfaceX2; set => sInterfaceX2 = value; }
-        public string DiagnosticTampon { get => sDiagnosticTampon; set => sDiagnosticTampon = value; }
-        public bool LocalHour { get => bLocalHour; set => bLocalHour = value; }
-        public bool WebServer { get => bWebServer; set => bWebServer = value; }
-        public bool Restart { get => bRestart; set => bRestart = value; }
-        public bool CadenceM0 { get => bCadenceM0; set => bCadenceM0 = value; }
-        public bool CadenceM1 { get => bCadenceM1; set => bCadenceM1 = value; }
-        public bool ScreenWrite { get => bScreenWrite; set => bScreenWrite = value; }
-        public bool HourChange { get => bHourChange; set => bHourChange = value; }
-        public bool CPUTimeSet { get => bCPUTimeSet; set => bCPUTimeSet = value; }
-        public bool ProgramProtection { get => bProgramProtection; set => bProgramProtection = value; }
-        public bool CPUDefault { get => bCPUDefault; set => bCPUDefault = value; }
-        public bool OB1PID { get => bOB1PID; set => bOB1PID = value; }
-        public int MMCLife { get => iMMCLife; set => iMMCLife = value; }
-        public int LoadMemory { get => iLoadMemory; set => iLoadMemory = value; }
-        public int WorkCodeMemory { get => iWorkCodeMemory; set => iWorkCodeMemory = value; }
-        public int WorkDataMemory { get => iWorkDataMemory; set => iWorkDataMemory = value; }
-        public int InstantVar { get => iInstantVar; set => iInstantVar = value; }
 
         public void AddOb(MyOB oOb)
         {
@@ -562,5 +715,25 @@ namespace ReceptionDeProjet
         {
             oInternalBlocs.Add(bloc);
         }
+    }
+
+    public class HMI
+    {
+        //Variable d'identification
+        public string sName { get; set; }
+        public string sReference { get; set; }
+        public string sFirmware { get; set; }
+
+        //Variable d'heure
+
+        //Variable réseau
+        public string sInterfaceX1 { get; set; }
+        public string sVlanX1 { get; set; }
+        public string sInterfaceX2 { get; set; }
+        public string sVlanX2 { get; set; }
+    }
+
+    public class SCADA
+    {
     }
 }
