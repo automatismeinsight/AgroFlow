@@ -40,11 +40,7 @@ namespace ReceptionDeProjet
             };
 
             //Ajout de la version
-            string sVersionTemp = resultProject.sProjectPath.Split('p').Last();
-
-            //Ajout de la langue
-            Siemens.Engineering.LanguageAssociation languageAssociation = (Siemens.Engineering.LanguageAssociation)tiaInterface.m_oTiaProject.LanguageSettings.GetAttribute("ActiveLanguages");
-            resultProject.sLanguage = languageAssociation.FirstOrDefault().Culture.ToString();
+            resultProject.sVersion = resultProject.sProjectPath.Split('p').Last();
 
             //Ajout des devices
             try
