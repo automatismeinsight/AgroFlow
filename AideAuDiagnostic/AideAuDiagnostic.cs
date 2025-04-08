@@ -259,7 +259,7 @@ namespace AideAuDiagnostic
                     {
                         if (j == 1)
                         {
-                            if (ws.Cell(i, 2).IsEmpty())
+                            if (ws.Cell(i, 1).IsEmpty())
                             {
                                 break;
                             }
