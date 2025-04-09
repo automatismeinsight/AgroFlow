@@ -47,10 +47,10 @@
     <ROW Property="ALLUSERS" Value="1"/>
     <ROW Property="ARPCOMMENTS" Value="This installer database contains the logic and data required to install [|ProductName]." ValueLocId="*"/>
     <ROW Property="Manufacturer" Value="Agromousquetaires"/>
-    <ROW Property="ProductCode" Value="1033:{A9755420-F3A7-4095-BC90-DA87114C757A} " Type="16"/>
+    <ROW Property="ProductCode" Value="1033:{FCE54680-FFCD-4F34-9E65-3F65A1093506} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
-    <ROW Property="ProductName" Value="AgroFlow(V17)"/>
-    <ROW Property="ProductVersion" Value="1.0.0" Options="32"/>
+    <ROW Property="ProductName" Value="AgroFlow(V19)"/>
+    <ROW Property="ProductVersion" Value="1.1.0" Options="32"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND"/>
     <ROW Property="UpgradeCode" Value="{5FC29BBE-D80C-4147-8B59-6D13EC082D68}"/>
     <ROW Property="WindowsType9X" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-"/>
