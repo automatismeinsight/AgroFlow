@@ -169,7 +169,7 @@ namespace ReceptionDeProjet
                     }
                 }
 
-            automate.sOnlineAccess = TestOnlineAccess(mainModule);
+            //automate.sOnlineAccess = TestOnlineAccess(mainModule);
 
             return automate;
         }
@@ -536,9 +536,30 @@ namespace ReceptionDeProjet
                         var node = networkInterface.Nodes.FirstOrDefault();
 
                         automate.sInterfaceX1 = node?.GetAttribute("Address").ToString();
-                        if (node?.GetAttribute("ConnectedSubnet") != null)
+
+                        Subnet subnet = node?.GetAttribute("ConnectedSubnet") as Subnet;
+
+                        if (subnet != null)
                         {
-                            automate.sVlanX1 = node?.GetAttribute("ConnectedSubnet").ToString();
+                            automate.sVlanX1 = subnet.GetAttribute("Name").ToString();
+                            NodeAssociation nodeSubnet = subnet.GetAttribute("Nodes") as NodeAssociation;
+                            if (nodeSubnet != null)
+                            {
+                                // Appareil trouvé 
+                                string sNameConnectedDevice;
+                                foreach(Node nodeX in nodeSubnet)
+                                {
+                                    sNameConnectedDevice = nodeX.GetAttribute("PnDeviceName").ToString().Split('.')[0];
+                                    if (string.Compare(sNameConnectedDevice, automate.sName, StringComparison.OrdinalIgnoreCase) != 0)
+                                    {
+                                        Console.WriteLine($"Appareil connecté : {sNameConnectedDevice}");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Appareil introuvable
+                            }
                         }
                         else
                         {
@@ -550,11 +571,15 @@ namespace ReceptionDeProjet
                     else if (item.GetAttribute("Name").ToString().Contains("2"))
                     {
                         var networkInterface = item.GetService<NetworkInterface>();
-                        automate.sInterfaceX2 = networkInterface?.Nodes.FirstOrDefault()?.GetAttribute("Address").ToString();
-                        if (networkInterface?.Nodes.FirstOrDefault()?.GetAttribute("ConnectedSubnet") != null)
+                        var node = networkInterface.Nodes.FirstOrDefault();
+
+                        automate.sInterfaceX2 = node?.GetAttribute("Address").ToString();
+
+                        Subnet subnet2 = node?.GetAttribute("ConnectedSubnet") as Subnet;
+                        if (subnet2 != null)
                         {
 
-                            automate.sVlanX2 = networkInterface?.Nodes.FirstOrDefault()?.GetAttribute("ConnectedSubnet").ToString();
+                            automate.sVlanX2 = subnet2.GetAttribute("Name").ToString();
                         }
                         else
                         {
