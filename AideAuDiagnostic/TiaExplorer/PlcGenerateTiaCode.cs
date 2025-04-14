@@ -294,11 +294,10 @@ namespace AideAuDiagnostic.TiaExplorer
                     //Ecriture du résultat de la recherche
                     foreach (string sElement in lsDataCollection)
                     {
-                        if (!sElement.Contains(":= '';"))
-                        {
-                            lsSourceFC.Add(sElement);
-                            if(!sElement.Contains("//")) iCmptEntree++;
-                        }
+
+                        lsSourceFC.Add(sElement);
+                        if(!sElement.Contains("//")) iCmptEntree++;
+                        
                     }
                     lsSourceFC.Add(@"END_IF;");
                 }
@@ -494,6 +493,8 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 try
                 {
+                    Console.WriteLine(sBlocName);
+
                     //Recherche du bloc dans le répertoire root
                     oBlocToMove = FindAnBlocInSpecificFolder(true, oThisPLC, oThisBlocFolder, sBlocName);
                     if (oBlocToMove == null)

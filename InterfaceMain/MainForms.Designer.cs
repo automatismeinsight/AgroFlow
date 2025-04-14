@@ -308,7 +308,7 @@
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "MainForms";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Interface Principale";
+            this.Text = "AgroFlow";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForms_FormClosed);
             this.Load += new System.EventHandler(this.MainForms_Load);
             ((System.ComponentModel.ISupportInitialize)(this.AgromIcon)).EndInit();

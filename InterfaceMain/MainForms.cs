@@ -14,7 +14,7 @@ namespace InterfaceMain
         public bool adminConnected = false;
         public readonly ReturnLogForms returnLogForms = new ReturnLogForms(); // Create an instance of the ReturnLogForms class
         
-        List<string> userFunctions = new List<string> { "Aide au Diagnostic", "TEST" }; // List of functions for the user
+        List<string> userFunctions = new List<string> { "Aide au Diagnostic"}; // List of functions for the user
         List<string> adminFunctions = new List<string> { "AdminItem1", "AdminItem2" }; // List of functions for the admin
 
         public MainForms()
