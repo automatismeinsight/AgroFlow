@@ -116,9 +116,6 @@ namespace InterfaceMain
 
             returnLogForms.UpdateLog($"-");
             returnLogForms.UpdateLog($"Try to change TIA version as TIA V{selectedVersion}");
-            // Dynamically load the assemblies (DLLs)
-            if (LoadReferences.LoadReference(referencePath) == 0) returnLogForms.UpdateLog("References loaded successfully.");
-            else returnLogForms.UpdateLog("Error loading references.");
         }
 
         // Event handler for TIA version click event
