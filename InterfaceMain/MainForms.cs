@@ -80,7 +80,7 @@ namespace InterfaceMain
         // Event handler for form closed event
         private void MainForms_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Environment.Exit(0);
+            Application.Exit();
         }
 
         // ...
@@ -224,7 +224,7 @@ namespace InterfaceMain
         // Event handler for close button click
         private void CloseIconButton_Click(object sender, EventArgs e)
         {
-            Application.Exit();
+            Environment.Exit(0);
         }
 
         // Event handler for maximize button click
