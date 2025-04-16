@@ -1,17 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace Common
 {
-    public class TIAVersionManager
+    public static class TIAVersionManager
     {
         private static string _currentVersion;
-
-        // Événement pour notifier les changements de version
         public static event EventHandler<string> VersionChanged;
+
+        private static readonly string[] OpennessDlls = new string[]
+        {
+            "Siemens.Engineering.dll",
+            "Siemens.Engineering.Hmi.dll"
+        };
 
         public static string CurrentVersion
         {
@@ -21,16 +22,37 @@ namespace Common
                 if (_currentVersion != value)
                 {
                     _currentVersion = value;
-                    // Déclencher l'événement de changement de version
                     VersionChanged?.Invoke(null, _currentVersion);
                 }
             }
         }
-
-        // Méthode de commodité pour définir la version
         public static void SetVersion(string version)
         {
             CurrentVersion = version;
+        }
+
+        public static string GetOpennessDllPath(string assemblyName)
+        {
+            string tiaVersion = CurrentVersion;
+            string dllPath = $"C:\\Program Files\\Siemens\\Automation\\Portal V{tiaVersion}\\PublicAPI\\V{tiaVersion}\\{assemblyName}";
+
+            if (File.Exists(dllPath))
+                return dllPath;
+
+            return null;
+        }
+        public static bool AreAllDllsAvailable()
+        {
+            if (string.IsNullOrEmpty(CurrentVersion))
+                return false;
+
+            foreach (string dll in OpennessDlls)
+            {
+                if (GetOpennessDllPath(dll) == null)
+                    return false;
+            }
+
+            return true;
         }
     }
 }

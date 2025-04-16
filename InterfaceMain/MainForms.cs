@@ -107,7 +107,6 @@ namespace InterfaceMain
             CbFunction.Enabled = true;
 
             string selectedVersion = LoadReferences.ExtractNumber(CbTIAVersion.SelectedItem.ToString());
-            string referencePath = $"C:\\Program Files\\Siemens\\Automation\\Portal V{selectedVersion}\\PublicAPI\\V{selectedVersion}\\";
 
             TIAVersionManager.SetVersion(selectedVersion);
 

@@ -6,6 +6,7 @@ using AideAuDiagnostic.TiaExplorer;
 using GlobalsOPCUA;
 using ClosedXML.Excel;
 using Common;
+using System.Reflection;
 
 namespace ReceptionDeProjet
 {
@@ -28,20 +29,25 @@ namespace ReceptionDeProjet
         {
             InitializeComponent();
 
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+            TIAVersionManager.VersionChanged += OnTIAVersionChanged;
+
+            ForceLoadSiemensAssemblies();
+
             oExploreTiaPLC = new ExploreTiaPLC(oPLC_ProjectDefinitions, dData, lsDataCollection);
             oCompareTiaPLC = new CompareTIA();
             Console.WriteLine(TIAVersionManager.CurrentVersion);
 
-            // S'abonner à l'événement de changement de version
-            TIAVersionManager.VersionChanged += OnTIAVersionChanged;
-
-            // Si le contrôle est déchargé, se désabonner de l'événement
-            this.Disposed += (s, e) => TIAVersionManager.VersionChanged -= OnTIAVersionChanged;
+            this.Disposed += (s, e) =>
+            {
+                TIAVersionManager.VersionChanged -= OnTIAVersionChanged;
+                AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomain_AssemblyResolve;
+            };
         }
+
 
         private void OnTIAVersionChanged(object sender, string newVersion)
         {
-            // Utiliser Invoke pour s'assurer que la mise à jour se fait sur le thread UI
             if (this.InvokeRequired)
             {
                 this.Invoke(new Action(() => UnloadControl()));
@@ -54,17 +60,60 @@ namespace ReceptionDeProjet
 
         private void UnloadControl()
         {
-            // Si le contrôle est dans un parent, le retirer de la collection de contrôles
             if (this.Parent != null)
             {
                 this.Parent.Controls.Remove(this);
             }
-
-            // Détacher les événements
             TIAVersionManager.VersionChanged -= OnTIAVersionChanged;
-
-            // Libérer les ressources
             this.Dispose();
+        }
+        private void ForceLoadSiemensAssemblies()
+        {
+            try
+            {
+                foreach (string dllName in new[] { "Siemens.Engineering.dll", "Siemens.Engineering.Hmi.dll" })
+                {
+                    string dllPath = TIAVersionManager.GetOpennessDllPath(dllName);
+                    if (!string.IsNullOrEmpty(dllPath))
+                    {
+                        Console.WriteLine($"Chargement forcé de {dllName} depuis {dllPath}");
+                        Assembly assembly = Assembly.LoadFrom(dllPath);
+                        Console.WriteLine($"DLL chargée avec succès: {assembly.FullName}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"ERREUR: Impossible de trouver {dllName}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception lors du chargement des DLLs: {ex.Message}");
+            }
+        }
+
+        private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            string shortAssemblyName = new AssemblyName(args.Name).Name;
+
+            if (shortAssemblyName.StartsWith("Siemens.Engineering"))
+            {
+                if (!shortAssemblyName.EndsWith(".dll"))
+                    shortAssemblyName += ".dll";
+
+                string dllPath = TIAVersionManager.GetOpennessDllPath(shortAssemblyName);
+
+                if (!string.IsNullOrEmpty(dllPath))
+                {
+                    Console.WriteLine($"Chargement de {shortAssemblyName} depuis {dllPath}");
+                    return Assembly.LoadFrom(dllPath);
+                }
+                else
+                {
+                    Console.WriteLine($"Échec de chargement: {shortAssemblyName} introuvable");
+                }
+            }
+            return null;
         }
 
         private void BpCdcLoad_Click(object sender, EventArgs e)
