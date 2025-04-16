@@ -17,8 +17,6 @@ namespace InterfaceMain
         public static void InitializeApp(List<string> versions)
         {
             LoadVersions(versions);
-            // Charger les assemblies via la bibliothèque partagée
-            SharedLibrary.AssemblyManager.LoadAssemblies(versions.ToArray());
         }
 
         private static void LoadVersions(List<string> versions)

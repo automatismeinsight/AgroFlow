@@ -149,10 +149,6 @@
       <Project>{caffc2fd-ca95-45dd-ab84-cf6f6f1e956d}</Project>
       <Name>AideAuDiagnostic</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SharedLibrary\SharedLibrary.csproj">
-      <Project>{8e7dc22d-5a63-47e4-bce7-5b3901315576}</Project>
-      <Name>SharedLibrary</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
