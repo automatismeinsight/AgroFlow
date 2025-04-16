@@ -5,12 +5,7 @@ using System.Windows.Forms;
 using AideAuDiagnostic.TiaExplorer;
 using GlobalsOPCUA;
 using ClosedXML.Excel;
-using PdfSharp.Pdf;
-using PdfSharp.Drawing;
-using PdfSharp.Drawing.Layout;
-using System.Windows.Input;
-using DocumentFormat.OpenXml.Presentation;
-
+using System.Threading.Tasks;
 namespace ReceptionDeProjet
 {
     public partial class ReceptionDeProjet: UserControl
@@ -43,7 +38,7 @@ namespace ReceptionDeProjet
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
                 openFileDialog.InitialDirectory = "c:\\";
-                openFileDialog.Filter = "xlsx files (*.xlsx) | *.xlsx";
+                openFileDialog.Filter = "Excel Files (*.xlsx;*.xlsm)|*.xlsx;*.xlsm";
                 openFileDialog.FilterIndex = 2;
                 openFileDialog.RestoreDirectory = true;
 
@@ -62,12 +57,10 @@ namespace ReceptionDeProjet
         {
             string sProjectName = string.Empty;
 
-            UpdateInfo("-");
-
             if (GetTiaProject(ref sProjectName) == true)
             {
                 UpdateInfo(string.Format($"Le projet cible : {sProjectName} est bien sélectionné"));
-                
+                UpdateInfo("-");
             }
             else
             {
@@ -99,7 +92,12 @@ namespace ReceptionDeProjet
         private void BpVerification_Click(object sender, EventArgs e)
         {
             string sError = null;
+
+            UpdateInfo("Début de la vérification...");
+            txBInformations.Refresh();
+
             oTiaProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
+ 
             UpdateInfo("-");
             // Affiche les informations du projet
             if (oTiaProject == null) {
@@ -165,7 +163,7 @@ namespace ReceptionDeProjet
                 using (XLWorkbook wb = new XLWorkbook(sCdcFilePath))
                 {
                     // Infos Projet
-                    var ws = wb.Worksheet(1); // Get the first worksheet in the workbook
+                    var ws = wb.Worksheet("PROJECT"); // Get the first worksheet in the workbook
                     var range = ws.RangeUsed(); // Get the range of cells used in the worksheet
 
                     ws.Cell(2, 1).Value = oTiaProject.sName;
@@ -179,8 +177,13 @@ namespace ReceptionDeProjet
 
                     // Infos automates
                     int currentRow = 2; // Start at row 2
-                    ws = wb.Worksheet(2); // Get the first worksheet in the workbook
+                    ws = wb.Worksheet("PLC"); // Get the first worksheet in the workbook
                     range = ws.RangeUsed(); // Get the range of cells used in the worksheet
+
+                    for (int i = 2; i <= range.LastRowUsed().RowNumber(); i++)
+                    {
+                        ws.Row(i).Clear(); // Clear the row
+                    }
 
                     foreach (Automate plc in oTiaProject.oAutomates)
                     {
@@ -196,24 +199,26 @@ namespace ReceptionDeProjet
                         ws.Cell(currentRow, 9).Value = plc.sHourChange;
                         ws.Cell(currentRow, 10).Value = plc.sInterfaceX1;
                         ws.Cell(currentRow, 11).Value = plc.sVlanX1;
-                        ws.Cell(currentRow, 12).Value = plc.sInterfaceX2;
-                        ws.Cell(currentRow, 13).Value = plc.sVlanX2;
-                        ws.Cell(currentRow, 14).Value = plc.sMMCLife;
-                        ws.Cell(currentRow, 15).Value = plc.sWatchDog;
-                        ws.Cell(currentRow, 16).Value = plc.sRestart;
-                        ws.Cell(currentRow, 17).Value = plc.sCadenceM0;
-                        ws.Cell(currentRow, 18).Value = plc.sCadenceM1;
-                        ws.Cell(currentRow, 19).Value = plc.sProgramProtection;
-                        ws.Cell(currentRow, 20).Value = plc.sWebServer;
-                        ws.Cell(currentRow, 21).Value = plc.sControlAccess;
-                        ws.Cell(currentRow, 22).Value = plc.sApiHmiCom;
-                        ws.Cell(currentRow, 23).Value = plc.sOnlineAccess;
-                        ws.Cell(currentRow, 24).Value = plc.sScreenWrite;
-                        ws.Cell(currentRow, 25).Value = plc.sInstantVar;
-                        ws.Cell(currentRow, 26).Value = plc.iStandardLTU;
-                        ws.Cell(currentRow, 27).Value = plc.sOB1PID;
-                        ws.Cell(currentRow, 28).Value = plc.iBlocOb1;
-                        ws.Cell(currentRow, 29).Value = plc.iBlocOb35;
+                        ws.Cell(currentRow, 12).Value = plc.sConnectedDeviceX1;
+                        ws.Cell(currentRow, 13).Value = plc.sInterfaceX2;
+                        ws.Cell(currentRow, 14).Value = plc.sVlanX2;
+                        ws.Cell(currentRow, 15).Value = plc.sConnectedDeviceX2;
+                        ws.Cell(currentRow, 16).Value = plc.sMMCLife;
+                        ws.Cell(currentRow, 17).Value = plc.sWatchDog;
+                        ws.Cell(currentRow, 18).Value = plc.sRestart;
+                        ws.Cell(currentRow, 19).Value = plc.sCadenceM0;
+                        ws.Cell(currentRow, 20).Value = plc.sCadenceM1;
+                        ws.Cell(currentRow, 21).Value = plc.sProgramProtection;
+                        ws.Cell(currentRow, 22).Value = plc.sWebServer;
+                        ws.Cell(currentRow, 23).Value = plc.sControlAccess;
+                        ws.Cell(currentRow, 24).Value = plc.sApiHmiCom;
+                        ws.Cell(currentRow, 25).Value = plc.sOnlineAccess;
+                        ws.Cell(currentRow, 26).Value = plc.sScreenWrite;
+                        ws.Cell(currentRow, 27).Value = plc.sInstantVar;
+                        ws.Cell(currentRow, 28).Value = plc.iStandardLTU;
+                        ws.Cell(currentRow, 29).Value = plc.sOB1PID;
+                        ws.Cell(currentRow, 30).Value = plc.iBlocOb1;
+                        ws.Cell(currentRow, 31).Value = plc.iBlocOb35;
                         currentRow++; // Go to the next row
                     }
                     wb.Save(); //Save file
@@ -269,7 +274,7 @@ namespace ReceptionDeProjet
 
             if (sMessage == "-")
             {
-                sFullMessage = "----------------------------------------------------------------------------------------------------------------------\n";
+                sFullMessage = "------------------------------------------------------------------------------------------------------------------\n";
             }
             else
             {

@@ -20,6 +20,7 @@ using Siemens.Engineering.Online;
 using Siemens.Engineering.SW;
 using Siemens.Engineering.SW.Blocks;
 using System.Globalization;
+using Siemens.Engineering;
 
 namespace ReceptionDeProjet
 {
@@ -41,6 +42,9 @@ namespace ReceptionDeProjet
 
             //Ajout de la version
             resultProject.sVersion = resultProject.sProjectPath.Split('p').Last();
+            
+            Language oLangueProjet = tiaInterface.m_oTiaProject.LanguageSettings.GetAttribute("ReferenceLanguage") as Language;
+            resultProject.sLanguage = oLangueProjet.GetAttribute("Culture").ToString().Split('-') [0];
 
             //Ajout des devices
             try
@@ -114,21 +118,9 @@ namespace ReceptionDeProjet
         private Automate CreateAutomateFromModule(DeviceItem mainModule)
         {
             string gamme = FindGamme(mainModule);
-            string[] gammesAutorisees = { "S7-1200", "S7-1500", "ET200SP" };
+            string[] gammesAutorisees = { "S7-1200", "S7-1500", "ET 200SP" };
 
-            if (!gammesAutorisees.Any(g => gamme.Contains(g)))
-            {
-                Console.WriteLine("Le device n'est pas dans la gamme");
-
-                var automateBis = new Automate
-                {
-                    sName = mainModule.GetAttribute("Name").ToString(),
-                    sGamme = gamme + " | Hors gamme",
-                };
-                return automateBis;
-            }
-
-            var automate = new Automate
+                var automate = new Automate
             {
                 sName = mainModule.GetAttribute("Name").ToString(),
                 sGamme = gamme,
@@ -143,6 +135,13 @@ namespace ReceptionDeProjet
                 sHourChange = mainModule.GetAttribute("TimeOfDayActivateDaylightSavingTime").ToString()
             };
 
+            if (!gammesAutorisees.Any(g => gamme.Contains(g)))
+            {
+                automate.sName = mainModule.GetAttribute("Name").ToString();
+                automate.sGamme = gamme + " | Hors gamme";
+            }
+
+
             PlcAccessControlConfigurationProvider provider = mainModule.GetService<PlcAccessControlConfigurationProvider>();
             if (provider != null)
             {
@@ -153,23 +152,24 @@ namespace ReceptionDeProjet
 
             // Analyse des sous-éléments (MMC, écran, etc.)
             foreach (var item in mainModule.DeviceItems)
+            {
+                var itemName = item.GetAttribute("Name").ToString();
+                if (itemName.Contains("Dispositif de lecture") || itemName.Contains("Card reader"))
                 {
-                    var itemName = item.GetAttribute("Name").ToString();
-                    if (itemName.Contains("Dispositif de lecture") || itemName.Contains("Card reader"))
+                    if (item.GetAttribute("DiagnosticsAgingSimaticMemoryCard").ToString() == "True")
                     {
-                        if (item.GetAttribute("DiagnosticsAgingSimaticMemoryCard").ToString() == "True")
-                        {
-                            automate.sMMCLife = item.GetAttribute("DiagnosticsAgingSimaticMemoryCardThreshold").ToString();
-                        }
-                        else automate.sMMCLife = "Option desactivé";
+                        automate.sMMCLife = item.GetAttribute("DiagnosticsAgingSimaticMemoryCardThreshold").ToString();
                     }
-                    else if (itemName.Contains("Ecran") || itemName.Contains("display"))
-                    {
-                        automate.sScreenWrite = item.GetAttribute("DisplayWriteAccess").ToString();
-                    }
+                    else automate.sMMCLife = "Option desactivé";
+                }  
+                if (itemName.Contains("Ecran") || itemName.Contains("display"))
+                {
+                    automate.sScreenWrite = item.GetAttribute("DisplayWriteAccess").ToString();
                 }
+                else automate.sScreenWrite = "Option non disponible";
+            }
 
-            //automate.sOnlineAccess = TestOnlineAccess(mainModule);
+            automate.sOnlineAccess = TestOnlineAccess(mainModule);
 
             return automate;
         }
@@ -522,9 +522,21 @@ namespace ReceptionDeProjet
                         var networkInterface = item.GetService<NetworkInterface>();
                         if (networkInterface?.GetAttribute("TimeSynchronizationNtp").ToString() == "True")
                         {
-                            automate.sNtpServer1 = networkInterface?.GetAttribute("TimeSynchronizationServer1").ToString();
-                            automate.sNtpServer2 = networkInterface?.GetAttribute("TimeSynchronizationServer2").ToString();
-                            automate.sNtpServer3 = networkInterface?.GetAttribute("TimeSynchronizationServer3").ToString();
+                            if (networkInterface?.GetAttribute("TimeSynchronizationServer1").ToString() != "")
+                            {
+                                automate.sNtpServer1 = networkInterface?.GetAttribute("TimeSynchronizationServer1").ToString();
+                            }
+                            else automate.sNtpServer1 = "Non";
+                            if (networkInterface?.GetAttribute("TimeSynchronizationServer2").ToString() != "")
+                            {
+                                automate.sNtpServer2 = networkInterface?.GetAttribute("TimeSynchronizationServer2").ToString();
+                            }
+                            else automate.sNtpServer2 = "Non";
+                            if (networkInterface?.GetAttribute("TimeSynchronizationServer3").ToString() != "")
+                            {
+                                automate.sNtpServer3 = networkInterface?.GetAttribute("TimeSynchronizationServer3").ToString();
+                            }
+                            else automate.sNtpServer3 = "Non";
                         }
                         else
                         {
@@ -553,12 +565,13 @@ namespace ReceptionDeProjet
                                     if (string.Compare(sNameConnectedDevice, automate.sName, StringComparison.OrdinalIgnoreCase) != 0)
                                     {
                                         Console.WriteLine($"Appareil connecté : {sNameConnectedDevice}");
+                                        automate.sConnectedDeviceX1 = sNameConnectedDevice;
                                     }
                                 }
                             }
                             else
                             {
-                                // Appareil introuvable
+                                automate.sConnectedDeviceX1 = "Appareil introuvable";
                             }
                         }
                         else
@@ -580,6 +593,25 @@ namespace ReceptionDeProjet
                         {
 
                             automate.sVlanX2 = subnet2.GetAttribute("Name").ToString();
+                            NodeAssociation nodeSubnet = subnet2.GetAttribute("Nodes") as NodeAssociation;
+                            if (nodeSubnet != null)
+                            {
+                                // Appareil trouvé 
+                                string sNameConnectedDevice;
+                                foreach (Node nodeX in nodeSubnet)
+                                {
+                                    sNameConnectedDevice = nodeX.GetAttribute("PnDeviceName").ToString().Split('.')[0];
+                                    if (string.Compare(sNameConnectedDevice, automate.sName, StringComparison.OrdinalIgnoreCase) != 0)
+                                    {
+                                        Console.WriteLine($"Appareil connecté : {sNameConnectedDevice}");
+                                        automate.sConnectedDeviceX2 = sNameConnectedDevice;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                automate.sConnectedDeviceX2 = "Appareil introuvable";
+                            }
                         }
                         else
                         {
@@ -659,7 +691,9 @@ namespace ReceptionDeProjet
         //Variable réseau
         public string sInterfaceX1 { get; set; }
         public string sVlanX1 { get; set; }
+        public string sConnectedDeviceX1 { get; set; }
         public string sInterfaceX2 { get; set; }
+        public string sConnectedDeviceX2 { get; set; }
         public string sVlanX2 { get; set; }
 
         //Variable systéme
