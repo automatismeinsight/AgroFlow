@@ -5,7 +5,8 @@ using System.Windows.Forms;
 using AideAuDiagnostic.TiaExplorer;
 using GlobalsOPCUA;
 using ClosedXML.Excel;
-using System.Threading.Tasks;
+using Common;
+
 namespace ReceptionDeProjet
 {
     public partial class ReceptionDeProjet: UserControl
@@ -29,6 +30,41 @@ namespace ReceptionDeProjet
 
             oExploreTiaPLC = new ExploreTiaPLC(oPLC_ProjectDefinitions, dData, lsDataCollection);
             oCompareTiaPLC = new CompareTIA();
+            Console.WriteLine(TIAVersionManager.CurrentVersion);
+
+            // S'abonner à l'événement de changement de version
+            TIAVersionManager.VersionChanged += OnTIAVersionChanged;
+
+            // Si le contrôle est déchargé, se désabonner de l'événement
+            this.Disposed += (s, e) => TIAVersionManager.VersionChanged -= OnTIAVersionChanged;
+        }
+
+        private void OnTIAVersionChanged(object sender, string newVersion)
+        {
+            // Utiliser Invoke pour s'assurer que la mise à jour se fait sur le thread UI
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => UnloadControl()));
+            }
+            else
+            {
+                UnloadControl();
+            }
+        }
+
+        private void UnloadControl()
+        {
+            // Si le contrôle est dans un parent, le retirer de la collection de contrôles
+            if (this.Parent != null)
+            {
+                this.Parent.Controls.Remove(this);
+            }
+
+            // Détacher les événements
+            TIAVersionManager.VersionChanged -= OnTIAVersionChanged;
+
+            // Libérer les ressources
+            this.Dispose();
         }
 
         private void BpCdcLoad_Click(object sender, EventArgs e)

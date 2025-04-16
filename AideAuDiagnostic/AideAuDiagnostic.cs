@@ -14,6 +14,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using ClosedXML.Excel;
 using Siemens.Engineering.HW;
 using System.Collections.ObjectModel;
+using Common;
 
 namespace AideAuDiagnostic
 {
@@ -97,6 +98,34 @@ namespace AideAuDiagnostic
                 UpdateInfo(string.Format("Temps de démarrage de l'application : {0} secondes", (tEndTime - tStartTime).TotalSeconds));
             }
         }
+
+        private void OnTIAVersionChanged(object sender, string newVersion)
+        {
+            // Utiliser Invoke pour s'assurer que la mise à jour se fait sur le thread UI
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => UnloadControl()));
+            }
+            else
+            {
+                UnloadControl();
+            }
+        }
+
+        private void UnloadControl()
+        {
+            // Si le contrôle est dans un parent, le retirer de la collection de contrôles
+            if (this.Parent != null)
+            {
+                this.Parent.Controls.Remove(this);
+            }
+
+            // Détacher les événements
+            TIAVersionManager.VersionChanged -= OnTIAVersionChanged;
+
+            // Libérer les ressources
+            this.Dispose();
+        }
         //**************************  Traitement de fin de thread  **************************//
         private void ThreadConnectionIsFinishedTask(object sender, EventArgs arg)
         {
@@ -119,6 +148,12 @@ namespace AideAuDiagnostic
 
             BeginInvoke(new MethodInvoker(() => bPSelectStation.Enabled = true));
             BeginInvoke(new MethodInvoker(() => GIFChargement.Visible = false));
+
+            // S'abonner à l'événement de changement de version
+            TIAVersionManager.VersionChanged += OnTIAVersionChanged;
+
+            // Si le contrôle est déchargé, se désabonner de l'événement
+            this.Disposed += (s, e) => TIAVersionManager.VersionChanged -= OnTIAVersionChanged;
         }
         //**************************  Gestion de l'ecriture Thread secondaire  **************************//
         public void TraceThreadUIPrincipal(string sTrace)

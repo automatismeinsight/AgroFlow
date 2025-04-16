@@ -6,6 +6,7 @@ using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Common;
 
 
 namespace InterfaceMain
@@ -106,13 +107,9 @@ namespace InterfaceMain
             CbFunction.Enabled = true;
 
             string selectedVersion = LoadReferences.ExtractNumber(CbTIAVersion.SelectedItem.ToString());
-
-            // Load the appropriate DLL files based on the selected version
-            // exemple path :  C:\Program Files\Siemens\Automation\Portal V16\PublicAPI\Siemens.Engineering.dll
-
-
             string referencePath = $"C:\\Program Files\\Siemens\\Automation\\Portal V{selectedVersion}\\PublicAPI\\V{selectedVersion}\\";
 
+            TIAVersionManager.SetVersion(selectedVersion);
 
             returnLogForms.UpdateLog($"-");
             returnLogForms.UpdateLog($"Try to change TIA version as TIA V{selectedVersion}");

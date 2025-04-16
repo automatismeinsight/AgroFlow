@@ -299,6 +299,10 @@
       <Project>{caffc2fd-ca95-45dd-ab84-cf6f6f1e956d}</Project>
       <Name>AideAuDiagnostic</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{f841b6e5-7b6b-4ab6-9d52-17f95bbdda8b}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.8">
