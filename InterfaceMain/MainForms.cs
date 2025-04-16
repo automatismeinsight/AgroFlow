@@ -7,6 +7,8 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Common;
+using System.IO;
+using DocumentFormat.OpenXml.Bibliography;
 
 
 namespace InterfaceMain
@@ -15,7 +17,6 @@ namespace InterfaceMain
     {
         public bool adminConnected = false;
         public readonly ReturnLogForms returnLogForms = new ReturnLogForms(); // Create an instance of the ReturnLogForms class
-        
         List<string> userFunctions = new List<string> { "Aide au Diagnostic", "Reception de Projet" }; // List of functions for the user
         List<string> adminFunctions = new List<string> { "AdminItem1", "AdminItem2" }; // List of functions for the admin
 
@@ -58,6 +59,22 @@ namespace InterfaceMain
                 returnLogForms.UpdateLog($"TIA version V{version} founds");
             }
             UpdateCbFunctions();
+
+            string lastVersion = Properties.Settings.Default.LastSelectedTIAVersion;
+            if (!string.IsNullOrEmpty(lastVersion))
+            {
+                foreach (var item in CbTIAVersion.Items)
+                {
+                    if (item.ToString().Contains(lastVersion))
+                    {
+                        CbTIAVersion.SelectedItem = item;
+                        TIAVersionManager.IsFirstSelection = false;
+                        break;
+                    }
+                }
+                TIAVersionManager.SetVersion(lastVersion);
+                returnLogForms.UpdateLog($"Version TIA chargée : TIA V{lastVersion}");
+            }
         }
 
         // Event handler for form closed event
@@ -108,12 +125,28 @@ namespace InterfaceMain
 
             string selectedVersion = LoadReferences.ExtractNumber(CbTIAVersion.SelectedItem.ToString());
 
-            TIAVersionManager.SetVersion(selectedVersion);
+            if (TIAVersionManager.IsFirstSelection)
+            {
+                TIAVersionManager.SetVersion(selectedVersion);
+                TIAVersionManager.IsFirstSelection = false;
 
-            returnLogForms.UpdateLog($"-");
-            returnLogForms.UpdateLog($"Try to change TIA version as TIA V{selectedVersion}");
+                Properties.Settings.Default.LastSelectedTIAVersion = selectedVersion;
+                Properties.Settings.Default.Save();
+
+                returnLogForms.UpdateLog($"-");
+                returnLogForms.UpdateLog($"Version TIA définie à TIA V{selectedVersion}");
+                return;
+            }
+
+            if (selectedVersion != TIAVersionManager.CurrentVersion)
+            {
+                Properties.Settings.Default.LastSelectedTIAVersion = selectedVersion;
+                Properties.Settings.Default.Save();
+
+                Application.Restart();
+                Environment.Exit(0);
+            }
         }
-
         // Event handler for TIA version click event
         private void CbTIAVersion_Click(object sender, EventArgs e)
         {

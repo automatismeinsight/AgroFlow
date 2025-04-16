@@ -29,91 +29,10 @@ namespace ReceptionDeProjet
         {
             InitializeComponent();
 
-            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
-            TIAVersionManager.VersionChanged += OnTIAVersionChanged;
-
-            ForceLoadSiemensAssemblies();
-
+            TIAAssemblyLoader.SetupControl(this);
+ 
             oExploreTiaPLC = new ExploreTiaPLC(oPLC_ProjectDefinitions, dData, lsDataCollection);
             oCompareTiaPLC = new CompareTIA();
-            Console.WriteLine(TIAVersionManager.CurrentVersion);
-
-            this.Disposed += (s, e) =>
-            {
-                TIAVersionManager.VersionChanged -= OnTIAVersionChanged;
-                AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomain_AssemblyResolve;
-            };
-        }
-
-
-        private void OnTIAVersionChanged(object sender, string newVersion)
-        {
-            if (this.InvokeRequired)
-            {
-                this.Invoke(new Action(() => UnloadControl()));
-            }
-            else
-            {
-                UnloadControl();
-            }
-        }
-
-        private void UnloadControl()
-        {
-            if (this.Parent != null)
-            {
-                this.Parent.Controls.Remove(this);
-            }
-            TIAVersionManager.VersionChanged -= OnTIAVersionChanged;
-            this.Dispose();
-        }
-        private void ForceLoadSiemensAssemblies()
-        {
-            try
-            {
-                foreach (string dllName in new[] { "Siemens.Engineering.dll", "Siemens.Engineering.Hmi.dll" })
-                {
-                    string dllPath = TIAVersionManager.GetOpennessDllPath(dllName);
-                    if (!string.IsNullOrEmpty(dllPath))
-                    {
-                        Console.WriteLine($"Chargement forcé de {dllName} depuis {dllPath}");
-                        Assembly assembly = Assembly.LoadFrom(dllPath);
-                        Console.WriteLine($"DLL chargée avec succès: {assembly.FullName}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"ERREUR: Impossible de trouver {dllName}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception lors du chargement des DLLs: {ex.Message}");
-            }
-        }
-
-        private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
-        {
-            string shortAssemblyName = new AssemblyName(args.Name).Name;
-
-            if (shortAssemblyName.StartsWith("Siemens.Engineering"))
-            {
-                if (!shortAssemblyName.EndsWith(".dll"))
-                    shortAssemblyName += ".dll";
-
-                string dllPath = TIAVersionManager.GetOpennessDllPath(shortAssemblyName);
-
-                if (!string.IsNullOrEmpty(dllPath))
-                {
-                    Console.WriteLine($"Chargement de {shortAssemblyName} depuis {dllPath}");
-                    return Assembly.LoadFrom(dllPath);
-                }
-                else
-                {
-                    Console.WriteLine($"Échec de chargement: {shortAssemblyName} introuvable");
-                }
-            }
-            return null;
         }
 
         private void BpCdcLoad_Click(object sender, EventArgs e)

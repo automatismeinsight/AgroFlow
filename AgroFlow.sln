@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReceptionDeProjet", "Recept
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{F841B6E5-7B6B-4AB6-9D52-17F95BBDDA8B}"
 EndProject
-Project("{840C416C-B8F3-42BC-B0DD-F6BB14C9F8CB}") = "TestExe", "TestExe\TestExe.aiproj", "{A29F9CD0-D71A-4A93-9F60-1129D4D9E512}"
+Project("{840C416C-B8F3-42BC-B0DD-F6BB14C9F8CB}") = "TestExe2", "TestExe2\TestExe2.aiproj", "{69E0A4BA-F07C-4194-A346-3F0C81F72255}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,12 +44,12 @@ Global
 		{F841B6E5-7B6B-4AB6-9D52-17F95BBDDA8B}.DefaultBuild|Any CPU.Build.0 = Release|Any CPU
 		{F841B6E5-7B6B-4AB6-9D52-17F95BBDDA8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F841B6E5-7B6B-4AB6-9D52-17F95BBDDA8B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A29F9CD0-D71A-4A93-9F60-1129D4D9E512}.Debug|Any CPU.ActiveCfg = DefaultBuild
-		{A29F9CD0-D71A-4A93-9F60-1129D4D9E512}.Debug|Any CPU.Build.0 = DefaultBuild
-		{A29F9CD0-D71A-4A93-9F60-1129D4D9E512}.DefaultBuild|Any CPU.ActiveCfg = DefaultBuild
-		{A29F9CD0-D71A-4A93-9F60-1129D4D9E512}.DefaultBuild|Any CPU.Build.0 = DefaultBuild
-		{A29F9CD0-D71A-4A93-9F60-1129D4D9E512}.Release|Any CPU.ActiveCfg = DefaultBuild
-		{A29F9CD0-D71A-4A93-9F60-1129D4D9E512}.Release|Any CPU.Build.0 = DefaultBuild
+		{69E0A4BA-F07C-4194-A346-3F0C81F72255}.Debug|Any CPU.ActiveCfg = DefaultBuild
+		{69E0A4BA-F07C-4194-A346-3F0C81F72255}.Debug|Any CPU.Build.0 = DefaultBuild
+		{69E0A4BA-F07C-4194-A346-3F0C81F72255}.DefaultBuild|Any CPU.ActiveCfg = DefaultBuild
+		{69E0A4BA-F07C-4194-A346-3F0C81F72255}.DefaultBuild|Any CPU.Build.0 = DefaultBuild
+		{69E0A4BA-F07C-4194-A346-3F0C81F72255}.Release|Any CPU.ActiveCfg = DefaultBuild
+		{69E0A4BA-F07C-4194-A346-3F0C81F72255}.Release|Any CPU.Build.0 = DefaultBuild
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
