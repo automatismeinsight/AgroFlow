@@ -1,10 +1,14 @@
 ﻿using InterfaceLoginTest;
+using ReceptionDeProjet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Common;
+using System.IO;
+using DocumentFormat.OpenXml.Bibliography;
 
 
 namespace InterfaceMain
@@ -13,8 +17,7 @@ namespace InterfaceMain
     {
         public bool adminConnected = false;
         public readonly ReturnLogForms returnLogForms = new ReturnLogForms(); // Create an instance of the ReturnLogForms class
-        
-        List<string> userFunctions = new List<string> { "Aide au Diagnostic"}; // List of functions for the user
+        List<string> userFunctions = new List<string> { "Aide au Diagnostic", "Reception de Projet" }; // List of functions for the user
         List<string> adminFunctions = new List<string> { "AdminItem1", "AdminItem2" }; // List of functions for the admin
 
         public MainForms()
@@ -56,6 +59,22 @@ namespace InterfaceMain
                 returnLogForms.UpdateLog($"TIA version V{version} founds");
             }
             UpdateCbFunctions();
+
+            string lastVersion = Properties.Settings.Default.LastSelectedTIAVersion;
+            if (!string.IsNullOrEmpty(lastVersion))
+            {
+                foreach (var item in CbTIAVersion.Items)
+                {
+                    if (item.ToString().Contains(lastVersion))
+                    {
+                        CbTIAVersion.SelectedItem = item;
+                        TIAVersionManager.IsFirstSelection = false;
+                        break;
+                    }
+                }
+                TIAVersionManager.SetVersion(lastVersion);
+                returnLogForms.UpdateLog($"Version TIA chargée : TIA V{lastVersion}");
+            }
         }
 
         // Event handler for form closed event
@@ -75,8 +94,10 @@ namespace InterfaceMain
             switch (selectedFunction)
             {
                 case "AideAuDiagnostic":
-                    // Passez les références au constructeur
                     selectedControl = new AideAuDiagnostic.AideAuDiagnostic();
+                    break;
+                case "ReceptionDeProjet":
+                    selectedControl = new ReceptionDeProjet.ReceptionDeProjet();
                     break;
                 default:
                     GbFunctions.Text = "Fonction";
@@ -104,20 +125,28 @@ namespace InterfaceMain
 
             string selectedVersion = LoadReferences.ExtractNumber(CbTIAVersion.SelectedItem.ToString());
 
-            // Load the appropriate DLL files based on the selected version
-            // exemple path :  C:\Program Files\Siemens\Automation\Portal V16\PublicAPI\Siemens.Engineering.dll
+            if (TIAVersionManager.IsFirstSelection)
+            {
+                TIAVersionManager.SetVersion(selectedVersion);
+                TIAVersionManager.IsFirstSelection = false;
 
+                Properties.Settings.Default.LastSelectedTIAVersion = selectedVersion;
+                Properties.Settings.Default.Save();
 
-            string referencePath = $"C:\\Program Files\\Siemens\\Automation\\Portal V{selectedVersion}\\PublicAPI\\V{selectedVersion}\\";
+                returnLogForms.UpdateLog($"-");
+                returnLogForms.UpdateLog($"Version TIA définie à TIA V{selectedVersion}");
+                return;
+            }
 
+            if (selectedVersion != TIAVersionManager.CurrentVersion)
+            {
+                Properties.Settings.Default.LastSelectedTIAVersion = selectedVersion;
+                Properties.Settings.Default.Save();
 
-            returnLogForms.UpdateLog($"-");
-            returnLogForms.UpdateLog($"Try to change TIA version as TIA V{selectedVersion}");
-            // Dynamically load the assemblies (DLLs)
-            if (LoadReferences.LoadReference(referencePath) == 0) returnLogForms.UpdateLog("References loaded successfully.");
-            else returnLogForms.UpdateLog("Error loading references.");
+                Application.Restart();
+                Environment.Exit(0);
+            }
         }
-
         // Event handler for TIA version click event
         private void CbTIAVersion_Click(object sender, EventArgs e)
         {

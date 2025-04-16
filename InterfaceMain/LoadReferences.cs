@@ -44,29 +44,6 @@ namespace InterfaceMain
             return match.Success ? match.Value : string.Empty;
         }
 
-        public static int LoadReference(string path)
-        {
-            if ((!File.Exists($"{path}Siemens.Engineering.dll")) || (!File.Exists($"{path}Siemens.Engineering.Hmi.dll")))
-            {
-                Console.WriteLine("DLL not found.");
-                return 1;
-            }
-
-            try // Try to load the required references
-            {
-                // Load the required references
-                Assembly.LoadFrom(Path.Combine(path, "Siemens.Engineering.dll"));
-                Assembly.LoadFrom(Path.Combine(path, "Siemens.Engineering.Hmi.dll"));
-
-                return 0;
-            }
-            catch (Exception e) // Catch any exceptions
-            {
-                Console.WriteLine(e.Message); // Write the exception message to the console
-                return 1;
-            }
-        }
-
         public static string FormatString(string input)
         {
             if (string.IsNullOrWhiteSpace(input))

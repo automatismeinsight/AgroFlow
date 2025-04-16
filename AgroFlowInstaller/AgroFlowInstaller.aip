@@ -9,7 +9,7 @@
     <ROW Property="Manufacturer" Value="Agromousquetaires"/>
     <ROW Property="ProductCode" Value="1033:{5DE2250E-3E8A-4756-B4AA-67D30C35FDD2} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
-    <ROW Property="ProductName" Value="AgroFlow(V19)"/>
+    <ROW Property="ProductName" Value="AgroFlow"/>
     <ROW Property="ProductVersion" Value="1.2.0" Options="32"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND"/>
     <ROW Property="UpgradeCode" Value="{B7F7339D-0302-41F8-AFE3-F7443F8B6A54}"/>
@@ -36,25 +36,26 @@
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiCompsComponent">
     <ROW Component="APPDIR" ComponentId="{B12073ED-3F09-49E1-AA75-B8758F57FBFA}" Directory_="APPDIR" Attributes="0"/>
-    <ROW Component="AideAuDiagnostic.exe" ComponentId="{7F132F66-149A-4CD8-B689-6A19614431B2}" Directory_="Debug_Dir" Attributes="0" KeyPath="AideAuDiagnostic.exe"/>
-    <ROW Component="AideAuDiagnostic.exe.config" ComponentId="{EC18C7A4-0C01-4DE3-BCAB-7C677AB7D697}" Directory_="Debug_Dir" Attributes="0" KeyPath="AideAuDiagnostic.exe.config" Type="0"/>
-    <ROW Component="ClosedXML.Parser.dll" ComponentId="{6C08F1C1-361C-416B-B669-86B80CA2F9EE}" Directory_="Debug_Dir" Attributes="0" KeyPath="ClosedXML.Parser.dll"/>
-    <ROW Component="ClosedXML.dll" ComponentId="{48F56FAE-E06D-47B6-8FF7-AB8F41AB9437}" Directory_="Debug_Dir" Attributes="0" KeyPath="ClosedXML.dll"/>
-    <ROW Component="DocumentFormat.OpenXml.Framework.dll" ComponentId="{68E2696E-24B3-47C5-AFE3-7FD97BB8A837}" Directory_="Debug_Dir" Attributes="0" KeyPath="DocumentFormat.OpenXml.Framework.dll"/>
-    <ROW Component="DocumentFormat.OpenXml.dll" ComponentId="{52DE836B-39A4-42CC-8CDE-E927C4EA7F4A}" Directory_="Debug_Dir" Attributes="0" KeyPath="DocumentFormat.OpenXml.dll"/>
-    <ROW Component="ExcelNumberFormat.dll" ComponentId="{BA4D42F6-8EFE-4CED-B2EC-A4E13EA36B1B}" Directory_="Debug_Dir" Attributes="0" KeyPath="ExcelNumberFormat.dll"/>
-    <ROW Component="InterfaceMain.exe" ComponentId="{9D608226-3F5F-409D-A7D9-9287E29A8BAD}" Directory_="Debug_Dir" Attributes="0" KeyPath="InterfaceMain.exe"/>
-    <ROW Component="Microsoft.Bcl.HashCode.dll" ComponentId="{E2D675D9-EBFD-4288-9B5B-593AFEA7AAED}" Directory_="Debug_Dir" Attributes="0" KeyPath="Microsoft.Bcl.HashCode.dll"/>
+    <ROW Component="AideAuDiagnostic.exe" ComponentId="{CD463D1D-2DD8-41EC-B2F9-24B2DBEC1047}" Directory_="Debug_Dir" Attributes="0" KeyPath="AideAuDiagnostic.exe"/>
+    <ROW Component="AideAuDiagnostic.exe.config" ComponentId="{A3B46E17-1A3D-4419-8539-87083821CA07}" Directory_="Debug_Dir" Attributes="0" KeyPath="AideAuDiagnostic.exe.config" Type="0"/>
+    <ROW Component="ClosedXML.Parser.dll" ComponentId="{1024BF5C-490E-40A9-92CF-6F21FC9C7B2B}" Directory_="Debug_Dir" Attributes="0" KeyPath="ClosedXML.Parser.dll"/>
+    <ROW Component="ClosedXML.dll" ComponentId="{549C375D-AA67-4686-817A-3BE104A9DE08}" Directory_="Debug_Dir" Attributes="0" KeyPath="ClosedXML.dll"/>
+    <ROW Component="Common.dll" ComponentId="{B9CF6313-FE90-44F9-A340-C27F0D30EECE}" Directory_="Debug_Dir" Attributes="0" KeyPath="Common.dll"/>
+    <ROW Component="DocumentFormat.OpenXml.Framework.dll" ComponentId="{A8BC2202-0318-44A2-9EF0-C3BE334A4DB2}" Directory_="Debug_Dir" Attributes="0" KeyPath="DocumentFormat.OpenXml.Framework.dll"/>
+    <ROW Component="DocumentFormat.OpenXml.dll" ComponentId="{1BFB8186-F63F-442F-9A24-1320889F0A5B}" Directory_="Debug_Dir" Attributes="0" KeyPath="DocumentFormat.OpenXml.dll"/>
+    <ROW Component="ExcelNumberFormat.dll" ComponentId="{C606F43A-7506-4A79-B109-D8305508E04F}" Directory_="Debug_Dir" Attributes="0" KeyPath="ExcelNumberFormat.dll"/>
+    <ROW Component="InterfaceMain.exe" ComponentId="{B6ECE03C-080E-48D3-9F81-3A7AEC187997}" Directory_="Debug_Dir" Attributes="0" KeyPath="InterfaceMain.exe"/>
+    <ROW Component="Microsoft.Bcl.HashCode.dll" ComponentId="{C2A19A9E-82D1-43F7-A20E-7A2BFBC33F7C}" Directory_="Debug_Dir" Attributes="0" KeyPath="Microsoft.Bcl.HashCode.dll"/>
     <ROW Component="ProductInformation" ComponentId="{B48B4B8D-240A-4D96-9DBC-276525906F13}" Directory_="APPDIR" Attributes="4" KeyPath="Version"/>
-    <ROW Component="RBush.dll" ComponentId="{5AB426B8-B0CB-4A31-B7AB-7BF519909BEB}" Directory_="Debug_Dir" Attributes="0" KeyPath="RBush.dll"/>
-    <ROW Component="SharedLibrary.dll" ComponentId="{CC10F124-F0E0-4F6E-91F5-416F90900D2B}" Directory_="Debug_Dir" Attributes="0" KeyPath="SharedLibrary.dll"/>
-    <ROW Component="Siemens.Engineering.Hmi.dll" ComponentId="{34F4A4F1-5478-4FF7-92AE-AE56A16072AB}" Directory_="Debug_Dir" Attributes="0" KeyPath="Siemens.Engineering.Hmi.dll"/>
-    <ROW Component="Siemens.Engineering.dll" ComponentId="{A652FB0A-FE59-4F35-948A-0AFD6F455FA8}" Directory_="Debug_Dir" Attributes="0" KeyPath="Siemens.Engineering.dll"/>
-    <ROW Component="SixLabors.Fonts.dll" ComponentId="{CFCD399A-BF98-4677-8665-CB1DB0A5514D}" Directory_="Debug_Dir" Attributes="0" KeyPath="SixLabors.Fonts.dll"/>
-    <ROW Component="System.Buffers.dll" ComponentId="{4B5EADEC-C765-4A7F-AF7C-50FFB2E84EB4}" Directory_="Debug_Dir" Attributes="0" KeyPath="System.Buffers.dll"/>
-    <ROW Component="System.Memory.dll" ComponentId="{405EAC6B-3F96-4A6D-8154-5CB4AF6CBA20}" Directory_="Debug_Dir" Attributes="0" KeyPath="System.Memory.dll"/>
-    <ROW Component="System.Numerics.Vectors.dll" ComponentId="{46F917F6-94FE-4A4A-8691-E386B1B2A531}" Directory_="Debug_Dir" Attributes="0" KeyPath="System.Numerics.Vectors.dll"/>
-    <ROW Component="System.Runtime.CompilerServices.Unsafe.dll" ComponentId="{0B945F90-83C6-429E-9265-DB037D4706E2}" Directory_="Debug_Dir" Attributes="0" KeyPath="System.Runtime.CompilerServices.Unsafe.dll"/>
+    <ROW Component="RBush.dll" ComponentId="{C9DCDC3B-F541-42CA-9CCD-E84E64EC5249}" Directory_="Debug_Dir" Attributes="0" KeyPath="RBush.dll"/>
+    <ROW Component="ReceptionDeProjet.exe" ComponentId="{3B2D1C95-A603-4B61-A4EE-DA5DB9A14303}" Directory_="Debug_Dir" Attributes="0" KeyPath="ReceptionDeProjet.exe"/>
+    <ROW Component="SixLabors.Fonts.dll" ComponentId="{FFD38F64-5B8A-4798-AAF7-47C3DBD2330C}" Directory_="Debug_Dir" Attributes="0" KeyPath="SixLabors.Fonts.dll"/>
+    <ROW Component="System.Buffers.dll" ComponentId="{2BB62883-FC45-48F2-BD7E-F87A6232B6A7}" Directory_="Debug_Dir" Attributes="0" KeyPath="System.Buffers.dll"/>
+    <ROW Component="System.Memory.dll" ComponentId="{7DC18803-EAF5-4BBD-8695-0BB966496138}" Directory_="Debug_Dir" Attributes="0" KeyPath="System.Memory.dll"/>
+    <ROW Component="System.Numerics.Vectors.dll" ComponentId="{8425ED44-85E6-4CA7-AD5F-7E7B2ECB2391}" Directory_="Debug_Dir" Attributes="0" KeyPath="System.Numerics.Vectors.dll"/>
+    <ROW Component="System.Runtime.CompilerServices.Unsafe.dll" ComponentId="{762D8CD4-CE4A-44B1-B7F6-A618F3F2BEF0}" Directory_="Debug_Dir" Attributes="0" KeyPath="System.Runtime.CompilerServices.Unsafe.dll"/>
+    <ROW Component="grpc_csharp_ext.x64.dll" ComponentId="{091DC694-56C0-40CB-B4E6-6BF5BCEF6A8C}" Directory_="Debug_Dir" Attributes="256" KeyPath="grpc_csharp_ext.x64.dll"/>
+    <ROW Component="grpc_csharp_ext.x86.dll" ComponentId="{AFA2EF6F-6B63-465F-BF1E-72F2CED7CE1F}" Directory_="Debug_Dir" Attributes="0" KeyPath="grpc_csharp_ext.x86.dll"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiFeatsComponent">
     <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0"/>
@@ -69,28 +70,29 @@
     <ROW File="ClosedXML.Parser.xml" Component_="AideAuDiagnostic.exe.config" FileName="CLOSED~1.XML|ClosedXML.Parser.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ClosedXML.Parser.xml" SelfReg="false"/>
     <ROW File="ClosedXML.pdb" Component_="ClosedXML.dll" FileName="CLOSED~1.PDB|ClosedXML.pdb" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ClosedXML.pdb" SelfReg="false"/>
     <ROW File="ClosedXML.xml" Component_="AideAuDiagnostic.exe.config" FileName="CLOSED~2.XML|ClosedXML.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ClosedXML.xml" SelfReg="false"/>
+    <ROW File="Common.dll" Component_="Common.dll" FileName="Common.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Common.dll" SelfReg="false"/>
+    <ROW File="Common.pdb" Component_="Common.dll" FileName="Common.pdb" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Common.pdb" SelfReg="false"/>
     <ROW File="DocumentFormat.OpenXml.dll" Component_="DocumentFormat.OpenXml.dll" FileName="DOCUME~1.DLL|DocumentFormat.OpenXml.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\DocumentFormat.OpenXml.dll" SelfReg="false"/>
     <ROW File="DocumentFormat.OpenXml.Framework.dll" Component_="DocumentFormat.OpenXml.Framework.dll" FileName="DOCUME~2.DLL|DocumentFormat.OpenXml.Framework.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\DocumentFormat.OpenXml.Framework.dll" SelfReg="false"/>
     <ROW File="DocumentFormat.OpenXml.Framework.xml" Component_="AideAuDiagnostic.exe.config" FileName="DOCUME~1.XML|DocumentFormat.OpenXml.Framework.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\DocumentFormat.OpenXml.Framework.xml" SelfReg="false"/>
     <ROW File="DocumentFormat.OpenXml.xml" Component_="AideAuDiagnostic.exe.config" FileName="DOCUME~2.XML|DocumentFormat.OpenXml.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\DocumentFormat.OpenXml.xml" SelfReg="false"/>
     <ROW File="ExcelNumberFormat.dll" Component_="ExcelNumberFormat.dll" FileName="EXCELN~1.DLL|ExcelNumberFormat.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ExcelNumberFormat.dll" SelfReg="false"/>
     <ROW File="ExcelNumberFormat.xml" Component_="AideAuDiagnostic.exe.config" FileName="EXCELN~1.XML|ExcelNumberFormat.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ExcelNumberFormat.xml" SelfReg="false"/>
-    <ROW File="HMADBExport.Xml" Component_="AideAuDiagnostic.exe.config" FileName="HMADBE~1.XML|HMADBExport.Xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\HMADBExport.Xml" SelfReg="false"/>
+    <ROW File="grpc_csharp_ext.x64.dll" Component_="grpc_csharp_ext.x64.dll" FileName="GRPC_C~1.DLL|grpc_csharp_ext.x64.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\grpc_csharp_ext.x64.dll" SelfReg="false"/>
+    <ROW File="grpc_csharp_ext.x86.dll" Component_="grpc_csharp_ext.x86.dll" FileName="GRPC_C~2.DLL|grpc_csharp_ext.x86.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\grpc_csharp_ext.x86.dll" SelfReg="false"/>
     <ROW File="InterfaceMain.exe" Component_="InterfaceMain.exe" FileName="INTERF~1.EXE|InterfaceMain.exe" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\InterfaceMain.exe" SelfReg="false" DigSign="true"/>
     <ROW File="InterfaceMain.exe.config" Component_="AideAuDiagnostic.exe.config" FileName="INTERF~1.CON|InterfaceMain.exe.config" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\InterfaceMain.exe.config" SelfReg="false"/>
     <ROW File="InterfaceMain.pdb" Component_="InterfaceMain.exe" FileName="INTERF~1.PDB|InterfaceMain.pdb" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\InterfaceMain.pdb" SelfReg="false"/>
+    <ROW File="libgrpc_csharp_ext.x64.dylib" Component_="AideAuDiagnostic.exe.config" FileName="LIBGRP~1.DYL|libgrpc_csharp_ext.x64.dylib" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\libgrpc_csharp_ext.x64.dylib" SelfReg="false"/>
+    <ROW File="libgrpc_csharp_ext.x64.so" Component_="AideAuDiagnostic.exe.config" FileName="LIBGRP~1.SO|libgrpc_csharp_ext.x64.so" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\libgrpc_csharp_ext.x64.so" SelfReg="false"/>
     <ROW File="Liste_LTU_BackJump.xlsx" Component_="AideAuDiagnostic.exe.config" FileName="LISTE_~1.XLS|Liste_LTU_BackJump.xlsx" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Liste_LTU_BackJump.xlsx" SelfReg="false"/>
-    <ROW File="Logo_Mousquetaires.ico" Component_="AideAuDiagnostic.exe.config" FileName="LOGO_M~1.ICO|Logo_Mousquetaires.ico" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Logo_Mousquetaires.ico" SelfReg="false"/>
     <ROW File="Microsoft.Bcl.HashCode.dll" Component_="Microsoft.Bcl.HashCode.dll" FileName="MICROS~1.DLL|Microsoft.Bcl.HashCode.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Microsoft.Bcl.HashCode.dll" SelfReg="false"/>
     <ROW File="Microsoft.Bcl.HashCode.xml" Component_="AideAuDiagnostic.exe.config" FileName="MICROS~1.XML|Microsoft.Bcl.HashCode.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Microsoft.Bcl.HashCode.xml" SelfReg="false"/>
     <ROW File="RBush.dll" Component_="RBush.dll" FileName="RBush.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\RBush.dll" SelfReg="false"/>
     <ROW File="RBush.xml" Component_="AideAuDiagnostic.exe.config" FileName="RBush.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\RBush.xml" SelfReg="false"/>
-    <ROW File="SharedLibrary.dll" Component_="SharedLibrary.dll" FileName="SHARED~1.DLL|SharedLibrary.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\SharedLibrary.dll" SelfReg="false"/>
-    <ROW File="SharedLibrary.pdb" Component_="SharedLibrary.dll" FileName="SHARED~1.PDB|SharedLibrary.pdb" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\SharedLibrary.pdb" SelfReg="false"/>
-    <ROW File="Siemens.Engineering.dll" Component_="Siemens.Engineering.dll" FileName="SIEMEN~1.DLL|Siemens.Engineering.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Siemens.Engineering.dll" SelfReg="false"/>
-    <ROW File="Siemens.Engineering.Hmi.dll" Component_="Siemens.Engineering.Hmi.dll" FileName="SIEMEN~2.DLL|Siemens.Engineering.Hmi.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Siemens.Engineering.Hmi.dll" SelfReg="false"/>
-    <ROW File="Siemens.Engineering.Hmi.xml" Component_="AideAuDiagnostic.exe.config" FileName="SIEMEN~1.XML|Siemens.Engineering.Hmi.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Siemens.Engineering.Hmi.xml" SelfReg="false"/>
-    <ROW File="Siemens.Engineering.xml" Component_="AideAuDiagnostic.exe.config" FileName="SIEMEN~2.XML|Siemens.Engineering.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Siemens.Engineering.xml" SelfReg="false"/>
+    <ROW File="ReceptionDeProjet.exe" Component_="ReceptionDeProjet.exe" FileName="RECEPT~1.EXE|ReceptionDeProjet.exe" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ReceptionDeProjet.exe" SelfReg="false" DigSign="true"/>
+    <ROW File="ReceptionDeProjet.exe.config" Component_="AideAuDiagnostic.exe.config" FileName="RECEPT~1.CON|ReceptionDeProjet.exe.config" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ReceptionDeProjet.exe.config" SelfReg="false"/>
+    <ROW File="ReceptionDeProjet.pdb" Component_="ReceptionDeProjet.exe" FileName="RECEPT~1.PDB|ReceptionDeProjet.pdb" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ReceptionDeProjet.pdb" SelfReg="false"/>
     <ROW File="SixLabors.Fonts.dll" Component_="SixLabors.Fonts.dll" FileName="SIXLAB~1.DLL|SixLabors.Fonts.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\SixLabors.Fonts.dll" SelfReg="false"/>
     <ROW File="SixLabors.Fonts.xml" Component_="AideAuDiagnostic.exe.config" FileName="SIXLAB~1.XML|SixLabors.Fonts.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\SixLabors.Fonts.xml" SelfReg="false"/>
     <ROW File="System.Buffers.dll" Component_="System.Buffers.dll" FileName="SYSTEM~1.DLL|System.Buffers.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\System.Buffers.dll" SelfReg="false"/>
@@ -176,15 +178,16 @@
     <ROW Feature_="MainFeature" Component_="AideAuDiagnostic.exe.config"/>
     <ROW Feature_="MainFeature" Component_="ClosedXML.dll"/>
     <ROW Feature_="MainFeature" Component_="ClosedXML.Parser.dll"/>
+    <ROW Feature_="MainFeature" Component_="Common.dll"/>
     <ROW Feature_="MainFeature" Component_="DocumentFormat.OpenXml.dll"/>
     <ROW Feature_="MainFeature" Component_="DocumentFormat.OpenXml.Framework.dll"/>
     <ROW Feature_="MainFeature" Component_="ExcelNumberFormat.dll"/>
+    <ROW Feature_="MainFeature" Component_="grpc_csharp_ext.x64.dll"/>
+    <ROW Feature_="MainFeature" Component_="grpc_csharp_ext.x86.dll"/>
     <ROW Feature_="MainFeature" Component_="InterfaceMain.exe"/>
     <ROW Feature_="MainFeature" Component_="Microsoft.Bcl.HashCode.dll"/>
     <ROW Feature_="MainFeature" Component_="RBush.dll"/>
-    <ROW Feature_="MainFeature" Component_="SharedLibrary.dll"/>
-    <ROW Feature_="MainFeature" Component_="Siemens.Engineering.dll"/>
-    <ROW Feature_="MainFeature" Component_="Siemens.Engineering.Hmi.dll"/>
+    <ROW Feature_="MainFeature" Component_="ReceptionDeProjet.exe"/>
     <ROW Feature_="MainFeature" Component_="SixLabors.Fonts.dll"/>
     <ROW Feature_="MainFeature" Component_="System.Buffers.dll"/>
     <ROW Feature_="MainFeature" Component_="System.Memory.dll"/>
@@ -192,7 +195,6 @@
     <ROW Feature_="MainFeature" Component_="System.Runtime.CompilerServices.Unsafe.dll"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiIconsComponent">
-    <ROW Name="InterfaceMain.exe" SourcePath="..\InterfaceMain\bin\Debug\Logo_Mousquetaires.ico" Index="0"/>
     <ROW Name="Logo_Mousquetaires.exe" SourcePath="..\InterfaceMain\Pictures\Logo_Mousquetaires.ico" Index="0"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiInstExSeqComponent">
@@ -225,7 +227,7 @@
     <ROW Registry="Version" Root="-1" Key="Software\[Manufacturer]\[ProductName]" Name="Version" Value="[ProductVersion]" Component_="ProductInformation"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiShortsComponent">
-    <ROW Shortcut="InterfaceMain" Directory_="DesktopFolder" Name="AGROFL~2|AgroFlow(V19)" Component_="InterfaceMain.exe" Target="[#InterfaceMain.exe]" Hotkey="0" Icon_="InterfaceMain.exe" IconIndex="0" ShowCmd="1" WkDir="Debug_Dir"/>
+    <ROW Shortcut="InterfaceMain" Directory_="DesktopFolder" Name="AgroFlow" Component_="InterfaceMain.exe" Target="[#InterfaceMain.exe]" Hotkey="0" Icon_="Logo_Mousquetaires.exe" IconIndex="0" ShowCmd="1" WkDir="Debug_Dir"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiThemeComponent">
     <ATTRIBUTE name="UsedTheme" value="classic"/>

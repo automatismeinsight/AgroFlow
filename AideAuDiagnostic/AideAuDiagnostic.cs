@@ -14,6 +14,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using ClosedXML.Excel;
 using Siemens.Engineering.HW;
 using System.Collections.ObjectModel;
+using Common;
 
 namespace AideAuDiagnostic
 {
@@ -87,7 +88,6 @@ namespace AideAuDiagnostic
                 while (bApplicationIsStarted == false)
                 {
                     Application.DoEvents();
-
                 }
             }
             finally
@@ -119,6 +119,8 @@ namespace AideAuDiagnostic
 
             BeginInvoke(new MethodInvoker(() => bPSelectStation.Enabled = true));
             BeginInvoke(new MethodInvoker(() => GIFChargement.Visible = false));
+
+            TIAAssemblyLoader.SetupControl(this);
         }
         //**************************  Gestion de l'ecriture Thread secondaire  **************************//
         public void TraceThreadUIPrincipal(string sTrace)

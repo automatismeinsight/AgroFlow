@@ -1,24 +1,26 @@
-﻿using AideAuDiagnostic.TiaExplorer;
-using OpennessV16;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Windows.Forms;
+using System.Xml;
+using AideAuDiagnostic.TiaExplorer;
+using DocumentFormat.OpenXml.Wordprocessing;
 using GlobalsOPCUA;
+using OpennessV16;
 using Siemens.Engineering;
 using Siemens.Engineering.Compiler;
+using Siemens.Engineering.Hmi.Screen;
+using Siemens.Engineering.HmiUnified.UI.Controls;
 using Siemens.Engineering.HW;
 using Siemens.Engineering.HW.Features;
+using Siemens.Engineering.Online;
 using Siemens.Engineering.SW;
 using Siemens.Engineering.SW.Blocks;
 using Siemens.Engineering.SW.Blocks.Interface;
 using Siemens.Engineering.SW.ExternalSources;
 using Siemens.Engineering.SW.Tags;
 using Siemens.Engineering.SW.Types;
-using System.Xml;
-using System;
-using System.Windows.Forms;
-using System.IO.Packaging;
-using Siemens.Engineering.Hmi.Tag;
-using System.Linq;
 
 namespace AideAuDiagnostic.TiaExplorer
 {
@@ -180,6 +182,66 @@ namespace AideAuDiagnostic.TiaExplorer
             }
 
             return bRet;
+        }
+
+        // This method retrieves PLC device information from the project.
+        public List<(string Name, string IPAddress)> GetPlcDevicesInfo()
+        {
+            List<(string, string)> plcInfoList = new List<(string, string)>();
+
+            try
+            {
+                foreach (Device device in oTiainterface.m_oTiaProject.Devices)
+                {
+                    DeviceItem mainModule = null;
+                    string deviceName = device.Name;
+                    string watchdogTime = "Non défini";
+                       
+                    //Vérifie que le device n'est pas vide
+                    if (device.DeviceItems.Count > 1)
+                    {
+                        //Recherche de la CPU
+                        foreach(DeviceItem item in device.DeviceItems)
+                        {
+                            if (item.GetAttribute("Name").ToString().Contains("AP")) mainModule = item;
+                        }
+
+                        try
+                        {
+                            if (mainModule != null)
+                            {
+                                // Approche alternative pour obtenir les informations de protection
+                                try
+                                {
+                                    
+                                 
+                                    
+                                    
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Erreur lors de l'accès aux propriétés de sécurité: {ex.Message}");
+                                }
+                            }
+                    }
+                        catch
+                        {
+                            Console.WriteLine($"Erreur module vide");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Le device est vide");
+                    }
+                        plcInfoList.Add((deviceName, watchdogTime));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Erreur lors de la récupération des informations des PLC : " + ex.Message);
+            }
+
+            return plcInfoList;
         }
 
         #endregion
