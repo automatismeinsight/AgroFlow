@@ -227,11 +227,11 @@ namespace AideAuDiagnostic.TiaExplorer
                             bRootFound = true;
                             break;
                         }
-                        //Si le folder n'est pas trouvé, on le crée
-                        if (bRootFound == false)
-                        {
-                            oGrpOPCUA = oThisPlc.BlockGroup.Groups.Create(sRootOPCUAFolder);
-                        }
+                    }
+                    //Si le folder n'est pas trouvé, on le crée
+                    if (bRootFound == false)
+                    {
+                        oGrpOPCUA = oThisPlc.BlockGroup.Groups.Create(sRootOPCUAFolder);
                     }
                 }
                 catch (Exception e)

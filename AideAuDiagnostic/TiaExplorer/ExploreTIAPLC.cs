@@ -423,7 +423,16 @@ namespace AideAuDiagnostic.TiaExplorer
                                             if (oNodeobjectlist.Name == @"SW.Blocks.CompileUnit")
                                             {
                                                 //Enumeration de tous les membres du reseau
-                                                EnumerateMembers(oNodeobjectlist, oControllerTarget, oTiaProjectForCPU, oBlocTIA, ref sCurrentPath, true);
+                                                EnumerateMembers(
+                                                     oNodeobjectlist,
+                                                     oControllerTarget,
+                                                     oTiaProjectForCPU,
+                                                     oBlocTIA,
+                                                     ref sCurrentPath,
+                                                     true,
+                                                     dData,
+                                                     lsDataCollection
+                                                );
                                             }
                                         }
                                     }
@@ -437,225 +446,215 @@ namespace AideAuDiagnostic.TiaExplorer
             return bRet;
         }
         //Enumere les membres correspondant à des paramètres
-        void EnumerateMembers(XmlNode oListOfNodeMembers, PlcSoftware oControllerTarget, TiaProjectForCPU oTiaProjectForCPU, TiaPortalBloc oBlocTIA, ref string sCurrentPath, bool bFirstLevel)
+        public void EnumerateMembers(
+            XmlNode oListOfNodeMembers,
+            PlcSoftware oControllerTarget,
+            TiaProjectForCPU oTiaProjectForCPU,
+            TiaPortalBloc oBlocTIA,
+            ref string sCurrentPath,
+            bool bFirstLevel,
+            Dictionary<Tuple<int, int>, object> dData,
+            List<string> lsDataCollection
+        )
         {
-            #region VARIABLES
-            bool bIdentCont = false;
-            var vUIDVariableEntree = new List<string>();
-            var vVariableEntree = new List<string>();
-            var vUIDPatteBlockLTU = new List<string>();
-            var vPatteBlockLTU = new List<string>();
-            var vUIDBlockLTU = new List<string>();
-            var vNomBlockLTU = new List<string>();
-            var vNomDBi = new List<string>();
-            #endregion
-            //Pour chaque reseaux, on recherche nos variables
+            // 1. Structures pour les mappings
+            var variableByUID = new Dictionary<string, VariableInfo>(); // UID → DB/Variable
+            var wires = new List<WireInfo>();
+            var blocks = new List<BlockInfo>();
+
+            // 2. Parsing XML
             foreach (XmlNode nodeCompileUnit in oListOfNodeMembers.ChildNodes)
             {
-                if (nodeCompileUnit.Name == @"AttributeList")
+                if (nodeCompileUnit.Name == "AttributeList")
                 {
                     foreach (XmlNode nodeAttributeList in nodeCompileUnit)
                     {
-                        if (nodeAttributeList.Name == @"NetworkSource")
+                        if (nodeAttributeList.Name == "NetworkSource")
                         {
                             foreach (XmlNode nodeNetworkSource in nodeAttributeList)
                             {
-                                if (nodeNetworkSource.Name == @"FlgNet")
+                                if (nodeNetworkSource.Name == "FlgNet")
                                 {
                                     foreach (XmlNode nodeFlgNet in nodeNetworkSource)
                                     {
-                                        //PARTIE DATA ET BLOCS
-                                        if (nodeFlgNet.Name == @"Parts")
+                                        // DATA ET BLOCS
+                                        if (nodeFlgNet.Name == "Parts")
                                         {
                                             foreach (XmlNode nodeParts in nodeFlgNet)
                                             {
-                                                //ON CHERCHE POUR LES NOMS DES VARIABLES EN ENTREE DU BLOC
-                                                if (nodeParts.Name == @"Access")
+                                                if (nodeParts.Name == "Access")
                                                 {
-                                                    //Sauvegarde du Access Uid
-                                                    vUIDVariableEntree.Add(nodeParts.Attributes["UId"].Value.ToString());
-
+                                                    string accessUid = nodeParts.Attributes["UId"].Value;
                                                     foreach (XmlNode nodeAccess in nodeParts)
                                                     {
-
-                                                        //Si on a une VARIABLE de connecter
-                                                        if (nodeAccess.Name == @"Symbol")
+                                                        if (nodeAccess.Name == "Symbol")
                                                         {
-
+                                                            string dbName = null;
+                                                            string varName = null;
                                                             bool firstComponent = true;
-
                                                             foreach (XmlNode nodeSymbol in nodeAccess)
                                                             {
-                                                                if (firstComponent == true)
+                                                                if (nodeSymbol.Name == "Component")
                                                                 {
-                                                                    if (nodeSymbol.Name == @"Component")
+                                                                    if (firstComponent)
                                                                     {
-                                                                        //Sauvegarde du COMPONENT NAME
-                                                                        vVariableEntree.Add(nodeSymbol.Attributes["Name"].Value.ToString());
+                                                                        dbName = nodeSymbol.Attributes["Name"].Value;
                                                                         firstComponent = false;
                                                                     }
-
+                                                                    else
+                                                                    {
+                                                                        varName = nodeSymbol.Attributes["Name"].Value;
+                                                                    }
                                                                 }
+                                                            }
+                                                            if (!string.IsNullOrEmpty(dbName))
+                                                            {
+                                                                variableByUID[accessUid] = new VariableInfo { DbName = dbName, VarName = varName };
                                                             }
                                                         }
-                                                        //TEST SI ON A UNE VARIABLE
-
-                                                        //Si on a une CONSTANTE de connecter
-                                                        if (nodeAccess.Name == @"Constant")
+                                                        else if (nodeAccess.Name == "Constant")
                                                         {
-                                                            foreach (XmlNode nodeConstant in nodeAccess)
-                                                            {
-                                                                if (nodeConstant.Name == @"ConstantType")
-                                                                {
-                                                                    //Sauvegarde du COMPONENT NAME
-                                                                    vVariableEntree.Add(nodeConstant.Name.ToString());
-                                                                }
-
-                                                            }
-
+                                                            // Optionnel : gérer les constantes si besoin
+                                                            variableByUID[accessUid] = new VariableInfo { DbName = "ConstantType", VarName = null };
                                                         }
                                                     }
                                                 }
-                                                //SI ON CHERCHE POUR LE NOM DU BLOC APPELE ET DU DBi
-                                                if (nodeParts.Name == @"Call")
+                                                else if (nodeParts.Name == "Call")
                                                 {
-                                                    //Sauvegarde de l'UId du FC appelé
-                                                    vUIDBlockLTU.Add(nodeParts.Attributes["UId"].Value.ToString());
+                                                    string blockUid = nodeParts.Attributes["UId"].Value;
+                                                    string blockName = "";
+                                                    string dbiName = "";
 
                                                     foreach (XmlNode nodeCall in nodeParts)
                                                     {
-                                                        if (nodeCall.Name == @"CallInfo")
+                                                        if (nodeCall.Name == "CallInfo")
                                                         {
-                                                            //Sauvegarde Nom du FC appelé
-                                                            vNomBlockLTU.Add(nodeCall.Attributes["Name"].Value.ToString());
-
+                                                            blockName = nodeCall.Attributes["Name"].Value;
                                                             foreach (XmlNode nodeCallInfo in nodeCall)
                                                             {
-                                                                if (nodeCallInfo.Name == @"Instance")
+                                                                if (nodeCallInfo.Name == "Instance")
                                                                 {
                                                                     foreach (XmlNode nodeInstance in nodeCallInfo)
                                                                     {
-                                                                        if (nodeInstance.Name == @"Component")
+                                                                        if (nodeInstance.Name == "Component")
                                                                         {
-                                                                            //Sauvegarde Nom du DBi utilisé
-                                                                            vNomDBi.Add(nodeInstance.Attributes["Name"].Value.ToString());
+                                                                            dbiName = nodeInstance.Attributes["Name"].Value;
                                                                         }
                                                                     }
                                                                 }
                                                             }
                                                         }
                                                     }
+                                                    blocks.Add(new BlockInfo
+                                                    {
+                                                        UID = blockUid,
+                                                        Name = blockName,
+                                                        DBiName = dbiName
+                                                    });
                                                 }
                                             }
                                         }
-                                        //PARTIE LIENS DES BLOCS
-                                        if (nodeFlgNet.Name == @"Wires")
+                                        // WIRES
+                                        else if (nodeFlgNet.Name == "Wires")
                                         {
                                             foreach (XmlNode nodeWires in nodeFlgNet)
                                             {
-                                                //LISTING DES LIENS
-                                                if (nodeWires.Name == @"Wire")
+                                                if (nodeWires.Name == "Wire")
                                                 {
+                                                    string wireSource = null;
+                                                    string wireTarget = null;
+                                                    string wireName = null;
+
                                                     foreach (XmlNode nodeWire in nodeWires)
                                                     {
-                                                        if (bIdentCont == true)
+                                                        if (nodeWire.Name == "IdentCon")
                                                         {
-                                                            // Enumération de toutes les IN/OUT cablés
-                                                            if (nodeWire.Name == @"NameCon")
-                                                            {
-                                                                //Sauvegarde du NAMECON Name
-                                                                vPatteBlockLTU.Add(nodeWire.Attributes["Name"].Value.ToString());
-                                                                //Sauvegarde du NAMECON UId
-                                                                vUIDPatteBlockLTU.Add(nodeWire.Attributes["UId"].Value.ToString());
-                                                                bIdentCont = false;
-
-                                                            }
+                                                            wireSource = nodeWire.Attributes["UId"].Value;
                                                         }
-                                                        // Enumération de tous les IDs de connexions
-                                                        if (nodeWire.Name == @"IdentCon")
+                                                        else if (nodeWire.Name == "NameCon")
                                                         {
-                                                            bIdentCont = true;
+                                                            wireTarget = nodeWire.Attributes["UId"].Value;
+                                                            wireName = nodeWire.Attributes["Name"].Value;
                                                         }
                                                     }
+                                                    if (wireSource != null && wireTarget != null && wireName != null)
+                                                    {
+                                                        wires.Add(new WireInfo
+                                                        {
+                                                            SourceUID = wireSource,
+                                                            TargetUID = wireTarget,
+                                                            Name = wireName
+                                                        });
+                                                    }
                                                 }
-
                                             }
                                         }
                                     }
                                 }
                             }
-
-
                         }
                     }
                 }
             }
 
-            //TRAITEMENT+ ANALYSE
-            //COMPARAISON AVEC LES DATAS
+            // 3. Créer mapping bloc → (patte → DB parent)
+            var blockPatteToDb = new Dictionary<string, Dictionary<string, string>>(); // BlockUID → (Patte → DB)
 
-            //On verifie chaque LTU que l'on a detecter dans le reseau
-            for (int a = 0; a < vNomBlockLTU.Count; a++)
+            foreach (var block in blocks)
             {
-                //Lecture des Donnees Excel
+                var patteToDb = new Dictionary<string, string>();
+                foreach (var wire in wires.Where(w => w.TargetUID == block.UID))
+                {
+                    if (variableByUID.TryGetValue(wire.SourceUID, out var varInfo))
+                    {
+                        if (!string.IsNullOrEmpty(varInfo.DbName) && varInfo.DbName != "ConstantType")
+                        {
+                            patteToDb[wire.Name] = varInfo.DbName;
+                        }
+                    }
+                }
+                blockPatteToDb[block.UID] = patteToDb;
+            }
+
+            // 4. Parcours des données Excel
+            foreach (var block in blocks)
+            {
+                // Recherche dans le fichier Excel
                 foreach (KeyValuePair<Tuple<int, int>, object> keyValue in dData)
                 {
-                    //On scan la premiere colonne du fichier Excel
-                    if (keyValue.Key.Item2 == 1)
+                    if (keyValue.Key.Item2 == 1 && block.Name == keyValue.Value.ToString())
                     {
-                        //Si le nom du LTU export est présent dans le fichier Excel
-                        if (vNomBlockLTU[a] == keyValue.Value.ToString())
+                        // Ecriture de la première colonne dans le DBi
+                        lsDataCollection.Add($"\"{block.DBiName}\".sHmiUdt.backJump[0] := '{block.Name}';");
+                        int ligneIndice = keyValue.Key.Item1;
+
+                        // DBs à écrire (colonne Excel → DB parent)
+                        var excelColumnToDb = new Dictionary<int, string>();
+
+                        foreach (KeyValuePair<Tuple<int, int>, object> keyValueH in dData)
                         {
-                            //Ecriture de la premiere colonne dans le DBi
-                            lsDataCollection.Add("\"" + vNomDBi[a] + "\"" + ".sHmiUdt.backJump[0] := '" + vNomBlockLTU[a] + "';");
-                            //Sauvegarde de l'indice de la ligne du LTU trouver
-                            int indiceLigne = keyValue.Key.Item1;
-
-                            //Lecture des Donnees de la ligne LTU
-                            foreach (KeyValuePair<Tuple<int, int>, object> keyValueH in dData)
+                            if (keyValueH.Key.Item1 == ligneIndice && keyValueH.Key.Item2 > 1)
                             {
-                                //On scan la ligne a l'horizontal
-                                if ((keyValueH.Key.Item1 == indiceLigne) && (keyValueH.Key.Item2 > 1))
+                                var patteName = keyValueH.Value.ToString();
+                                int columnIndex = keyValueH.Key.Item2;
+
+                                if (!string.IsNullOrEmpty(patteName)
+                                    && blockPatteToDb.TryGetValue(block.UID, out var patteDbMap)
+                                    && patteDbMap.TryGetValue(patteName, out var dbName))
                                 {
-                                    //On verifie que la cellule n'est pas vide
-                                    if (keyValueH.Value.ToString() != "")
-                                    {
-                                        int b = 0;
-
-                                        if (vPatteBlockLTU.Contains(keyValueH.Value.ToString()))
-                                        {
-
-
-                                            b = vPatteBlockLTU.IndexOf(keyValueH.Value.ToString());
-                                            //On verifie que ca correspond bien a l'UId du block LTU appele
-                                            if (vUIDPatteBlockLTU[b] == vUIDBlockLTU[a] && vVariableEntree[b] != "ConstantType")
-                                            {
-                                                //Ecriture de l'info 
-                                                lsDataCollection.Add("\"" + vNomDBi[a] + "\"" + ".sHmiUdt.backJump[" + ((keyValueH.Key.Item2) - 1) + "] := '" + vVariableEntree[b] + "';");
-                                                vPatteBlockLTU[b] = "";
-                                            }
-                                            else
-                                            {
-                                                //Ecriture de l'info vide
-                                                lsDataCollection.Add("\"" + vNomDBi[a] + "\"" + ".sHmiUdt.backJump[" + ((keyValueH.Key.Item2) - 1) + "] := '';");
-                                            }
-
-
-                                        }
-                                        else
-                                        {
-                                            //Ecriture de l'info vide
-                                            lsDataCollection.Add("\"" + vNomDBi[a] + "\"" + ".sHmiUdt.backJump[" + ((keyValueH.Key.Item2) - 1) + "] := '';");
-                                        }
-
-                                    }
-                                    else
-                                    {
-                                        break;
-                                    }
-
+                                    excelColumnToDb[columnIndex] = dbName;
                                 }
                             }
+                        }
+
+                        // Trier les colonnes 
+                        var orderedColumns = excelColumnToDb.Keys.OrderBy(k => k).ToList();
+
+                        // Écriture finale dans lsDataCollection
+                        for (int i = 0; i < orderedColumns.Count; i++)
+                        {
+                            int columnIndex = orderedColumns[i];
+                            lsDataCollection.Add($"\"{block.DBiName}\".sHmiUdt.backJump[{columnIndex - 1}] := '{excelColumnToDb[columnIndex]}';");
                         }
                     }
                 }
@@ -954,5 +953,24 @@ namespace AideAuDiagnostic.TiaExplorer
         {
             return string.Format("{0}", oTiaPortalDevice.Name);
         }
+    }
+    public class WireInfo
+    {
+        public string SourceUID { get; set; }
+        public string TargetUID { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class BlockInfo
+    {
+        public string UID { get; set; }
+        public string Name { get; set; }
+        public string DBiName { get; set; }
+    }
+
+    public class VariableInfo
+    {
+        public string DbName { get; set; }
+        public string VarName { get; set; }
     }
 }
