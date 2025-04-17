@@ -60,7 +60,16 @@ namespace InterfaceMain
             }
             UpdateCbFunctions();
 
-            string lastVersion = Properties.Settings.Default.LastSelectedTIAVersion;
+            string lastVersion = null;
+            try
+            {
+                lastVersion = Properties.Settings.Default.LastSelectedTIAVersion;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading last selected TIA version: {ex.Message}");
+            }
+
             if (!string.IsNullOrEmpty(lastVersion))
             {
                 foreach (var item in CbTIAVersion.Items)

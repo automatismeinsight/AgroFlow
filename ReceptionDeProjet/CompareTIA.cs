@@ -120,21 +120,72 @@ namespace ReceptionDeProjet
             string gamme = FindGamme(mainModule);
             string[] gammesAutorisees = { "S7-1200", "S7-1500", "ET 200SP" };
 
-                var automate = new Automate
+            var automate = new Automate
             {
                 sName = mainModule.GetAttribute("Name").ToString(),
                 sGamme = gamme,
                 sReference = mainModule.GetAttribute("OrderNumber").ToString(),
-                sFirmware = mainModule.GetAttribute("FirmwareVersion").ToString(),
-                sWatchDog = mainModule.GetAttribute("CycleMaximumCycleTime").ToString(),
-                sWebServer = mainModule.GetAttribute("WebserverActivate").ToString(),
-                sRestart = mainModule.GetAttribute("StartupActionAfterPowerOn").ToString(),
-                sCadenceM0 = mainModule.GetAttribute("SystemMemoryByte").ToString(),
-                sCadenceM1 = mainModule.GetAttribute("ClockMemoryByte").ToString(),
-                sLocalHour = mainModule.GetAttribute("TimeOfDayLocalTimeZone").ToString(),
-                sHourChange = mainModule.GetAttribute("TimeOfDayActivateDaylightSavingTime").ToString()
+                sFirmware = mainModule.GetAttribute("FirmwareVersion").ToString()
             };
 
+            try
+            {
+                automate.sWatchDog = mainModule.GetAttribute("CycleMaximumCycleTime").ToString();
+            }
+            catch
+            {
+                automate.sWatchDog = "Non trouvé";
+            }
+            try
+            {
+                automate.sWebServer = mainModule.GetAttribute("WebserverActivate").ToString();
+            }
+            catch
+            {
+                automate.sWebServer = "Non trouvé";
+            }
+            try
+            {
+                automate.sRestart = mainModule.GetAttribute("StartupActionAfterPowerOn").ToString();
+            }
+            catch
+            {
+                automate.sRestart = "Non trouvé";
+            }
+            try
+            {
+                automate.sCadenceM0 = mainModule.GetAttribute("SystemMemoryByte").ToString();
+            }
+            catch
+            {
+                automate.sCadenceM0 = "Non trouvé";
+            }
+            try
+            {
+                automate.sCadenceM1 = mainModule.GetAttribute("ClockMemoryByte").ToString();
+            }
+            catch
+            {
+                automate.sCadenceM1 = "Non trouvé";
+            }
+            try
+            {
+                automate.sLocalHour = mainModule.GetAttribute("TimeOfDayLocalTimeZone").ToString();
+
+            }
+            catch
+            {
+                automate.sLocalHour = "Non trouvé";
+            }
+            try
+            {
+                automate.sHourChange = mainModule.GetAttribute("TimeOfDayActivateDaylightSavingTime").ToString();
+            }
+            catch
+            {
+                automate.sHourChange = "Non trouvé";
+            }
+           
             if (!gammesAutorisees.Any(g => gamme.Contains(g)))
             {
                 automate.sName = mainModule.GetAttribute("Name").ToString();
@@ -156,12 +207,19 @@ namespace ReceptionDeProjet
                 var itemName = item.GetAttribute("Name").ToString();
                 if (itemName.Contains("Dispositif de lecture") || itemName.Contains("Card reader"))
                 {
-                    if (item.GetAttribute("DiagnosticsAgingSimaticMemoryCard").ToString() == "True")
+                    try
                     {
-                        automate.sMMCLife = item.GetAttribute("DiagnosticsAgingSimaticMemoryCardThreshold").ToString();
+                        if (item.GetAttribute("DiagnosticsAgingSimaticMemoryCard").ToString() == "True")
+                        {
+                            automate.sMMCLife = item.GetAttribute("DiagnosticsAgingSimaticMemoryCardThreshold").ToString();
+                        }
+                        else automate.sMMCLife = "Option desactivé";
                     }
-                    else automate.sMMCLife = "Option desactivé";
-                }  
+                    catch
+                    {
+                        automate.sMMCLife = "Non trouvé";
+                    }
+                }
                 if (itemName.Contains("Ecran") || itemName.Contains("display"))
                 {
                     automate.sScreenWrite = item.GetAttribute("DisplayWriteAccess").ToString();
@@ -169,8 +227,14 @@ namespace ReceptionDeProjet
                 else automate.sScreenWrite = "Option non disponible";
             }
 
-            automate.sOnlineAccess = TestOnlineAccess(mainModule);
-
+            try
+            {
+                automate.sOnlineAccess = TestOnlineAccess(mainModule);
+            }
+            catch
+            {
+                automate.sOnlineAccess = "Connexion Impossible";
+            }
             return automate;
         }
         private string FindGamme(DeviceItem mainModule)

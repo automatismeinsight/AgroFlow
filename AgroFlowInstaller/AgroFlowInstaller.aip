@@ -49,8 +49,6 @@
     <ROW Component="ProductInformation" ComponentId="{B48B4B8D-240A-4D96-9DBC-276525906F13}" Directory_="APPDIR" Attributes="4" KeyPath="Version"/>
     <ROW Component="RBush.dll" ComponentId="{9795254A-3DB5-4DF9-9C64-8D59A753B788}" Directory_="Debug_Dir" Attributes="0" KeyPath="RBush.dll"/>
     <ROW Component="ReceptionDeProjet.exe" ComponentId="{160EDAC6-845A-49DC-A283-9D1C80B83A90}" Directory_="Debug_Dir" Attributes="0" KeyPath="ReceptionDeProjet.exe"/>
-    <ROW Component="Siemens.Engineering.Hmi.dll" ComponentId="{3D43F5A2-90E8-42AA-A332-E9C0039A48A3}" Directory_="Debug_Dir" Attributes="0" KeyPath="Siemens.Engineering.Hmi.dll"/>
-    <ROW Component="Siemens.Engineering.dll" ComponentId="{DF0527C5-634F-452A-960D-AB8B6E020A35}" Directory_="Debug_Dir" Attributes="0" KeyPath="Siemens.Engineering.dll"/>
     <ROW Component="SixLabors.Fonts.dll" ComponentId="{C82BD078-6BA2-4E9E-AF71-639649E97E30}" Directory_="Debug_Dir" Attributes="0" KeyPath="SixLabors.Fonts.dll"/>
     <ROW Component="System.Buffers.dll" ComponentId="{5B803FC4-668F-4D68-811E-D1705C5207F2}" Directory_="Debug_Dir" Attributes="0" KeyPath="System.Buffers.dll"/>
     <ROW Component="System.Memory.dll" ComponentId="{D8F9AA85-C243-4A13-A515-DBF957152481}" Directory_="Debug_Dir" Attributes="0" KeyPath="System.Memory.dll"/>
@@ -89,10 +87,6 @@
     <ROW File="ReceptionDeProjet.exe" Component_="ReceptionDeProjet.exe" FileName="RECEPT~1.EXE|ReceptionDeProjet.exe" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ReceptionDeProjet.exe" SelfReg="false" DigSign="true"/>
     <ROW File="ReceptionDeProjet.exe.config" Component_="AideAuDiagnostic.exe.config" FileName="RECEPT~1.CON|ReceptionDeProjet.exe.config" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ReceptionDeProjet.exe.config" SelfReg="false"/>
     <ROW File="ReceptionDeProjet.pdb" Component_="ReceptionDeProjet.exe" FileName="RECEPT~1.PDB|ReceptionDeProjet.pdb" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\ReceptionDeProjet.pdb" SelfReg="false"/>
-    <ROW File="Siemens.Engineering.dll" Component_="Siemens.Engineering.dll" FileName="SIEMEN~1.DLL|Siemens.Engineering.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Siemens.Engineering.dll" SelfReg="false"/>
-    <ROW File="Siemens.Engineering.Hmi.dll" Component_="Siemens.Engineering.Hmi.dll" FileName="SIEMEN~2.DLL|Siemens.Engineering.Hmi.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Siemens.Engineering.Hmi.dll" SelfReg="false"/>
-    <ROW File="Siemens.Engineering.Hmi.xml" Component_="AideAuDiagnostic.exe.config" FileName="SIEMEN~1.XML|Siemens.Engineering.Hmi.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Siemens.Engineering.Hmi.xml" SelfReg="false"/>
-    <ROW File="Siemens.Engineering.xml" Component_="AideAuDiagnostic.exe.config" FileName="SIEMEN~2.XML|Siemens.Engineering.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\Siemens.Engineering.xml" SelfReg="false"/>
     <ROW File="SixLabors.Fonts.dll" Component_="SixLabors.Fonts.dll" FileName="SIXLAB~1.DLL|SixLabors.Fonts.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\SixLabors.Fonts.dll" SelfReg="false"/>
     <ROW File="SixLabors.Fonts.xml" Component_="AideAuDiagnostic.exe.config" FileName="SIXLAB~1.XML|SixLabors.Fonts.xml" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\SixLabors.Fonts.xml" SelfReg="false"/>
     <ROW File="System.Buffers.dll" Component_="System.Buffers.dll" FileName="SYSTEM~1.DLL|System.Buffers.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\InterfaceMain\bin\Debug\System.Buffers.dll" SelfReg="false"/>
@@ -186,8 +180,6 @@
     <ROW Feature_="MainFeature" Component_="Microsoft.Bcl.HashCode.dll"/>
     <ROW Feature_="MainFeature" Component_="RBush.dll"/>
     <ROW Feature_="MainFeature" Component_="ReceptionDeProjet.exe"/>
-    <ROW Feature_="MainFeature" Component_="Siemens.Engineering.dll"/>
-    <ROW Feature_="MainFeature" Component_="Siemens.Engineering.Hmi.dll"/>
     <ROW Feature_="MainFeature" Component_="SixLabors.Fonts.dll"/>
     <ROW Feature_="MainFeature" Component_="System.Buffers.dll"/>
     <ROW Feature_="MainFeature" Component_="System.Memory.dll"/>
