@@ -42,9 +42,9 @@ namespace ReceptionDeProjet
 
             //Ajout de la version
             resultProject.sVersion = resultProject.sProjectPath.Split('p').Last();
-            
+
             Language oLangueProjet = tiaInterface.m_oTiaProject.LanguageSettings.GetAttribute("ReferenceLanguage") as Language;
-            resultProject.sLanguage = oLangueProjet.GetAttribute("Culture").ToString().Split('-') [0];
+            resultProject.sLanguage = oLangueProjet.GetAttribute("Culture").ToString().Split('-')[0];
 
             //Ajout des devices
             try
@@ -95,7 +95,7 @@ namespace ReceptionDeProjet
                         Console.WriteLine($"Erreur lors de l'accès aux propriétés de sécurité: {ex.Message} {device.Name}");
                     }
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -171,7 +171,6 @@ namespace ReceptionDeProjet
             try
             {
                 automate.sLocalHour = mainModule.GetAttribute("TimeOfDayLocalTimeZone").ToString();
-
             }
             catch
             {
@@ -185,21 +184,27 @@ namespace ReceptionDeProjet
             {
                 automate.sHourChange = "Non trouvé";
             }
-           
+
             if (!gammesAutorisees.Any(g => gamme.Contains(g)))
             {
                 automate.sName = mainModule.GetAttribute("Name").ToString();
                 automate.sGamme = gamme + " | Hors gamme";
             }
 
-
-            PlcAccessControlConfigurationProvider provider = mainModule.GetService<PlcAccessControlConfigurationProvider>();
-            if (provider != null)
+            try
             {
-                var configuration = provider.GetAttribute("PlcAccessControlConfiguration");
-                automate.sControlAccess = configuration.ToString();
-            }else automate.sControlAccess = "Option non disponible";
-
+                PlcAccessControlConfigurationProvider provider = mainModule.GetService<PlcAccessControlConfigurationProvider>();
+                if (provider != null)
+                {
+                    var configuration = provider.GetAttribute("PlcAccessControlConfiguration");
+                    automate.sControlAccess = configuration.ToString();
+                }
+                else automate.sControlAccess = "Option non disponible";
+            }
+            catch
+            {
+                automate.sControlAccess = "Option non disponible";
+            }
 
             // Analyse des sous-éléments (MMC, écran, etc.)
             foreach (var item in mainModule.DeviceItems)
@@ -220,30 +225,38 @@ namespace ReceptionDeProjet
                         automate.sMMCLife = "Non trouvé";
                     }
                 }
-                if (itemName.Contains("Ecran") || itemName.Contains("display"))
+                try
                 {
-                    automate.sScreenWrite = item.GetAttribute("DisplayWriteAccess").ToString();
+                    if (itemName.Contains("Ecran") || itemName.Contains("display"))
+                    {
+                        automate.sScreenWrite = item.GetAttribute("DisplayWriteAccess").ToString();
+                    }
+                    else automate.sScreenWrite = "Option non disponible";
                 }
-                else automate.sScreenWrite = "Option non disponible";
+                catch
+                {
+                    automate.sScreenWrite = "Option non disponible";
+                }
+
+                try
+                {
+                    automate.sOnlineAccess = TestOnlineAccess(mainModule);
+                }
+                catch
+                {
+                    automate.sOnlineAccess = "Connexion Impossible";
+                }
             }
 
-            try
-            {
-                automate.sOnlineAccess = TestOnlineAccess(mainModule);
-            }
-            catch
-            {
-                automate.sOnlineAccess = "Connexion Impossible";
-            }
-            return automate;
+            return automate; 
         }
         private string FindGamme(DeviceItem mainModule)
         {
             string sGamme = "Non trouvé";
-            
+
             Device parent = (Device)mainModule.Parent;
             sGamme = parent.GetAttribute("TypeName").ToString();
-            Console.WriteLine($"Gamme : {sGamme}"); 
+            Console.WriteLine($"Gamme : {sGamme}");
 
             return sGamme;
         }
@@ -252,7 +265,7 @@ namespace ReceptionDeProjet
             try
             {
                 OnlineProvider onlineProvider = mainModule.GetService<OnlineProvider>();
-                if (onlineProvider == null) return "False"; 
+                if (onlineProvider == null) return "False";
                 if (onlineProvider.Configuration.IsConfigured)
                 {
                     onlineProvider.GoOnline();
@@ -301,7 +314,7 @@ namespace ReceptionDeProjet
 
                         foreach (var location in referenceObject.Locations)
                         {
-                            if(!(location.GetAttribute("ReferenceType").ToString() == "UsedBy"))
+                            if (!(location.GetAttribute("ReferenceType").ToString() == "UsedBy"))
                             {
                                 // Choix du type selon la référence
                                 if (refType != "Instruction" && !refAddress.Contains("FC") && !refAddress.Contains("FB"))
@@ -328,8 +341,8 @@ namespace ReceptionDeProjet
                     }
                     automate.AddFc(vFcObject);
                 }
-            
-                if(block.GetType().ToString() == "Siemens.Engineering.SW.Blocks.InstanceDB")
+
+                if (block.GetType().ToString() == "Siemens.Engineering.SW.Blocks.InstanceDB")
                 {
 
                 }
@@ -447,7 +460,7 @@ namespace ReceptionDeProjet
                 automate.iStandardLTU = (iNbLTU * 100) / iNbBloc;
                 automate.iBlocOb1 = (iTotalBlocOB1 * 100) / iNbBloc;
                 automate.iBlocOb35 = (iTotalBlocOB35 * 100) / iNbBloc;
-            } 
+            }
         }
         private void DebugObBlocks(Automate automate)
         {
@@ -532,7 +545,7 @@ namespace ReceptionDeProjet
 
             foreach (var bloc in myOb.oBlocList)
             {
-                
+
                 totalBlocs++;
                 if (bloc.sName.StartsWith("LTU", StringComparison.OrdinalIgnoreCase)) ltuCount++;
                 if (bloc.sType == "FC")
@@ -546,7 +559,7 @@ namespace ReceptionDeProjet
             myOb.iNbBloc = totalBlocs;
 
             // Calculer le pourcentage
-            if(totalBlocs == 0) return 0.0;
+            if (totalBlocs == 0) return 0.0;
             else return (double)ltuCount / totalBlocs * 100.0;
         }
         private void PIDOB1(Automate automate)
@@ -577,7 +590,7 @@ namespace ReceptionDeProjet
         }
         private void InterfaceNetwork(DeviceItem mainModule, Automate automate)
         {
-            foreach(var item in mainModule.DeviceItems)
+            foreach (var item in mainModule.DeviceItems)
             {
                 if (item.GetAttribute("Name").ToString().Contains("PROFINET"))
                 {
@@ -623,7 +636,7 @@ namespace ReceptionDeProjet
                             {
                                 // Appareil trouvé 
                                 string sNameConnectedDevice;
-                                foreach(Node nodeX in nodeSubnet)
+                                foreach (Node nodeX in nodeSubnet)
                                 {
                                     sNameConnectedDevice = nodeX.GetAttribute("PnDeviceName").ToString().Split('.')[0];
                                     if (string.Compare(sNameConnectedDevice, automate.sName, StringComparison.OrdinalIgnoreCase) != 0)
@@ -682,10 +695,11 @@ namespace ReceptionDeProjet
                             automate.sVlanX2 = "Pas de VLAN";
                         }
                     }
-                }                
+                }
             }
         }
     }
+
 
 
     public class Project
