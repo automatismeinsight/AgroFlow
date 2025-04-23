@@ -1,19 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GlobalsOPCUA
+﻿namespace GlobalsOPCUA
 {
     /// <summary>
-    /// Classe contenant les informations de recherche dans le 
-    /// projet Tia Portal de l'automate 
+    /// Classe contenant les informations de configuration et de recherche dans le projet TIA Portal
+    /// pour l'automate et le serveur OPC UA.
     /// </summary>
     public class PLC_ProjectDefinitions
     {
-        #region constantes
+        #region Constantes
 
         private const string sFamilyBlocMarckDef = @"OPCUA:";
         private const string sCommentarBlocParameterMarckDef = @"OPCUA:";
@@ -27,92 +20,109 @@ namespace GlobalsOPCUA
 
         #region Variables
 
-        // indique soi l'interface de Tia Portal est visible
+        /// <summary>
+        /// Indique si l'interface graphique de TIA Portal doit être visible.
+        /// </summary>
         public bool bWithUITiaPortal { get; set; }
 
-        // Nom du répertoire pour la partie openness
+        /// <summary>
+        /// Nom du répertoire pour la partie Openness.
+        /// </summary>
         private string m_sOpennessLibraryPath;
-        public string GetOpennessLibraryPath() { return m_sOpennessLibraryPath; }
+        /// <summary>
+        /// Définit le chemin du répertoire Openness.
+        /// </summary>
         public void SetOpennessLibraryPath(string sOpennessLibraryPath) { m_sOpennessLibraryPath = sOpennessLibraryPath; }
 
-        public string sExtensionProjectName = @"ap16";  // Extension project name Tia Portal
+        /// <summary>
+        /// Extension du nom du projet TIA Portal.
+        /// </summary>
+        public string sExtensionProjectName = @"ap16";
 
-        // Marque de repere des blocs OPC UA au niveau des blocs
+        /// <summary>
+        /// Marque de repère des blocs OPC UA au niveau des blocs.
+        /// </summary>
         public string sFamilyBlocMarck { get; set; } = sFamilyBlocMarckDef;
 
-        // String parameter define new bloc name
+        /// <summary>
+        /// Chaine définissant le nouveau nom de bloc.
+        /// </summary>
         public string sFamillyStrResearchNewBlocName { get; set; } = sFamillyStrResearchNewBlocNameDef;
 
-        // Marque de repere des paramètres d'un bloc pour accès OPC UA
+        /// <summary>
+        /// Marque de repère des paramètres d'un bloc pour accès OPC UA.
+        /// </summary>
         public string sCommentarBlocParameterMarck { get; set; } = sCommentarBlocParameterMarckDef;
 
-        // Marque de repère d'un tag pour accès OPC UA
+        /// <summary>
+        /// Marque de repère d'un tag pour accès OPC UA.
+        /// </summary>
         public string sCommentarTagVariableMarck { get; set; } = sCommentarTagVariableMarckDef;
 
-        // Nom de l'utilisateur pour accès au projet TIA portal
+        /// <summary>
+        /// Nom de l'utilisateur pour accès au projet TIA Portal.
+        /// </summary>
         private string m_sUserName;
         public string GetUserName() { return m_sUserName; }
         public void SetUserName(string sUserName) { m_sUserName = sUserName; }
 
-        // Mot de passe de l'utilisateur déchiffré
+        /// <summary>
+        /// Mot de passe utilisateur déchiffré (jamais stocké en clair).
+        /// </summary>
         private string m_sUncryptPasswordUser;
         public string GetUncryptPasswordUser() { return m_sUncryptPasswordUser; }
+        /// <summary>
+        /// Déchiffre le mot de passe à partir du mot de passe chiffré.
+        /// </summary>
         public void SetUncryptPasswordUser(string sCryptPasswordUser)
         {
-            // Déchiffrement du mot de passe            
+            // Déchiffrement du mot de passe
             CryptString crypt = new CryptString(true);
             m_sUncryptPasswordUser = crypt.Decrypt(sCryptPasswordUser);
         }
 
-        // Nom du premier folder pour la définition des blocs dans l'arcborescence du serveur OPC UA
+        /// <summary>
+        /// Nom du premier dossier pour la définition des blocs dans l'arborescence du serveur OPC UA.
+        /// </summary>
         public string sRootFolderBlocOPCUAServer { get; set; } = sRootFolderBlocOPCUAServerDef;
 
-        // Nom du premier folder pour la définition des tags dans l'arcborescence du serveur OPC UA
+        /// <summary>
+        /// Nom du premier dossier pour la définition des tags dans l'arborescence du serveur OPC UA.
+        /// </summary>
         public string sRootFolderTagsOPCUAServer { get; set; } = sRootFolderTagsOPCUAServerDef;
 
-        // Nom de la station S5-1500 H cible pour l'accès en OPC UA
+        /// <summary>
+        /// Nom de la station S7-1500 H cible pour l'accès en OPC UA.
+        /// </summary>
         public string sPLCS71500HTargetStationName { get; set; }
 
-        // Nom de la station PLC S7-1500 gateway numéro 1
-        public string sPLCS71500GatewayStationName_01 { get; set; }
-
-        // Nom de la station PLC S7-1500 gateway numéro 2
-        public string sPLCS71500GatewayStationName_02 { get; set; }
-
-        // Chemin complet de l'application
+        /// <summary>
+        /// Chemin complet de l'application.
+        /// </summary>
         public string sPathApplication { get; set; }
 
-        // Nom du DB OPC UA de mapping
+        /// <summary>
+        /// Nom du DB OPC UA de mapping.
+        /// </summary>
         public string sDBNameMappingOPCUA { get; set; }
 
-        // Namespace pour le serveur OPC UA
+        /// <summary>
+        /// Namespace pour le serveur OPC UA.
+        /// </summary>
         public string sOPCUAServerNamespace { get; set; }
 
-        // Flag de validation de la génération des nodeid avec le nouveau dans la famille
+        /// <summary>
+        /// Flag pour valider la génération des NodeId uniquement avec le nouveau nom dans la famille.
+        /// </summary>
         public bool bNewNameBlockOnlyForTagNodeId { get; set; }
 
         #endregion
 
         /// <summary>
-        /// Constructeur par defaut de la classe
+        /// Constructeur par défaut de la classe.
         /// </summary>
         public PLC_ProjectDefinitions()
         {
-        }
-
-        /// <summary>
-        /// Constructeur évolué de la classe
-        /// <paramref name="sOpennessLibraryPath"> Chemin du répertoire pour la partie openness </paramref>/>
-        /// <paramref name="sProjectUserName"> UserName pour accès au projet Tia </paramref>/>
-        /// <paramref name="sCryptPasswordUser"> Mot de passe chiffré pour l'utilisateur </paramref>/>
-        /// </summary>
-        public PLC_ProjectDefinitions(string sOpennessLibraryPath, string sUserName, string sCryptPasswordUser)
-        {
-            m_sOpennessLibraryPath = sOpennessLibraryPath;
-            m_sUserName = sUserName;
-            // Déchiffrement du mot de passe            
-            CryptString crypt = new CryptString(true);
-            m_sUncryptPasswordUser = crypt.Decrypt(sCryptPasswordUser);
         }
 
     }

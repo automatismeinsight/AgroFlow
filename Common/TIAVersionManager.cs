@@ -5,19 +5,40 @@ using System.Windows.Forms;
 
 namespace Common
 {
+    /// <summary>
+    /// Provides utilities for managing the current TIA Portal version and validating Openness DLLs.
+    /// </summary>
     public static class TIAVersionManager
     {
+        /// <summary>
+        /// Holds the current selected TIA Portal version.
+        /// </summary>
         private static string _currentVersion;
+
+        /// <summary>
+        /// Event triggered when the TIA version changes.
+        /// The new version string is provided as event data.
+        /// </summary>
         public static event EventHandler<string> VersionChanged;
-        // Liste des DLL requises pour Openness
+
+        /// <summary>
+        /// List of required Openness DLLs for TIA.
+        /// </summary>
         public static readonly string[] OpennessDlls = new string[]
         {
-        "Siemens.Engineering.dll",
-        "Siemens.Engineering.Hmi.dll"
+            "Siemens.Engineering.dll",
+            "Siemens.Engineering.Hmi.dll"
         };
 
+        /// <summary>
+        /// Indicates if it is the first version selection in the current session.
+        /// </summary>
         public static bool IsFirstSelection { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets the current TIA Portal version.
+        /// Triggers the VersionChanged event if the value changes.
+        /// </summary>
         public static string CurrentVersion
         {
             get => _currentVersion;
@@ -31,12 +52,20 @@ namespace Common
             }
         }
 
-        // Méthode de commodité pour définir la version
+        /// <summary>
+        /// Sets the current TIA Portal version.
+        /// </summary>
+        /// <param name="version">The version string to set as current.</param>
         public static void SetVersion(string version)
         {
             CurrentVersion = version;
         }
 
+        /// <summary>
+        /// Gets the full path for a requested Openness DLL for the current TIA version.
+        /// </summary>
+        /// <param name="assemblyName">The DLL file name to look for.</param>
+        /// <returns>The full DLL path if available, otherwise null.</returns>
         public static string GetOpennessDllPath(string assemblyName)
         {
             string tiaVersion = CurrentVersion;
@@ -48,7 +77,10 @@ namespace Common
             return null;
         }
 
-        // Cette méthode vérifie si toutes les DLL requises sont disponibles
+        /// <summary>
+        /// Checks if all required Openness DLLs are available for the current TIA version.
+        /// </summary>
+        /// <returns>True if all DLLs are available, otherwise false.</returns>
         public static bool AreAllDllsAvailable()
         {
             if (string.IsNullOrEmpty(CurrentVersion))
@@ -64,9 +96,17 @@ namespace Common
         }
     }
 
+    /// <summary>
+    /// Provides methods for dynamic assembly loading and control management related to TIA Openness.
+    /// </summary>
     public static class TIAAssemblyLoader
     {
-        // Gestionnaire d'événements pour résoudre les assemblies
+        /// <summary>
+        /// Event handler for resolving TIA Openness assemblies dynamically.
+        /// </summary>
+        /// <param name="sender">The event sender (not used).</param>
+        /// <param name="args">Assembly resolve event arguments.</param>
+        /// <returns>The loaded assembly if found, otherwise null.</returns>
         public static Assembly ResolveAssembly(object sender, ResolveEventArgs args)
         {
             string shortAssemblyName = new AssemblyName(args.Name).Name;
@@ -80,18 +120,21 @@ namespace Common
 
                 if (!string.IsNullOrEmpty(dllPath))
                 {
-                    Console.WriteLine($"Chargement de {shortAssemblyName} depuis {dllPath}");
+                    Console.WriteLine($"Loading {shortAssemblyName} from {dllPath}");
                     return Assembly.LoadFrom(dllPath);
                 }
                 else
                 {
-                    Console.WriteLine($"Échec de chargement: {shortAssemblyName} introuvable");
+                    Console.WriteLine($"Failed to load: {shortAssemblyName} not found");
                 }
             }
             return null;
         }
 
-        // Chargement forcé des assemblies principales
+        /// <summary>
+        /// Forces the loading of all main Openness assemblies for the current TIA version.
+        /// Logs success or error information to the console.
+        /// </summary>
         public static void ForceLoadAssemblies()
         {
             try
@@ -101,33 +144,36 @@ namespace Common
                     string dllPath = TIAVersionManager.GetOpennessDllPath(dllName);
                     if (!string.IsNullOrEmpty(dllPath))
                     {
-                        Console.WriteLine($"Chargement forcé de {dllName} depuis {dllPath}");
+                        Console.WriteLine($"Forcing load of {dllName} from {dllPath}");
                         Assembly assembly = Assembly.LoadFrom(dllPath);
-                        Console.WriteLine($"DLL chargée avec succès: {assembly.FullName}");
+                        Console.WriteLine($"DLL loaded successfully: {assembly.FullName}");
                     }
                     else
                     {
-                        Console.WriteLine($"ERREUR: Impossible de trouver {dllName}");
+                        Console.WriteLine($"ERROR: Cannot find {dllName}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception lors du chargement des DLLs: {ex.Message}");
+                Console.WriteLine($"Exception during DLL loading: {ex.Message}");
             }
         }
 
-        // Méthode pour configurer un contrôle avec les gestionnaires d'événements
+        /// <summary>
+        /// Configures a control to use dynamic assembly resolving and handles unloading on version change.
+        /// </summary>
+        /// <param name="control">The control to configure.</param>
         public static void SetupControl(Control control)
         {
-            // Enregistrer les gestionnaires d'événements
+            // Register event handlers
             AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
             TIAVersionManager.VersionChanged += (s, newVersion) => UnloadControl(control, newVersion);
 
-            // Forcer le chargement des assemblies
+            // Force load assemblies
             ForceLoadAssemblies();
 
-            // S'assurer que les gestionnaires sont désenregistrés lors de la suppression
+            // Unregister event handlers when the control is disposed
             control.Disposed += (s, e) =>
             {
                 AppDomain.CurrentDomain.AssemblyResolve -= ResolveAssembly;
@@ -135,7 +181,11 @@ namespace Common
             };
         }
 
-        // Méthode pour décharger proprement un contrôle
+        /// <summary>
+        /// Unloads and disposes a control when the TIA version changes.
+        /// </summary>
+        /// <param name="control">The control to unload.</param>
+        /// <param name="newVersion">The new TIA version string.</param>
         private static void UnloadControl(Control control, string newVersion)
         {
             if (control.InvokeRequired)
@@ -148,6 +198,10 @@ namespace Common
             }
         }
 
+        /// <summary>
+        /// Helper method for removing and disposing a control.
+        /// </summary>
+        /// <param name="control">The control to remove and dispose.</param>
         private static void UnloadControlImpl(Control control)
         {
             if (control.Parent != null)

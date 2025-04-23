@@ -1,31 +1,50 @@
 ﻿using InterfaceLoginTest;
-using ReceptionDeProjet;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Common;
-using System.IO;
-using DocumentFormat.OpenXml.Bibliography;
-
 
 namespace InterfaceMain
 {
+    /// <summary>
+    /// Represents the main Windows Form of the application.
+    /// Manages UI components, events, and user/admin session states.
+    /// </summary>
     public partial class MainForms : Form
     {
+        /// <summary>
+        /// Indicates whether an admin user is currently connected.
+        /// </summary>
         public bool adminConnected = false;
-        public readonly ReturnLogForms returnLogForms = new ReturnLogForms(); // Create an instance of the ReturnLogForms class
-        List<string> userFunctions = new List<string> { "Aide au Diagnostic", "Reception de Projet" }; // List of functions for the user
-        List<string> adminFunctions = new List<string> { "AdminItem1", "AdminItem2" }; // List of functions for the admin
 
+        /// <summary>
+        /// Provides access to the logging form for recording actions and events.
+        /// </summary>
+        public readonly ReturnLogForms returnLogForms = new ReturnLogForms();
+
+        /// <summary>
+        /// List of available functions for a standard user.
+        /// </summary>
+        List<string> userFunctions = new List<string> { "Aide au Diagnostic", "Reception de Projet" };
+
+        /// <summary>
+        /// List of available functions for an admin user.
+        /// </summary>
+        List<string> adminFunctions = new List<string> { "AdminItem1", "AdminItem2" };
+
+        /// <summary>
+        /// Initializes a new instance of the MainForms class.
+        /// </summary>
         public MainForms()
         {
             InitializeComponent();
         }
 
-        // Method to load and set the colors for various UI elements
+        /// <summary>
+        /// Loads and applies the color scheme to UI elements.
+        /// </summary>
         private void LoadColor()
         {
             Color AgroM_Green = Color.FromArgb(175, 190, 36);
@@ -45,8 +64,10 @@ namespace InterfaceMain
             LogoutIconButton.BackColor = AgroM_Green;
         }
 
-        // Event handler for form load event
-
+        /// <summary>
+        /// Handles the form load event.
+        /// Initializes references, loads TIA versions, and restores the previous session state.
+        /// </summary>
         private void MainForms_Load(object sender, EventArgs e)
         {
             LoadColor();
@@ -86,14 +107,19 @@ namespace InterfaceMain
             }
         }
 
-        // Event handler for form closed event
+        /// <summary>
+        /// Handles the form closed event.
+        /// Exits the application.
+        /// </summary>
         private void MainForms_FormClosed(object sender, FormClosedEventArgs e)
         {
             Application.Exit();
         }
 
-        // ...
-
+        /// <summary>
+        /// Handles the function selection change event.
+        /// Loads and displays the selected function's user control.
+        /// </summary>
         private void CbFunction_SelectedIndexChanged(object sender, EventArgs e)
         {
             GbFunctions.Controls.Clear();
@@ -123,11 +149,13 @@ namespace InterfaceMain
                 GbFunctions.Controls.Add(selectedControl);
             }
 
-            // Write the selected function to the log
             returnLogForms.UpdateLog($"Function TIA changed as {CbFunction.Text}");
         }
 
-        // Event handler for TIA version selection change
+        /// <summary>
+        /// Handles the TIA version selection change event.
+        /// Updates the application state and restarts if a different version is selected.
+        /// </summary>
         private void CbTIAVersion_SelectedIndexChanged(object sender, EventArgs e)
         {
             CbFunction.Enabled = true;
@@ -156,20 +184,26 @@ namespace InterfaceMain
                 Environment.Exit(0);
             }
         }
-        // Event handler for TIA version click event
+
+        /// <summary>
+        /// Handles the TIA version combo box click event.
+        /// Resets the function group box and disables the function selection.
+        /// </summary>
         private void CbTIAVersion_Click(object sender, EventArgs e)
         {
-            // Clear the function group box
             GbFunctions.Text = "Fonction";
             GbFunctions.Controls.Clear();
 
-            // Disable the function selection combo box
             CbFunction.Text = "Sélectionner une fonction";
             CbFunction.Enabled = false;
         }
 
         #region MainMenu
-        // Event handler for undevelop button click
+
+        /// <summary>
+        /// Handles the undevelop menu button click event.
+        /// Shrinks the menu and adjusts the layout.
+        /// </summary>
         private void UndeveloppIconButton_Click(object sender, EventArgs e)
         {
             ShowMenu();
@@ -178,7 +212,10 @@ namespace InterfaceMain
             GbFunctions.Location = new Point(25, 115);
         }
 
-        // Event handler for develop button click
+        /// <summary>
+        /// Handles the develop menu button click event.
+        /// Expands the menu and adjusts the layout.
+        /// </summary>
         private void DeveloppIconButton_Click(object sender, EventArgs e)
         {
             ShowMenu();
@@ -187,7 +224,9 @@ namespace InterfaceMain
             GbFunctions.Location = new Point(25, 175);
         }
 
-        // Method to show or hide the menu
+        /// <summary>
+        /// Toggles the visibility of menu components and admin controls.
+        /// </summary>
         private void ShowMenu()
         {
             CbFunction.Visible = !CbFunction.Visible;
@@ -202,7 +241,10 @@ namespace InterfaceMain
             }
         }
 
-        // Event handler for terminal button click
+        /// <summary>
+        /// Handles the terminal icon button click event.
+        /// Displays the logging form.
+        /// </summary>
         private void IconTerminalButton_Click(object sender, EventArgs e)
         {
             returnLogForms.Show();
@@ -213,30 +255,41 @@ namespace InterfaceMain
 
         [DllImport("user32.DLL", EntryPoint = "ReleaseCapture")]
         private extern static void ReleaseCapture();
+
         [DllImport("user32.DLL", EntryPoint = "SendMessage")]
         private extern static void SendMessage(System.IntPtr hWnd, int wMsg, int wParam, int lParam);
 
-        // Event handler for mouse down event on title label
+        /// <summary>
+        /// Handles the mouse down event on the title label for window dragging.
+        /// </summary>
         private void LbTitle_MouseDown(object sender, MouseEventArgs e)
         {
             ReleaseCapture();
             SendMessage(this.Handle, 0x112, 0xf012, 0);
         }
 
-        // Event handler for mouse down event on icon
+        /// <summary>
+        /// Handles the mouse down event on the icon for window dragging.
+        /// </summary>
         private void AgromIcon_MouseDown(object sender, MouseEventArgs e)
         {
             ReleaseCapture();
             SendMessage(this.Handle, 0x112, 0xf012, 0);
         }
 
-        // Event handler for close button click
+        /// <summary>
+        /// Handles the close button click event.
+        /// Closes the application immediately.
+        /// </summary>
         private void CloseIconButton_Click(object sender, EventArgs e)
         {
             Environment.Exit(0);
         }
 
-        // Event handler for maximize button click
+        /// <summary>
+        /// Handles the maximize button click event.
+        /// Maximizes the window and updates UI elements.
+        /// </summary>
         private void MaximizeIconButton_Click(object sender, EventArgs e)
         {
             if (WindowState == FormWindowState.Normal)
@@ -252,7 +305,10 @@ namespace InterfaceMain
             CloseFullIconButton.Visible = true;
         }
 
-        // Event handler for restore button click
+        /// <summary>
+        /// Handles the restore button click event.
+        /// Restores the window to its normal state and updates UI elements.
+        /// </summary>
         private void CloseFullIconButton_Click(object sender, EventArgs e)
         {
             WindowState = FormWindowState.Normal;
@@ -263,13 +319,18 @@ namespace InterfaceMain
             MaximizeIconButton.Visible = true;
         }
 
-        // Event handler for minimize button click
+        /// <summary>
+        /// Handles the minimize button click event.
+        /// Minimizes the window.
+        /// </summary>
         private void MinimizeIconButton_Click(object sender, EventArgs e)
         {
             WindowState = FormWindowState.Minimized;
         }
 
-        // Method to rescale and reposition form elements
+        /// <summary>
+        /// Rescales and repositions the form's controls according to the current window size.
+        /// </summary>
         private void RescaleForms()
         {
             CloseIconButton.Location = new Point(this.Width - 50, 0);
@@ -289,6 +350,10 @@ namespace InterfaceMain
             BottomBorder.Location = new Point(0, this.Height - 10);
         }
 
+        /// <summary>
+        /// Handles the login icon button click event.
+        /// Opens the login form and updates the UI based on authentication result.
+        /// </summary>
         private void LoginIconButton_Click(object sender, EventArgs e)
         {
             using (LoginForms loginForms = new LoginForms())
@@ -316,9 +381,11 @@ namespace InterfaceMain
                     returnLogForms.UpdateLog("Connection failed");
                 }
             }
-            
         }
 
+        /// <summary>
+        /// Updates the UI and available functions for an admin connection.
+        /// </summary>
         private void AdminConnected()
         {
             adminConnected = true;
@@ -330,6 +397,10 @@ namespace InterfaceMain
             TerminalIconButton.Enabled = true;
         }
 
+        /// <summary>
+        /// Handles the logout icon button click event.
+        /// Logs out the user and resets UI states.
+        /// </summary>
         private void LogoutIconButton_Click(object sender, EventArgs e)
         {
             LogoutIconButton.Visible = false;
@@ -350,17 +421,18 @@ namespace InterfaceMain
             UpdateCbFunctions();
         }
 
+        /// <summary>
+        /// Updates the items in the function combo box based on the user/admin status.
+        /// </summary>
         private void UpdateCbFunctions()
         {
             CbFunction.Items.Clear();
 
-            // Add the user functions to the combo box
             foreach (var item in userFunctions)
             {
                 CbFunction.Items.Add(item);
             }
 
-            // Add the admin functions to the combo box
             if (adminConnected)
             {
                 foreach (var item in adminFunctions)
@@ -369,7 +441,6 @@ namespace InterfaceMain
                 }
             }
         }
-        // TEST POUR GITHUB 
         #endregion
     }
 }

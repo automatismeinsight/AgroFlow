@@ -1,39 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace GlobalsOPCUA
 {
+    /// <summary>
+    /// Représente une variable du TIA Portal, avec ses propriétés, parent et informations de mapping OPC UA.
+    /// </summary>
     public class TiaPortalVariable
     {
-        //Nom de la variable
+        /// <summary>Nom de la variable.</summary>
         public string sVariableName { get; set; }
-        //Type de la variable
+        /// <summary>Type de la variable.</summary>
         public string sVariableType { get; set; }
-        //Type de la variable bute
+        /// <summary>Type brut de la variable.</summary>
         public string sRawType { get; set; }
-        //Bloc parent si il existe
+        /// <summary>Bloc parent si il existe.</summary>
         public TiaPortalBloc oParentBloc { get; set; }
-        //Id de la variable
+        /// <summary>Identifiant de la variable.</summary>
         public int iVariableId { get; set; }
-        //Noeud folder parent
+        /// <summary>Noeud parent dans l'arborescence.</summary>
         public TreeNode oParentNode { get; set; }
-        //Definition du commentaire sur la variable (Description dans le fichier OPC UA)
+        /// <summary>Description/commentaire OPC UA.</summary>
         public string sComment { get; set; }
-        //Definition de l'adresse de variable de mapping
+        /// <summary>Adresse de mapping OPC UA.</summary>
         public string sMappingAddress { get; set; }
-        //Definition de la variable ReadOnly
+        /// <summary>Indique si la variable est en lecture seule.</summary>
         public bool bIsReadOnly { get; set; }
-        //Definition du chemin de variable courant
+        /// <summary>Chemin courant de la variable dans l'arborescence.</summary>
         public string sCurrentPath { get; set; }
 
-
-        //Constructeur de la classe
-        public TiaPortalVariable(string sVariableName, string sVariableType, string sRawType, 
-                                 TiaPortalBloc oParentBloc, int iVariableId, TreeNode oParentNode, 
+        /// <summary>
+        /// Constructeur de base de la classe <see cref="TiaPortalVariable"/>.
+        /// </summary>
+        public TiaPortalVariable(string sVariableName, string sVariableType, string sRawType,
+                                 TiaPortalBloc oParentBloc, int iVariableId, TreeNode oParentNode,
                                  string sComment, string sCurrentPath)
         {
             this.sVariableName = sVariableName;
@@ -47,7 +47,10 @@ namespace GlobalsOPCUA
             this.bIsReadOnly = false;
             this.sCurrentPath = sCurrentPath;
         }
-        //Constructeur de la classe évolué
+
+        /// <summary>
+        /// Constructeur évolué de la classe <see cref="TiaPortalVariable"/>.
+        /// </summary>
         public TiaPortalVariable(string sName, TiaPortalBloc oBlocParent, string sType, string sRawType, int iId, TreeNode oNodeParent, string sCommentar,
                                  string sMappingVariable, bool bReadOnly, string sCurrentPathVariable)
         {
@@ -62,22 +65,27 @@ namespace GlobalsOPCUA
             this.bIsReadOnly = bReadOnly;
             this.sCurrentPath = sCurrentPathVariable;
         }
-
     }
+
+    /// <summary>
+    /// Représente un bloc de programme TIA Portal, avec ses variables et propriétés associées.
+    /// </summary>
     public class TiaPortalBloc
     {
-        //Nom du bloc
+        /// <summary>Nom du bloc.</summary>
         public string sBlocName { get; set; }
-        //Liste des variables du bloc
+        /// <summary>Liste des variables du bloc.</summary>
         public List<TiaPortalVariable> loListVariables { get; set; }
-        //Node folder reference
+        /// <summary>Noeud parent dans l'arborescence.</summary>
         public TreeNode oParentNode { get; set; }
-        //Id du folder
+        /// <summary>Identifiant du dossier parent.</summary>
         public int iFolderId { get; set; }
-        //Nouveau nom dans le cas d'une régénération
+        /// <summary>Nouveau nom dans le cas d'une régénération.</summary>
         public string sNewBlocName { get; set; }
 
-        //Constructeur de la classe
+        /// <summary>
+        /// Constructeur de la classe <see cref="TiaPortalBloc"/>.
+        /// </summary>
         public TiaPortalBloc(string sBlocName, TreeNode oParentNode, int iFolderId, string sNewBlocName)
         {
             this.sBlocName = sBlocName;
@@ -87,81 +95,85 @@ namespace GlobalsOPCUA
             this.sNewBlocName = sNewBlocName;
         }
     }
+
+    /// <summary>
+    /// Représente un dossier (folder) dans l'arborescence TIA Portal.
+    /// </summary>
     public class TiaPortalFolder
     {
-        //Nom du Folder
+        /// <summary>Nom du dossier.</summary>
         public string sFolderName { get; set; }
-        //Chemin complet du Folder
+        /// <summary>Identifiant du dossier.</summary>
         public int iFolderId { get; set; }
 
-        //Constructeur de la classe
+        /// <summary>
+        /// Constructeur de la classe <see cref="TiaPortalFolder"/>.
+        /// </summary>
         public TiaPortalFolder(string sFolderName, int iFolderId)
         {
             this.sFolderName = sFolderName;
             this.iFolderId = iFolderId;
         }
     }
+
+    /// <summary>
+    /// Modèle de projet TIA Portal pour l'automate cible, avec gestion de l'arborescence blocs/tags/variables système.
+    /// </summary>
     public class TiaProjectForCPU
     {
         #region CONSTANTES
-        // Valeur du premier identifiant pour les folders
         private const int iStartFolderId = 1200;
         #endregion
+
         #region VARIABLES
-        // Dernier identifiant disponible pour affectation dans les folders et variables
         private int iLastFolderVariableId;
-        //Nom du projet TIA Portal cible pour l'automate passerelle
+        /// <summary>Nom du projet TIA Portal cible pour l'automate passerelle.</summary>
         public string sProjectName { get; set; }
-        // Nom de la station cible pour l'automate passerelle
+        /// <summary>Nom de la station cible pour l'automate passerelle.</summary>
         public string sStationName { get; set; }
-        // Nom de la racine pour les blocs
+        /// <summary>Nom de la racine pour les blocs.</summary>
         public string sRootBlocsName { get; set; }
-        // Nom de la racine pour les tags
+        /// <summary>Nom de la racine pour les tags.</summary>
         public string sRootTagsName { get; set; }
-        // Nom du DB pour le mapping OPC UA
+        /// <summary>Nom du DB pour le mapping OPC UA.</summary>
         public string sDBNameMappingOPCUA { get; set; }
-        // Noed arborescence pour les folders et les blocs
         private TreeNode oRootNodefolderBlocks;
-        public TreeNode GetRootNodefolderBlocks()
-        {
-            return oRootNodefolderBlocks;
-        }
-        // Noed arborescence pour les folders et les tags
+        /// <summary>Récupère le noeud racine des blocs.</summary>
+        public TreeNode GetRootNodefolderBlocks() => oRootNodefolderBlocks;
         private TreeNode oRootNodefolderTags;
-        public TreeNode GetRootNodefolderTags()
-        {
-            return oRootNodefolderTags;
-        }
-        // Noed arborescence pour les folders et les variables systeme
+        /// <summary>Récupère le noeud racine des tags.</summary>
+        public TreeNode GetRootNodefolderTags() => oRootNodefolderTags;
         private TreeNode oRootNodefolderSystemVariables;
-        public TreeNode GetRootNodefolderSystemVariables()
-        {
-            return oRootNodefolderSystemVariables;
-        }
-        // Repertoire par defaut pour le système
+        /// <summary>Récupère le noeud racine des variables système.</summary>
+        public TreeNode GetRootNodefolderSystemVariables() => oRootNodefolderSystemVariables;
         private string sRootVariableSystemeName = @"System";
-        // Liste des blocs
+        /// <summary>Liste des blocs du projet.</summary>
         public List<TiaPortalBloc> loListBlocs { get; set; } = new List<TiaPortalBloc>();
-        // Liste des variables sous le folder tags
+        /// <summary>Liste des variables sous le folder tags.</summary>
         public List<TiaPortalVariable> loListVariablesTags { get; set; } = new List<TiaPortalVariable>();
-        // Liste des variables sous le folder des variables systeme
+        /// <summary>Liste des variables système.</summary>
         public List<TiaPortalVariable> loListVariablesSystem { get; set; } = new List<TiaPortalVariable>();
-        //Nom du controlleur automate dans le projet le source
+        /// <summary>Nom du contrôleur automate dans le projet source.</summary>
         public string sControllerPLCName { get; set; }
-        // Répertoire par défaut pour le system H
+        /// <summary>Répertoire par défaut pour le système H.</summary>
         public string sRootSystemName = @"System";
-        // Répertoire par défaut pour les variables system H
+        /// <summary>Répertoire par défaut pour les variables système H.</summary>
         public string sRootVariableSystemName = @"Variables_PLC_H";
         #endregion
 
-        // Constructeur de la classe par défaut
+        /// <summary>
+        /// Constructeur par défaut de la classe <see cref="TiaProjectForCPU"/>.
+        /// </summary>
         public TiaProjectForCPU()
         {
             iLastFolderVariableId = iStartFolderId;
         }
 
-        // Constructeur de la classe
-        public TiaProjectForCPU(string sProjectName, string sStationName, string sRootBlocsName, string sRootTagsName, string sDBNameMappingOPCUA) : this()
+        /// <summary>
+        /// Constructeur avec initialisation de toutes les propriétés principales.
+        /// </summary>
+        public TiaProjectForCPU(string sProjectName, string sStationName, string sRootBlocsName, string sRootTagsName, string sDBNameMappingOPCUA)
+            : this()
         {
             this.sProjectName = sProjectName;
             this.sStationName = sStationName;
@@ -169,7 +181,7 @@ namespace GlobalsOPCUA
             this.sRootTagsName = sRootTagsName;
             this.sDBNameMappingOPCUA = sDBNameMappingOPCUA;
 
-            // Ajout d'un folder root par defaut s'il l'on en défini un
+            // Ajoute un folder root par défaut si défini
             if (this.sRootBlocsName.Length != 0)
             {
                 oRootNodefolderBlocks = new TreeNode(this.sRootBlocsName);
@@ -184,7 +196,9 @@ namespace GlobalsOPCUA
             oRootNodefolderSystemVariables.Tag = new TiaPortalFolder(sRootVariableSystemeName, GetNextFolderVariableId());
         }
 
-        // Calcul et retournl'identifiant du prochain folder ou variable
+        /// <summary>
+        /// Retourne et incrémente l'identifiant du prochain folder ou variable.
+        /// </summary>
         public int GetNextFolderVariableId()
         {
             return iLastFolderVariableId++;

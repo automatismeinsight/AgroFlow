@@ -4,64 +4,95 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Xml;
-using AideAuDiagnostic.TiaExplorer;
-using DocumentFormat.OpenXml.Wordprocessing;
 using GlobalsOPCUA;
 using OpennessV16;
 using Siemens.Engineering;
-using Siemens.Engineering.Compiler;
-using Siemens.Engineering.Hmi.Screen;
-using Siemens.Engineering.HmiUnified.UI.Controls;
 using Siemens.Engineering.HW;
 using Siemens.Engineering.HW.Features;
-using Siemens.Engineering.Online;
 using Siemens.Engineering.SW;
 using Siemens.Engineering.SW.Blocks;
-using Siemens.Engineering.SW.Blocks.Interface;
-using Siemens.Engineering.SW.ExternalSources;
 using Siemens.Engineering.SW.Tags;
-using Siemens.Engineering.SW.Types;
 
 namespace AideAuDiagnostic.TiaExplorer
 {
-    // Classe de traitement de l'exploration d'un projet TIA Portal
+    /// <summary>
+    /// Handles the exploration and analysis of a TIA Portal project, including project and station selection,
+    /// device information retrieval, and providing access to project definitions, openness interface, and Excel/FC data.
+    /// </summary>
     public class ExploreTiaPLC
     {
         #region VARIABLES
-        // Objet de définition du projet TIA Portal
+
+        /// <summary>
+        /// Project definitions object for the TIA Portal project.
+        /// </summary>
         private readonly PLC_ProjectDefinitions oTiaProjectDefinitions;
+
+        /// <summary>
+        /// Gets the TIA Portal project definitions.
+        /// </summary>
         public PLC_ProjectDefinitions GetTiaProjectDefinitions() { return oTiaProjectDefinitions; }
 
-        // Interface Openness sur Tia Portal
+        /// <summary>
+        /// Openness interface for TIA Portal.
+        /// </summary>
         public HMATIAOpenness_V16 oTiainterface = new HMATIAOpenness_V16();
+
+        /// <summary>
+        /// Gets the TIA Portal openness interface.
+        /// </summary>
         public HMATIAOpenness_V16 GetTiainterface() { return oTiainterface; }
 
-        // Variable to store the selected TIA Portal project
+        /// <summary>
+        /// Stores whether a TIA Portal project is currently selected.
+        /// </summary>
         public bool bTiaPortalProjectIsSelected = false;
+
+        /// <summary>
+        /// Gets whether a TIA Portal project is selected.
+        /// </summary>
         public bool GetTiaPortalProjectIsSelected() { return bTiaPortalProjectIsSelected; }
 
-        // Objet de traitement des fichiers Xml
+        /// <summary>
+        /// XML document handler for block export and parsing.
+        /// </summary>
         private readonly XmlDocument oXmlDocument;
 
-        //Donnees du fichiers excel
+        /// <summary>
+        /// Excel data dictionary loaded for block/tag mapping.
+        /// </summary>
         private readonly Dictionary<Tuple<int, int>, object> dData;
 
-        //Infos pour le FC
+        /// <summary>
+        /// Data collection list for function code (FC) extraction.
+        /// </summary>
         private readonly List<string> lsDataCollection;
         #endregion
-        // Constructeur de la classe
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExploreTiaPLC"/> class.
+        /// </summary>
+        /// <param name="oTiaProjectDefinitions">Project definitions instance for the TIA Portal project.</param>
+        /// <param name="dData">Excel data dictionary for mapping.</param>
+        /// <param name="lsDataCollection">List for collecting data about FCs.</param>
         public ExploreTiaPLC(PLC_ProjectDefinitions oTiaProjectDefinitions, Dictionary<Tuple<int, int>, object> dData, List<string> lsDataCollection)
         {
             this.oTiaProjectDefinitions = oTiaProjectDefinitions;
             this.oXmlDocument = new XmlDocument();
-            //Excel
+
             this.dData = dData;
-            //FC
+
             this.lsDataCollection = lsDataCollection;
 
         }
-        #region SÉLECTION DE LA CIBLE
-        //Selection d'un projet TIA Portal
+
+        #region TARGET SELECTION
+
+        /// <summary>
+        /// Allows the user to select a TIA Portal project, either currently open or by specifying a path.
+        /// </summary>
+        /// <param name="sError">Outputs any error encountered during selection.</param>
+        /// <returns>True if a project was successfully selected, otherwise false.</returns>
         public bool ChooseTiaProject(ref string sError)
         {
             bool bRet;
@@ -72,10 +103,9 @@ namespace AideAuDiagnostic.TiaExplorer
 
             TiaPortalProjectSelection oTiaSelection = new TiaPortalProjectSelection();
 
-            // Récupération de la liste des instances de projets Tia Portal en cours
+            // Retrieve list of running TIA Portal project instances
             List<TiaPortalProcess> loTiaPortalCurrentProcess = HMATIAOpennessCurrentInstance.GetCurrentTiaPortalInstance();
 
-            // Boucle de traitement de la liste des Tia Portal en cours de traitement
             foreach (TiaPortalProcess tiaprocess in loTiaPortalCurrentProcess)
             {
                 try
@@ -89,23 +119,19 @@ namespace AideAuDiagnostic.TiaExplorer
                 }
             }
 
-            // Affichage de la boite de dialogue
             oTiaSelection.ShowDialog();
 
-            // On teste si un projet a été sélectionné ?
             if (oTiaSelection.bOneProjectSelected == true)
             {
-                // on teste quel type de projet on a choisi ?
                 switch (oTiaSelection.iTiaProjectSelectType)
                 {
-                    // Cas d'un projet Tia Portal en cours
                     case TiaPortalProjectSelection.TiaProjectSelectionType.CurrentTiaProject:
                         if (oTiainterface.AttachTiaPortalInstance(oTiaSelection.GetSelectCurrentProject().GetTiaPortalProcess(), ref sinfo) == false)
                         {
                             sError = sinfo;
                             bRet = false;
                         }
-                        // On associe le projet Tia Portal
+
                         oTiainterface.SetTIAPortalProject(oTiaSelection.GetSelectCurrentProject().GetTiaPortalProcess().ProjectPath.FullName);
                         if (oTiainterface.OpenCurrentTIAProjectFromInstance(ref sinfo, ref bCriticalError) == false)
                         {
@@ -113,10 +139,10 @@ namespace AideAuDiagnostic.TiaExplorer
                             bRet = false;
                         }
                         break;
-                    // Cas d'un nouveau projet Tia Portal
+
                     case TiaPortalProjectSelection.TiaProjectSelectionType.NewTiaProject:
                         oTiainterface = new HMATIAOpenness_V16(oTiaProjectDefinitions.bWithUITiaPortal, ref sinfo);
-                        // Ouverture du projet avec le nouveau chemin
+
                         oTiainterface.SetTIAPortalProject(oTiaSelection.sNewTiaPortalSelectionPath);
                         if (oTiainterface.OpenTIAProject(oTiaProjectDefinitions.GetUserName(), oTiaProjectDefinitions.GetUncryptPasswordUser(), ref sinfo, ref bCriticalError) == false)
                         {
@@ -126,8 +152,6 @@ namespace AideAuDiagnostic.TiaExplorer
                         break;
                 }
                 bTiaPortalProjectIsSelected = true;
-
-                //FIN SELECTION/OUVERTURE DE PROJET TIA
                 bRet = true;
             }
             else
@@ -137,36 +161,36 @@ namespace AideAuDiagnostic.TiaExplorer
             }
             return bRet;
         }
-        // Method to get the TIA Station from the project list
+
+        /// <summary>
+        /// Prompts the user to select a PLC station from the TIA Portal project.
+        /// </summary>
+        /// <param name="sStationName">Outputs the selected station name.</param>
+        /// <param name="sError">Outputs any error encountered during selection.</param>
+        /// <returns>True if a station was successfully selected, otherwise false.</returns>
         public bool GetTiaStationFromProjectList(ref string sStationName, ref string sError)
         {
             bool bRet = true;
             List<Device> loListDevice = new List<Device>();
 
-
             while (true)
             {
                 sStationName = string.Empty;
-                // Lancement de l'énumération des stations dans le projet
                 if (oTiainterface.EnumerationDevice(ref loListDevice, ref sError) == false)
                 {
                     bRet = false;
                     break;
                 }
 
-                // Affichage de la boite de sélection d'une station du projet
                 TiaPortalStationSelection tiaportalstationselection = new TiaPortalStationSelection();
 
-            // Boucle de traitement de la liste des devices en cours de traitement
-            foreach (Device device in loListDevice)
-                { 
+                foreach (Device device in loListDevice)
+                {
                     tiaportalstationselection.dDictionnaryTiaStationList.Add(device.Name, new HMATiaPortalDevice(device));
                 }
 
-                // Affichage de la boite de dialogue
                 tiaportalstationselection.ShowDialog();
 
-                // Test si une station a été sélectionnée ?
                 if (tiaportalstationselection.bOneStationSelected == true)
                 {
                     sStationName = tiaportalstationselection.GetSelectCurrentStation().GetPortalDevice().Name;
@@ -183,71 +207,21 @@ namespace AideAuDiagnostic.TiaExplorer
 
             return bRet;
         }
-
-        // This method retrieves PLC device information from the project.
-        public List<(string Name, string IPAddress)> GetPlcDevicesInfo()
-        {
-            List<(string, string)> plcInfoList = new List<(string, string)>();
-
-            try
-            {
-                foreach (Device device in oTiainterface.m_oTiaProject.Devices)
-                {
-                    DeviceItem mainModule = null;
-                    string deviceName = device.Name;
-                    string watchdogTime = "Non défini";
-                       
-                    //Vérifie que le device n'est pas vide
-                    if (device.DeviceItems.Count > 1)
-                    {
-                        //Recherche de la CPU
-                        foreach(DeviceItem item in device.DeviceItems)
-                        {
-                            if (item.GetAttribute("Name").ToString().Contains("AP")) mainModule = item;
-                        }
-
-                        try
-                        {
-                            if (mainModule != null)
-                            {
-                                // Approche alternative pour obtenir les informations de protection
-                                try
-                                {
-                                    
-                                 
-                                    
-                                    
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine($"Erreur lors de l'accès aux propriétés de sécurité: {ex.Message}");
-                                }
-                            }
-                    }
-                        catch
-                        {
-                            Console.WriteLine($"Erreur module vide");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Le device est vide");
-                    }
-                        plcInfoList.Add((deviceName, watchdogTime));
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Erreur lors de la récupération des informations des PLC : " + ex.Message);
-            }
-
-            return plcInfoList;
-        }
-
         #endregion
-        #region LECTURE DU CODE DE LA CPU
-        //Methode d'énumération des folders, blocks, tags et paramètres
-        public bool EnumerateFoldersBlocksParametersAndTagsForOPCUA(ref TiaProjectForCPU oTiaProjectForCPU, string sStationNameForPLC, ref string sErrorText)
+        #region CPU CODE READING
+
+        /// <summary>
+        /// Enumerates all folders, blocks, tags, and parameters for OPC UA export and mapping
+        /// for a specific PLC station in the TIA project.
+        /// </summary>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="sStationNameForPLC">The name of the PLC station to analyze.</param>
+        /// <param name="sErrorText">Outputs any error encountered during enumeration.</param>
+        /// <returns>True if successful, otherwise false.</returns>
+        public bool EnumerateFoldersBlocksParametersAndTagsForOPCUA(
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            string sStationNameForPLC,
+            ref string sErrorText)
         {
             bool bRet = true;
             List<Device> loListDevice = new List<Device>();
@@ -259,100 +233,98 @@ namespace AideAuDiagnostic.TiaExplorer
 
             while (true)
             {
-                // Récupération de l'objet station correspondant à l'automate 
-                // Lancement de l'énumération des stations dans le projet
                 if (oTiainterface.EnumerationDevice(ref loListDevice, ref sErrorText) == false)
                 {
                     bRet = false;
                     break;
                 }
-                // Recherche de la station 
+
                 foreach (Device oDevice in loListDevice)
                 {
-                    Console.WriteLine("Nom du device : " + oDevice.Name);
                     if (oDevice.Name == sStationNameForPLC)
                     {
                         oStationPLC = oDevice;
                         break;
                     }
                 }
-                // Test si la station a été trouvée ?
+
                 if (oStationPLC == null)
                 {
-                    sErrorText = string.Format(@"Station '{0}' for PLC not found !", sStationNameForPLC);
+                    sErrorText = string.Format("Station '{0}' for PLC not found !", sStationNameForPLC);
                     bRet = false;
                     break;
                 }
-                // Enumération de tous les blocs et paramètres avec le repère 
+
                 if (EnumerateBlocksAndParameterOPCUAMarck(ref oTiaProjectForCPU, oStationPLC, ref oControllerPLC, ref sErrorText) == false)
                 {
-                    Console.WriteLine("Probleme Enum 1");
                     bRet = false;
                     break;
                 }
-                // Enumération de tous les tags avec repère
-                Console.WriteLine("Réussite Enum 1");
+
                 if (EnumerateTagsWithOPCUAMarck(ref oTiaProjectForCPU, oControllerPLC, ref sErrorText) == false)
                 {
-                    Console.WriteLine("Probleme Enum 2");
                     bRet = false;
                     break;
                 }
-                Console.WriteLine("Réussite Enum 2");
-                // Enumération de tous les variables system de diagnostic de l'automate pour la remontée vers les passerelles
+
                 if (EnumerateVariableSystemTags(ref oTiaProjectForCPU, ref sErrorText) == false)
                 {
-                    Console.WriteLine("Probleme Enum 3");
                     bRet = false;
                     break;
                 }
-                Console.WriteLine("Réussite Enum 3");
                 break;
             }
 
             return bRet;
         }
-        //Méthode d'énumération des blocs et paramètres
-        bool EnumerateBlocksAndParameterOPCUAMarck(ref TiaProjectForCPU oTiaProjectForcCPU, Device oStationPLC, ref PlcSoftware oControllerPLC, ref string sErrorText)
+
+        /// <summary>
+        /// Enumerates all PLC blocks and parameters with the OPC UA mark for the given station.
+        /// </summary>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oStationPLC">The PLC device object.</param>
+        /// <param name="oControllerPLC">Reference to the PLC software controller object.</param>
+        /// <param name="sErrorText">Outputs any error encountered during enumeration.</param>
+        /// <returns>True if successful, otherwise false.</returns>
+        bool EnumerateBlocksAndParameterOPCUAMarck(
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            Device oStationPLC,
+            ref PlcSoftware oControllerPLC,
+            ref string sErrorText)
         {
             bool bRet = true;
             PlcSoftware oControllertarget = null;
 
             while (true)
             {
-                //Récupération du controllertarget
                 DeviceItem oDeviceItemToGetService = TryToFoundDeviceItemInDevice(oStationPLC);
                 if (oDeviceItemToGetService == null)
                 {
-                    sErrorText = @"Impossible to found PLC device item in device";
+                    sErrorText = "Impossible to found PLC device item in device";
                     bRet = false;
                     break;
                 }
+
                 SoftwareContainer oSoftwareContainer = oDeviceItemToGetService.GetService<SoftwareContainer>() as SoftwareContainer;
                 oControllertarget = oSoftwareContainer.Software as PlcSoftware;
                 if (oControllertarget == null)
                 {
-                    sErrorText = @"controllertarget is null in this device";
+                    sErrorText = "controllertarget is null in this device";
                     bRet = false;
                     break;
                 }
 
-                //On affecte le PLC pour la fonction d'énumération des tags dans la méthode suivante
                 oControllerPLC = oControllertarget;
-
-                oTiaProjectForcCPU.sControllerPLCName = oControllerPLC.Name;
+                oTiaProjectForCPU.sControllerPLCName = oControllerPLC.Name;
 
                 try
                 {
-                    //Recherche de tous les blocs présents dans la racine du projet CPU
-                    SearchAllBlocInRootProgramFolder(oControllertarget, ref oTiaProjectForcCPU, oTiaProjectForcCPU.GetRootNodefolderBlocks());
-
-                    //Balayage de tous les folders de la racine et les sous folders et les blocs associés
-                    SearchAllFolderAndBlocInRootProgramFolder(oControllertarget, ref oTiaProjectForcCPU, oTiaProjectForcCPU.GetRootNodefolderBlocks());
+                    SearchAllBlocInRootProgramFolder(oControllertarget, ref oTiaProjectForCPU, oTiaProjectForCPU.GetRootNodefolderBlocks());
+                    SearchAllFolderAndBlocInRootProgramFolder(oControllertarget, ref oTiaProjectForCPU, oTiaProjectForCPU.GetRootNodefolderBlocks());
                 }
                 catch (Exception e)
                 {
-                    sErrorText = string.Format(@"Exception in EnumerateBlocksAndParameters() '{0}", e.Message);
+                    sErrorText = string.Format("Exception in EnumerateBlocksAndParameters() '{0}'", e.Message);
                     bRet = false;
                     break;
                 }
@@ -361,7 +333,12 @@ namespace AideAuDiagnostic.TiaExplorer
 
             return bRet;
         }
-        //Recherche de l'item de type CPU dans le device
+
+        /// <summary>
+        /// Searches for the CPU device item within a device.
+        /// </summary>
+        /// <param name="oPLCHStation">The PLC device to search.</param>
+        /// <returns>The first found CPU DeviceItem, or null if not found.</returns>
         public DeviceItem TryToFoundDeviceItemInDevice(Device oPLCHStation)
         {
             DeviceItem oDeviceitem = null;
@@ -371,7 +348,6 @@ namespace AideAuDiagnostic.TiaExplorer
 
             if (oTiainterface.EnumerationDeviceItems(oPLCHStation, ref loListDeviceItem, ref sError) == true)
             {
-                // Boucle de recherche de l'item de type CPU
                 foreach (DeviceItem item in loListDeviceItem)
                 {
                     oSoftwarecontainer = item.GetService<SoftwareContainer>() as SoftwareContainer;
@@ -385,31 +361,53 @@ namespace AideAuDiagnostic.TiaExplorer
 
             return oDeviceitem;
         }
-        //Recherche des blocs dans le folder en cours
-        void SearchAllBlocInRootProgramFolder(PlcSoftware oControllerTarget, ref TiaProjectForCPU oTiaProjectForCPU, TreeNode oNodeSource)
+
+        /// <summary>
+        /// Scans the root program folder for all blocks, exporting FC blocks and enumerating their OPC UA parameters.
+        /// </summary>
+        /// <param name="oControllerTarget">The PLC software controller.</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oNodeSource">The source tree node for the blocks.</param>
+        void SearchAllBlocInRootProgramFolder(
+            PlcSoftware oControllerTarget,
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            TreeNode oNodeSource)
         {
             List<PlcBlock> loListBlocks = new List<PlcBlock>();
             string sErrorText = string.Empty;
             string sNewName = string.Empty;
 
-            //Enumération de tous les blocs pour ce répertoire
             if (oTiainterface.EnumerateBlockUserProgramForPlc(oControllerTarget, ref loListBlocks, ref sErrorText) == true)
             {
                 foreach (PlcBlock oBloc in loListBlocks)
                 {
-                    //Test si on trouve sur un bloc FC alors EXPORT
-                    if (oBloc is FC)//DataBlock
+                    if (oBloc is FC)
                     {
-                        TiaPortalBloc blocTIA = new TiaPortalBloc(oBloc.Name, oNodeSource, oTiaProjectForCPU.GetNextFolderVariableId(), sNewName);
-                        //Enumération des listes des paramètres du bloc
+                        TiaPortalBloc blocTIA = new TiaPortalBloc(
+                            oBloc.Name,
+                            oNodeSource,
+                            oTiaProjectForCPU.GetNextFolderVariableId(),
+                            sNewName
+                        );
                         ExportTiaBlockDBAndEnumerateOPCUAParameters(oControllerTarget, (oBloc as FC), blocTIA, ref oTiaProjectForCPU);
                     }
                 }
             }
-
         }
-        //Export du bloc et recherche les parametres
-        bool ExportTiaBlockDBAndEnumerateOPCUAParameters(PlcSoftware oControllerTarget, FC oDB, TiaPortalBloc oBlocTIA, ref TiaProjectForCPU oTiaProjectForCPU)
+
+        /// <summary>
+        /// Exports a FC block to XML and enumerates its OPC UA parameters.
+        /// </summary>
+        /// <param name="oControllerTarget">The PLC software controller.</param>
+        /// <param name="oDB">The FC block to export.</param>
+        /// <param name="oBlocTIA">The TIA Portal block representation.</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <returns>True if export and parameter enumeration succeeded, otherwise false.</returns>
+        bool ExportTiaBlockDBAndEnumerateOPCUAParameters(
+            PlcSoftware oControllerTarget,
+            FC oDB,
+            TiaPortalBloc oBlocTIA,
+            ref TiaProjectForCPU oTiaProjectForCPU)
         {
             bool bRet = true;
             string sErrorText = string.Empty;
@@ -419,15 +417,12 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 try
                 {
-                    //Test si le fichier existe pour l'effacer avant export
-                    if (File.Exists(sXmlDBFile) == true) File.Delete(sXmlDBFile);
-                    //Export du FC
+                    if (File.Exists(sXmlDBFile)) File.Delete(sXmlDBFile);
                     bRet = oTiainterface.ExportBlocToXml(oDB, sXmlDBFile, ref sErrorText);
-                    if (bRet == false)
+                    if (!bRet)
                     {
                         break;
                     }
-                    //Traitement du fichier XML
                     bRet = ParseTiaXmlDBFile(oControllerTarget, sXmlDBFile, oBlocTIA, ref oTiaProjectForCPU);
                 }
                 catch
@@ -439,53 +434,69 @@ namespace AideAuDiagnostic.TiaExplorer
 
             return bRet;
         }
-        //Parser le fichier XML d'un FC exporté
-        bool ParseTiaXmlDBFile(PlcSoftware oControllerTarget, string sXmlFile, TiaPortalBloc oBlocTIA, ref TiaProjectForCPU oTiaProjectForCPU)
+        /// <summary>
+        /// Parses the XML file exported from a FC block and extracts block and parameter information
+        /// to update the data collection for diagnostic code generation.
+        /// </summary>
+        /// <param name="oControllerTarget">The PLC software controller.</param>
+        /// <param name="sXmlFile">The path to the exported XML file.</param>
+        /// <param name="oBlocTIA">The TIA Portal block representation.</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <returns>True if parsing succeeds, otherwise false.</returns>
+        bool ParseTiaXmlDBFile(
+            PlcSoftware oControllerTarget,
+            string sXmlFile,
+            TiaPortalBloc oBlocTIA,
+            ref TiaProjectForCPU oTiaProjectForCPU)
         {
             bool bRet = true;
             string sCurrentPath = string.Empty;
 
             while (true)
             {
-                //Test si le fichier existe
-                if (File.Exists(sXmlFile) == false)
+                if (!File.Exists(sXmlFile))
                 {
                     bRet = false;
                     break;
                 }
-                //Ouverture du fichier XML
                 oXmlDocument.Load(sXmlFile);
 
-                //Recherche des noeuds
                 foreach (XmlNode oNodeDocument in oXmlDocument.ChildNodes)
                 {
-                    if (oNodeDocument.Name == @"Document")
+                    if (oNodeDocument.Name == "Document")
                     {
                         foreach (XmlNode oNode in oNodeDocument.ChildNodes)
                         {
-                            if (oNode.Name == @"SW.Blocks.FC")
+                            if (oNode.Name == "SW.Blocks.FC")
                             {
                                 foreach (XmlNode oNodebloc in oNode.ChildNodes)
                                 {
-                                    if (oNodebloc.Name == @"AttributeList")
+                                    if (oNodebloc.Name == "AttributeList")
                                     {
                                         foreach (XmlNode oNodeAttributeList in oNodebloc.ChildNodes)
                                         {
-                                            if (oNodeAttributeList.Name == @"Name")
+                                            if (oNodeAttributeList.Name == "Name")
                                             {
-                                                //Nom du bloc FC dans lequel on se trouve
                                                 lsDataCollection.Add("//" + oNodeAttributeList.InnerText.ToString());
                                             }
                                         }
                                     }
-                                    if (oNodebloc.Name == @"ObjectList")
+                                    if (oNodebloc.Name == "ObjectList")
                                     {
                                         foreach (XmlNode oNodeobjectlist in oNodebloc.ChildNodes)
                                         {
-                                            if (oNodeobjectlist.Name == @"SW.Blocks.CompileUnit")
+                                            if (oNodeobjectlist.Name == "SW.Blocks.CompileUnit")
                                             {
-                                                //Enumeration de tous les membres du reseau
-                                                EnumerateMembers(oNodeobjectlist, oControllerTarget, oTiaProjectForCPU, oBlocTIA, ref sCurrentPath, true, dData, lsDataCollection);
+                                                EnumerateMembers(
+                                                    oNodeobjectlist,
+                                                    oControllerTarget,
+                                                    oTiaProjectForCPU,
+                                                    oBlocTIA,
+                                                    ref sCurrentPath,
+                                                    true,
+                                                    dData,
+                                                    lsDataCollection
+                                                );
                                             }
                                         }
                                     }
@@ -498,7 +509,19 @@ namespace AideAuDiagnostic.TiaExplorer
             }
             return bRet;
         }
-        //Enumere les membres correspondant à des paramètres
+
+        /// <summary>
+        /// Enumerates all members (parameters, blocks, wires) found in a compile unit XML node,
+        /// maps connections, and fills the data collection list for diagnostic code generation.
+        /// </summary>
+        /// <param name="oListOfNodeMembers">The XML node representing the list of compile unit members.</param>
+        /// <param name="oControllerTarget">The PLC software controller.</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oBlocTIA">The TIA Portal block representation.</param>
+        /// <param name="sCurrentPath">Reference to the current XML parsing path.</param>
+        /// <param name="bFirstLevel">Indicates whether this is the first recursion level.</param>
+        /// <param name="dData">Excel data dictionary for mapping.</param>
+        /// <param name="lsDataCollection">List for collecting data about FCs.</param>
         public void EnumerateMembers(
             XmlNode oListOfNodeMembers,
             PlcSoftware oControllerTarget,
@@ -510,12 +533,10 @@ namespace AideAuDiagnostic.TiaExplorer
             List<string> lsDataCollection
         )
         {
-            // 1. Structures pour les mappings
-            var variableByUID = new Dictionary<string, VariableInfo>(); // UID → DB/Variable
+            var variableByUID = new Dictionary<string, VariableInfo>();
             var wires = new List<WireInfo>();
             var blocks = new List<BlockInfo>();
 
-            // 2. Parsing XML
             foreach (XmlNode nodeCompileUnit in oListOfNodeMembers.ChildNodes)
             {
                 if (nodeCompileUnit.Name == "AttributeList")
@@ -530,7 +551,6 @@ namespace AideAuDiagnostic.TiaExplorer
                                 {
                                     foreach (XmlNode nodeFlgNet in nodeNetworkSource)
                                     {
-                                        // DATA ET BLOCS
                                         if (nodeFlgNet.Name == "Parts")
                                         {
                                             foreach (XmlNode nodeParts in nodeFlgNet)
@@ -567,7 +587,6 @@ namespace AideAuDiagnostic.TiaExplorer
                                                         }
                                                         else if (nodeAccess.Name == "Constant")
                                                         {
-                                                            // Optionnel : gérer les constantes si besoin
                                                             variableByUID[accessUid] = new VariableInfo { DbName = "ConstantType", VarName = null };
                                                         }
                                                     }
@@ -607,7 +626,6 @@ namespace AideAuDiagnostic.TiaExplorer
                                                 }
                                             }
                                         }
-                                        // WIRES
                                         else if (nodeFlgNet.Name == "Wires")
                                         {
                                             foreach (XmlNode nodeWires in nodeFlgNet)
@@ -650,8 +668,7 @@ namespace AideAuDiagnostic.TiaExplorer
                 }
             }
 
-            // 3. Créer mapping bloc → (patte → DB parent)
-            var blockPatteToDb = new Dictionary<string, Dictionary<string, string>>(); // BlockUID → (Patte → DB)
+            var blockPatteToDb = new Dictionary<string, Dictionary<string, string>>();
 
             foreach (var block in blocks)
             {
@@ -669,19 +686,15 @@ namespace AideAuDiagnostic.TiaExplorer
                 blockPatteToDb[block.UID] = patteToDb;
             }
 
-            // 4. Parcours des données Excel
             foreach (var block in blocks)
             {
-                // Recherche dans le fichier Excel
                 foreach (KeyValuePair<Tuple<int, int>, object> keyValue in dData)
                 {
                     if (keyValue.Key.Item2 == 1 && block.Name == keyValue.Value.ToString())
                     {
-                        // Ecriture de la première colonne dans le DBi
                         lsDataCollection.Add($"\"{block.DBiName}\".sHmiUdt.backJump[0] := '{block.Name}';");
                         int ligneIndice = keyValue.Key.Item1;
 
-                        // DBs à écrire (colonne Excel → DB parent)
                         var excelColumnToDb = new Dictionary<int, string>();
 
                         foreach (KeyValuePair<Tuple<int, int>, object> keyValueH in dData)
@@ -700,10 +713,8 @@ namespace AideAuDiagnostic.TiaExplorer
                             }
                         }
 
-                        // Trier les colonnes 
                         var orderedColumns = excelColumnToDb.Keys.OrderBy(k => k).ToList();
 
-                        // Écriture finale dans lsDataCollection
                         for (int i = 0; i < orderedColumns.Count; i++)
                         {
                             int columnIndex = orderedColumns[i];
@@ -714,70 +725,99 @@ namespace AideAuDiagnostic.TiaExplorer
             }
         }
 
-        // Recherche des folders et blocs depuis la racine du projet
-        void SearchAllFolderAndBlocInRootProgramFolder(PlcSoftware oControllerTarget, ref TiaProjectForCPU oTiaProjectForCPU, TreeNode oNodeSource)
+        /// <summary>
+        /// Recursively searches for all folders and blocks from the root of the PLC project,
+        /// populates the hierarchical structure and enumerates all blocks and subfolders.
+        /// </summary>
+        /// <param name="oControllerTarget">The PLC software controller.</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oNodeSource">The source tree node for the blocks.</param>
+        void SearchAllFolderAndBlocInRootProgramFolder(
+            PlcSoftware oControllerTarget,
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            TreeNode oNodeSource)
         {
-            //Boucle de recherches de tout les folder
             foreach (PlcBlockUserGroup oblockUserFolder in oControllerTarget.BlockGroup.Groups)
             {
-                //Ajout du folder dans notre arbre
                 TreeNode oNode = new TreeNode(oblockUserFolder.Name)
                 {
                     Tag = new TiaPortalFolder(oblockUserFolder.Name, oTiaProjectForCPU.GetNextFolderVariableId())
                 };
 
-                //Boucle de balayage des blocs si ils existent
                 oNodeSource?.Nodes.Add(oNode);
-
-                //Enumération des blocs dans le folder
                 EnumBlocksInFolderBlocks(oControllerTarget, oblockUserFolder, ref oTiaProjectForCPU, oNode);
-                //Enumération de tous les sous folders
                 EnumerateBlockUserFolders(oControllerTarget, oblockUserFolder, ref oTiaProjectForCPU, oNode);
             }
         }
-        //Recherche des blocs dans le folder
-        private void EnumBlocksInFolderBlocks(PlcSoftware oControllerTarget, PlcBlockUserGroup oBlocks, ref TiaProjectForCPU oTiaProjectForCPU, TreeNode oNodeSource)
+
+        /// <summary>
+        /// Enumerates all blocks inside a folder and exports FC blocks for OPC UA parameter extraction.
+        /// Adds blocks to the internal structure and node tree.
+        /// </summary>
+        /// <param name="oControllerTarget">The PLC software controller.</param>
+        /// <param name="oBlocks">The block user group (folder) to enumerate.</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oNodeSource">The parent tree node for the blocks.</param>
+        private void EnumBlocksInFolderBlocks(
+            PlcSoftware oControllerTarget,
+            PlcBlockUserGroup oBlocks,
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            TreeNode oNodeSource)
         {
             string sNewName = string.Empty;
 
-            //Boucle de traitement de tous les blocs du repertoire
             foreach (PlcBlock oBloc in oBlocks.Blocks)
             {
-                //Test si on trouve sur un bloc FC alors EXPORT
                 if (oBloc is FC)
                 {
-                    //Ajout à la liste interne
                     TreeNode oNode = new TreeNode(oBloc.Name);
                     TiaPortalBloc oTiaBloc = new TiaPortalBloc(oBloc.Name, oNodeSource, oTiaProjectForCPU.GetNextFolderVariableId(), sNewName);
-                    //Enumération des listes des paramètres du bloc
                     ExportTiaBlockDBAndEnumerateOPCUAParameters(oControllerTarget, (oBloc as FC), oTiaBloc, ref oTiaProjectForCPU);
-                    //Ajout du bloc dans la liste interne
                     oTiaProjectForCPU.loListBlocs.Add(oTiaBloc);
                     oNode.Tag = oTiaBloc;
-                    //On ajoute le noeud dans l'arbre
                     oNodeSource.Nodes.Add(oNode);
                 }
             }
         }
-        //Recherche des sous folder dans un folder
-        private void EnumerateBlockUserFolders(PlcSoftware oControllerTarget, PlcBlockUserGroup oBlockUserFolder, ref TiaProjectForCPU oTiaProjectForCPU, TreeNode oNodeSource)
+
+        /// <summary>
+        /// Recursively enumerates all subfolders within a block user folder and processes their blocks and structures.
+        /// </summary>
+        /// <param name="oControllerTarget">The PLC software controller.</param>
+        /// <param name="oBlockUserFolder">The parent block user group (folder).</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oNodeSource">The parent tree node for the subfolders.</param>
+        private void EnumerateBlockUserFolders(
+            PlcSoftware oControllerTarget,
+            PlcBlockUserGroup oBlockUserFolder,
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            TreeNode oNodeSource)
         {
             foreach (PlcBlockUserGroup oSubBlockUserFolder in oBlockUserFolder.Groups)
             {
-                //Ajout du folder dans la liste
                 TreeNode oNode = new TreeNode(oSubBlockUserFolder.Name)
                 {
                     Tag = new TiaPortalFolder(oSubBlockUserFolder.Name, oTiaProjectForCPU.GetNextFolderVariableId())
                 };
 
                 oNodeSource.Nodes.Add(oNode);
-                //Boucle de balayage des blocs si ils existent
                 EnumBlocksInFolderBlocks(oControllerTarget, oSubBlockUserFolder, ref oTiaProjectForCPU, oNode);
                 EnumerateBlockUserFolders(oControllerTarget, oSubBlockUserFolder, ref oTiaProjectForCPU, oNode);
             }
         }
-        //Enumération des tags contenu dans les tables avec l'atributs OPC UA
-        private bool EnumerateTagsWithOPCUAMarck(ref TiaProjectForCPU oTiaProjectForCPU, PlcSoftware oControllerPLC, ref string sErrorText)
+
+        /// <summary>
+        /// Enumerates all tags contained in tag tables with the OPC UA attribute.
+        /// Scans all tag tables at the root and recursively in folders.
+        /// </summary>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oControllerPLC">The PLC software controller.</param>
+        /// <param name="sErrorText">Outputs any error encountered during enumeration.</param>
+        /// <returns>True if successful, otherwise false.</returns>
+        private bool EnumerateTagsWithOPCUAMarck(
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            PlcSoftware oControllerPLC,
+            ref string sErrorText)
         {
             bool bRet = true;
             sErrorText = string.Empty;
@@ -786,14 +826,12 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 try
                 {
-                    //Recherche toutes les variables présentes dans la racine
                     SearchAllVariableTableInRootPlcTagTableFolder(oControllerPLC, ref oTiaProjectForCPU, oTiaProjectForCPU.GetRootNodefolderTags());
-                    // Balayage de tous les folders de la racine et les sous folders et tables associées
                     SearchAllFolderAndTagTableInRootTagTableFolder(oControllerPLC, ref oTiaProjectForCPU, oTiaProjectForCPU.GetRootNodefolderTags());
                 }
                 catch (Exception ex)
                 {
-                    sErrorText = string.Format(@"Exception in EnumerateTagsWithOPCUAMarck() '{0}", ex.Message);
+                    sErrorText = string.Format("Exception in EnumerateTagsWithOPCUAMarck() '{0}'", ex.Message);
                     bRet = false;
                     break;
                 }
@@ -801,96 +839,145 @@ namespace AideAuDiagnostic.TiaExplorer
             }
             return bRet;
         }
-        //Recherche des variables dans le folder racine
-        private void SearchAllVariableTableInRootPlcTagTableFolder(PlcSoftware oControllerPLC, ref TiaProjectForCPU oTiaProjectForCPU, TreeNode oNodeSource)
+
+        /// <summary>
+        /// Scans all variable tables at the root PLC tag table folder and enumerates variables with the OPC UA attribute.
+        /// </summary>
+        /// <param name="oControllerPLC">The PLC software controller.</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oNodeSource">The parent tree node for variables.</param>
+        private void SearchAllVariableTableInRootPlcTagTableFolder(
+            PlcSoftware oControllerPLC,
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            TreeNode oNodeSource)
         {
             PlcTagTableComposition oTagTables = oControllerPLC.TagTableGroup.TagTables;
 
-            //Boucle de traitement des tables présente sous la racine
             foreach (PlcTagTable oTagTable in oTagTables)
             {
-                //On énumère la liste des variables pour récupérer la liste avec l'attribut OPC UA
                 ReadAllVariablesInTableWithOPCUAFlag(oTagTable, ref oTiaProjectForCPU, oNodeSource);
             }
         }
-        //Lecture de toutes les variables dans une table avec l'attribut OPC UA
-        void ReadAllVariablesInTableWithOPCUAFlag(PlcTagTable oTagTable, ref TiaProjectForCPU oTiaProjectForCPU, TreeNode oNodeSource)
+
+        /// <summary>
+        /// Reads all variables in a given tag table and adds those with the OPC UA attribute to the project configuration.
+        /// </summary>
+        /// <param name="oTagTable">The tag table to scan.</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oNodeSource">The parent tree node for variables.</param>
+        void ReadAllVariablesInTableWithOPCUAFlag(
+            PlcTagTable oTagTable,
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            TreeNode oNodeSource)
         {
             List<string> lsListAttributs = new List<string>
-            {
-                @"ExternalWritable"
-            };
+    {
+        "ExternalWritable"
+    };
             IList<object> iloListValueAttributes;
             bool bReadOnly = false;
 
-            //Boucle de balayage de touts les tags de la table
             foreach (PlcTag oTag in oTagTable.Tags)
             {
-                //Test si un commentaire existe sur ce tag
                 if (oTag.Comment.Items.Count > 0)
                 {
-                    //On teste si l'attribut OPC UA est présent
                     if (oTag.Comment.Items[0].Text.ToUpper().IndexOf(oTiaProjectDefinitions.sCommentarTagVariableMarck.ToUpper()) == 0)
                     {
-                        //Lecture de l'attribut ReadOnly
                         iloListValueAttributes = oTag.GetAttributes(lsListAttributs);
                         if ((bool)iloListValueAttributes[0] == false) bReadOnly = true;
                         else bReadOnly = false;
-                        //Ajout de la variable dans la liste
-                        TiaPortalVariable oVariable = new TiaPortalVariable(oTag.Name, null, oTag.DataTypeName, oTag.DataTypeName, oTiaProjectForCPU.GetNextFolderVariableId(),
-                                                                           oNodeSource, oTag.Comment.Items[0].Text, string.Empty, bReadOnly, string.Empty);
+                        TiaPortalVariable oVariable = new TiaPortalVariable(
+                            oTag.Name,
+                            null,
+                            oTag.DataTypeName,
+                            oTag.DataTypeName,
+                            oTiaProjectForCPU.GetNextFolderVariableId(),
+                            oNodeSource,
+                            oTag.Comment.Items[0].Text,
+                            string.Empty,
+                            bReadOnly,
+                            string.Empty
+                        );
                         oTiaProjectForCPU.loListVariablesTags.Add(oVariable);
                     }
                 }
             }
         }
-        //Recherche des folders et tables de tags depuis la racine du projet
-        void SearchAllFolderAndTagTableInRootTagTableFolder(PlcSoftware oControllerPLC, ref TiaProjectForCPU oTiaProjectForCPU, TreeNode odeSource)
+
+        /// <summary>
+        /// Recursively scans all folders and tag tables from the root, enumerating all variables with the OPC UA attribute.
+        /// </summary>
+        /// <param name="oControllerPLC">The PLC software controller.</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="odeSource">The parent tree node for folders/tables.</param>
+        void SearchAllFolderAndTagTableInRootTagTableFolder(
+            PlcSoftware oControllerPLC,
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            TreeNode odeSource)
         {
-            //Boucle de recherches de tout les folder
             foreach (PlcTagTableUserGroup oControllerTargetUserFolder in oControllerPLC.TagTableGroup.Groups)
             {
-                //Ajout du folder dans notre arbre
                 TreeNode node = new TreeNode(oControllerTargetUserFolder.Name)
                 {
                     Tag = new TiaPortalFolder(oControllerTargetUserFolder.Name, oTiaProjectForCPU.GetNextFolderVariableId())
                 };
 
                 odeSource?.Nodes.Add(node);
-                //Boucle de balayage des tables si ils existent
                 EnumTagTableInFolderTagTable(oControllerTargetUserFolder, ref oTiaProjectForCPU, node);
-                //Enumération de tous les sous folders dans le folder tagTable
                 EnumerateTagTableUserGroup(oControllerTargetUserFolder, ref oTiaProjectForCPU, node);
             }
         }
-        //Enumere toutes les tagatable dans le folder tagtable
-        void EnumTagTableInFolderTagTable(PlcTagTableUserGroup oControllerTagUserFolder, ref TiaProjectForCPU oTiaProjectForCPU, TreeNode oNodeSource)
+
+        /// <summary>
+        /// Enumerates all tag tables in a given tag table user group and scans their variables.
+        /// </summary>
+        /// <param name="oControllerTagUserFolder">The tag table user group (folder).</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oNodeSource">The parent tree node for variables.</param>
+        void EnumTagTableInFolderTagTable(
+            PlcTagTableUserGroup oControllerTagUserFolder,
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            TreeNode oNodeSource)
         {
-            //Boucle de traitement de tous les blocs du repertoire
             foreach (PlcTagTable oTagTable in oControllerTagUserFolder.TagTables)
             {
                 ReadAllVariablesInTableWithOPCUAFlag(oTagTable, ref oTiaProjectForCPU, oNodeSource);
             }
         }
-        //Enumere les folder tagTable dans le folder tagTable
-        private void EnumerateTagTableUserGroup(PlcTagTableUserGroup oControllerTargetUserFolder, ref TiaProjectForCPU oTiaProjectForCPU, TreeNode oNodeSource)
+
+        /// <summary>
+        /// Recursively enumerates all subgroups within a tag table user group and scans contained tag tables.
+        /// </summary>
+        /// <param name="oControllerTargetUserFolder">The parent tag table user group (folder).</param>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oNodeSource">The parent tree node for subgroups.</param>
+        private void EnumerateTagTableUserGroup(
+            PlcTagTableUserGroup oControllerTargetUserFolder,
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            TreeNode oNodeSource)
         {
             foreach (PlcTagTableUserGroup oSubControllerTargetUserFolder in oControllerTargetUserFolder.Groups)
             {
-                //Ajout du folder dans la liste
                 TreeNode oNode = new TreeNode(oSubControllerTargetUserFolder.Name)
                 {
                     Tag = new TiaPortalFolder(oSubControllerTargetUserFolder.Name, oTiaProjectForCPU.GetNextFolderVariableId())
                 };
 
                 oNodeSource.Nodes.Add(oNode);
-                //Boucle de balayage des tables si ils existent
                 EnumTagTableInFolderTagTable(oSubControllerTargetUserFolder, ref oTiaProjectForCPU, oNode);
                 EnumerateTagTableUserGroup(oSubControllerTargetUserFolder, ref oTiaProjectForCPU, oNode);
             }
         }
-        //Enumération des variables system pour le diagnostic
-        private bool EnumerateVariableSystemTags(ref TiaProjectForCPU oTiaProjectForCPU, ref string sErrorText)
+
+        /// <summary>
+        /// Enumerates system variables for diagnostics and adds them to the project configuration.
+        /// </summary>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="sErrorText">Outputs any error encountered during enumeration.</param>
+        /// <returns>True if successful, otherwise false.</returns>
+        private bool EnumerateVariableSystemTags(
+            ref TiaProjectForCPU oTiaProjectForCPU,
+            ref string sErrorText)
         {
             bool bRet = true;
             sErrorText = string.Empty;
@@ -899,12 +986,11 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 try
                 {
-                    //Insertion de toutes les variables systemes pour le diagnostic
                     ScanAllSystemVariables(ref oTiaProjectForCPU, oTiaProjectForCPU.GetRootNodefolderSystemVariables());
                 }
                 catch (Exception e)
                 {
-                    sErrorText = string.Format(@"Exception in EnumerateVariableSystemTags() '{0}", e.Message);
+                    sErrorText = string.Format("Exception in EnumerateVariableSystemTags() '{0}'", e.Message);
                     bRet = false;
                     break;
                 }
@@ -912,13 +998,16 @@ namespace AideAuDiagnostic.TiaExplorer
             }
             return bRet;
         }
-        //Ajoute du repertoire des variables systeme et les variables systeme
+        /// <summary>
+        /// Adds all system variable folders and variables for diagnostics to the project configuration.
+        /// </summary>
+        /// <param name="oTiaProjectForCPU">Reference to the TIA project CPU configuration.</param>
+        /// <param name="oNodeSource">The parent tree node for the system variables.</param>
         void ScanAllSystemVariables(ref TiaProjectForCPU oTiaProjectForCPU, TreeNode oNodeSource)
         {
             string sVariableMappingName = string.Empty;
             TiaPortalVariable oTiaPortalVariable = null;
 
-            //Ajout du folder correspondant au repertoire des variables systeme
             TreeNode oNode = new TreeNode(oTiaProjectForCPU.sRootVariableSystemName)
             {
                 Tag = new TiaPortalFolder(oTiaProjectForCPU.sRootVariableSystemName,
@@ -926,40 +1015,32 @@ namespace AideAuDiagnostic.TiaExplorer
             };
             oNodeSource.Nodes.Add(oNode);
 
-            //Ajout de toutes les variables systeme
-            //Ajout de "ServiceLevel"
             sVariableMappingName = @"""OPC_UA_Server_State"".""iServiceLevel""";
 
-            // Modification passage en lecture écriture pour gestion Stop des cpus gateway
             oTiaPortalVariable = new TiaPortalVariable(@"ServiceLevel", null, @"Int16", @"Int16", oTiaProjectForCPU.GetNextFolderVariableId(),
                                                       oNode, @"Service level de la redondance OPC UA", sVariableMappingName, false, string.Empty);
             oTiaProjectForCPU.loListVariablesSystem.Add(oTiaPortalVariable);
 
-            // Ajout de "EnableWriteToPLCH"
             sVariableMappingName = @"""OPC_UA_Server_State"".""bEnableWriteToPLCH""";
             oTiaPortalVariable = new TiaPortalVariable(@"EnableWriteToPLCH", null, @"Boolean", @"Boolean", oTiaProjectForCPU.GetNextFolderVariableId(),
                                                       oNode, @"Valide l'écriture dans le PLC H distant", sVariableMappingName, false, string.Empty);
             oTiaProjectForCPU.loListVariablesSystem.Add(oTiaPortalVariable);
 
-            // Ajout de "ServerStatus"
             sVariableMappingName = @"""OPC_UA_Server_State"".""iServerStatus""";
             oTiaPortalVariable = new TiaPortalVariable(@"ServerStatus", null, @"Int16", @"Int16", oTiaProjectForCPU.GetNextFolderVariableId(),
                                                       oNode, @"Status du serveur OPC au niveau du PLC H distant", sVariableMappingName, true, string.Empty);
             oTiaProjectForCPU.loListVariablesSystem.Add(oTiaPortalVariable);
 
-            // Ajout de "PLC_H_Redundant_State"
             sVariableMappingName = @"""OPC_UA_Server_State"".""iPLC_H_Redundant_State""";
             oTiaPortalVariable = new TiaPortalVariable(@"PLC_H_Redundant_State", null, @"Int16", @"Int16", oTiaProjectForCPU.GetNextFolderVariableId(),
                                                       oNode, @"Etat de la redondance du PLC_H", sVariableMappingName, true, string.Empty);
             oTiaProjectForCPU.loListVariablesSystem.Add(oTiaPortalVariable);
 
-            // Ajout de "PLc_CPU_1_State"
             sVariableMappingName = @"""OPC_UA_Server_State"".""iPLc_CPU_1_State""";
             oTiaPortalVariable = new TiaPortalVariable(@"PLc_CPU_1_State", null, @"Int16", @"Int16", oTiaProjectForCPU.GetNextFolderVariableId(),
                                                       oNode, @"Etat de la CPU 1 du PLC H", sVariableMappingName, true, string.Empty);
             oTiaProjectForCPU.loListVariablesSystem.Add(oTiaPortalVariable);
 
-            // Ajout de "PLc_CPU_2_State"
             sVariableMappingName = @"""OPC_UA_Server_State"".""iPLc_CPU_2_State""";
             oTiaPortalVariable = new TiaPortalVariable(@"PLc_CPU_2_State", null, @"Int16", @"Int16", oTiaProjectForCPU.GetNextFolderVariableId(),
                                                       oNode, @"Etat de la CPU 2 du PLC H", sVariableMappingName, true, string.Empty);
@@ -968,62 +1049,120 @@ namespace AideAuDiagnostic.TiaExplorer
         #endregion
     }
 
+    /// <summary>
+    /// Represents information about a wire (connection) in a PLC FC block network.
+    /// </summary>
     public class WireInfo
     {
+        /// <summary>
+        /// Gets or sets the UID of the source of the wire.
+        /// </summary>
         public string SourceUID { get; set; }
+
+        /// <summary>
+        /// Gets or sets the UID of the target of the wire.
+        /// </summary>
         public string TargetUID { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the wire (connection).
+        /// </summary>
         public string Name { get; set; }
     }
 
+    /// <summary>
+    /// Represents information about a block in the PLC project for mapping and code generation.
+    /// </summary>
     public class BlockInfo
     {
+        /// <summary>
+        /// Gets or sets the unique identifier (UID) of the block.
+        /// </summary>
         public string UID { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the block.
+        /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the DB instance name associated with the block.
+        /// </summary>
         public string DBiName { get; set; }
     }
 
+    /// <summary>
+    /// Represents information about a variable for block/parameter mapping.
+    /// </summary>
     public class VariableInfo
     {
+        /// <summary>
+        /// Gets or sets the name of the parent DB (data block).
+        /// </summary>
         public string DbName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the variable within the DB.
+        /// </summary>
         public string VarName { get; set; }
     }
 
-    // Classe de représentation d'une interface process Tia Portal
+    /// <summary>
+    /// Represents a wrapper interface for a TIA Portal process.
+    /// </summary>
     public class HMATiaPortalProcess
     {
-        #region Variables
         private TiaPortalProcess oTiaPortalProcess;
-        public TiaPortalProcess GetTiaPortalProcess() { return oTiaPortalProcess; }
-        #endregion
 
-        // Constructeur de la classe
+        /// <summary>
+        /// Gets the wrapped TiaPortalProcess instance.
+        /// </summary>
+        public TiaPortalProcess GetTiaPortalProcess() { return oTiaPortalProcess; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HMATiaPortalProcess"/> class.
+        /// </summary>
+        /// <param name="oTiaPortalProcess">Underlying TIA Portal process.</param>
         public HMATiaPortalProcess(TiaPortalProcess oTiaPortalProcess)
         {
             this.oTiaPortalProcess = oTiaPortalProcess;
         }
 
+        /// <summary>
+        /// Returns the display name of the TIA project for selection controls.
+        /// </summary>
+        /// <returns>Project name without extension.</returns>
         public override string ToString()
         {
             return string.Format("{0}", Path.GetFileNameWithoutExtension(oTiaPortalProcess.ProjectPath.FullName));
         }
     }
-    // Classe de représentation d'un device dans un projet TIA Portal
+
+    /// <summary>
+    /// Represents a wrapper interface for a TIA Portal device.
+    /// </summary>
     public class HMATiaPortalDevice
     {
-        #region Variables
-
         private Device oTiaPortalDevice;
+
+        /// <summary>
+        /// Gets the wrapped Device instance.
+        /// </summary>
         public Device GetPortalDevice() { return oTiaPortalDevice; }
 
-        #endregion
-
-        // Constructeur
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HMATiaPortalDevice"/> class.
+        /// </summary>
+        /// <param name="oDevice">The underlying TIA Portal device.</param>
         public HMATiaPortalDevice(Device oDevice)
         {
             this.oTiaPortalDevice = oDevice;
         }
 
-        // Pour ajout dans la combobox de sélection des devices Tia Portal
+        /// <summary>
+        /// Returns the display name of the device for selection controls.
+        /// </summary>
+        /// <returns>Device name as string.</returns>
         public override string ToString()
         {
             return string.Format("{0}", oTiaPortalDevice.Name);

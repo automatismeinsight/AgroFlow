@@ -8,40 +8,76 @@ using Siemens.Engineering.SW.ExternalSources;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Packaging;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace AideAuDiagnostic.TiaExplorer
 {
-
-
+    /// <summary>
+    /// Provides logic for generating and compiling PLC code in a TIA Portal project,
+    /// including code export, FC block creation, and diagnostic support.
+    /// </summary>
     internal class PlcGenerateTiaCode
     {
-        #region CONSTANTES
+        #region CONSTANTS
+
+        /// <summary>
+        /// The root folder name for OPC UA blocks in the project.
+        /// </summary>
         const string sRootOPCUAFolder = @"AIDE_AU_DIAGNOSTIC";
+
+        /// <summary>
+        /// The name of the Function Code (FC) to be generated for diagnostic.
+        /// </summary>
         const string sFCName_Receive_From_Gateway_1 = @"FC_Aide_au_diagnostic";
+
+        /// <summary>
+        /// The title/description for the generated FC block.
+        /// </summary>
         const string sFCTitle_Receive_From_Gateway_1 = @"Update memory map from PLC Gateway 1";
+
         #endregion
+
         #region VARIABLES
-        // Référence su l'objet d'exploration du projet TIA Portal
+
+        /// <summary>
+        /// Reference to the project explorer object for TIA Portal.
+        /// </summary>
         ExploreTiaPLC oExploreTiaPLC;
-        // Référence sur les informations programme du S7-1500H
+
+        /// <summary>
+        /// Reference to the project/program information for the S7-1500H CPU.
+        /// </summary>
         private TiaProjectForCPU oTiaProjectForCPU;
+
+        /// <summary>
+        /// Sets the current TIA project CPU information.
+        /// </summary>
+        /// <param name="oTiaProjectForCPU">The CPU/project reference.</param>
         public void SetTiaProjectForCPU(TiaProjectForCPU oTiaProjectForCPU) { this.oTiaProjectForCPU = oTiaProjectForCPU; }
-        //Infos pour le FC
+
+        /// <summary>
+        /// List of lines for FC (Function Code) data collection.
+        /// </summary>
         private List<string> lsDataCollection;
+
         #endregion
-        //Constructeur de la classe
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PlcGenerateTiaCode"/>.
+        /// </summary>
+        /// <param name="oExploreTiaPLC">The TIA Portal project explorer instance.</param>
+        /// <param name="lsDataCollection">The FC data collection list.</param>
         public PlcGenerateTiaCode(ExploreTiaPLC oExploreTiaPLC, List<string> lsDataCollection)
         {
             this.oExploreTiaPLC = oExploreTiaPLC;
-            //FC
             this.lsDataCollection = lsDataCollection;
         }
-        //Méthode pour compiler le programme de la station
+
+        /// <summary>
+        /// Compiles the program for the specified station and checks for compilation errors.
+        /// </summary>
+        /// <param name="sStationName">Name of the station to compile.</param>
+        /// <param name="sErrorText">Outputs any error message.</param>
+        /// <returns>True if compilation succeeded without error, otherwise false.</returns>
         public bool CompileThisPlcAndCheckErrors(string sStationName, ref string sErrorText)
         {
             bool bRet = true;
@@ -53,27 +89,33 @@ namespace AideAuDiagnostic.TiaExplorer
 
             while (true)
             {
-                // Recherche de la référence de la station passée en paramètre
                 oThisPlc = GetThisStationByName(sStationName, ref oStationDevice, ref oStationDeviceItem, ref sErrorText);
                 if (oThisPlc == null)
                 {
-                    sErrorText = string.Format(@"Station with name {0} not found in TIA Project", sStationName);
+                    sErrorText = string.Format("Station with name {0} not found in TIA Project", sStationName);
                     bRet = false;
                     break;
                 }
-                // Compilation complète de la CPU
                 if (CompileStationAndGetErrors(oThisPlc, ref bOneErrorCompilation, ref sErrorText) == false)
                 {
                     bRet = false;
                     break;
                 }
-
                 break;
             }
 
             return bRet;
         }
-        //Méthode pour récupérer la référence de la station
+
+        /// <summary>
+        /// Returns the <see cref="PlcSoftware"/> reference and its associated <see cref="Device"/> and <see cref="DeviceItem"/>
+        /// for a given station name.
+        /// </summary>
+        /// <param name="sStationName">The name of the station to search for.</param>
+        /// <param name="oStationDevice">Outputs the found device object.</param>
+        /// <param name="oStationDeviceItem">Outputs the associated device item.</param>
+        /// <param name="sErrorText">Outputs any error message.</param>
+        /// <returns>The <see cref="PlcSoftware"/> object, or null if not found.</returns>
         private PlcSoftware GetThisStationByName(string sStationName, ref Device oStationDevice, ref DeviceItem oStationDeviceItem, ref string sErrorText)
         {
             PlcSoftware oThisPlc = null;
@@ -84,14 +126,10 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 try
                 {
-                    // Récupération de l'objet station correspondant à l'automate de la station
-                    // Lancement de l'énumération des stations dans le projet
                     if (oExploreTiaPLC.GetTiainterface().EnumerationDevice(ref ldListDevice, ref sErrorText) == false)
                     {
                         break;
                     }
-
-                    // Recherche de la station 
                     foreach (Device oDevice in ldListDevice)
                     {
                         if (oDevice.Name == sStationName)
@@ -101,18 +139,16 @@ namespace AideAuDiagnostic.TiaExplorer
                             break;
                         }
                     }
-                    // Test si la station a été trouvée ?
                     if (oPLCHStation == null)
                     {
-                        sErrorText = string.Format(@"Station '{0}' for Plc Gateway not found !", sStationName);
+                        sErrorText = string.Format("Station '{0}' for Plc Gateway not found !", sStationName);
                         break;
                     }
 
-                    // Récupération du controllertarget
                     DeviceItem oDeviceItemToGetService = oExploreTiaPLC.TryToFoundDeviceItemInDevice(oPLCHStation);
                     if (oDeviceItemToGetService == null)
                     {
-                        sErrorText = @"Impossible to found PLC device item in device";
+                        sErrorText = "Impossible to found PLC device item in device";
                         oThisPlc = null;
                         break;
                     }
@@ -121,21 +157,28 @@ namespace AideAuDiagnostic.TiaExplorer
                     oThisPlc = oSoftwareContainer.Software as PlcSoftware;
                     if (oThisPlc == null)
                     {
-                        sErrorText = @"controllertarget is null in this device";
+                        sErrorText = "controllertarget is null in this device";
                         break;
                     }
                 }
                 catch (Exception e)
                 {
                     oPLCHStation = null;
-                    sErrorText = string.Format(@"GetThisStationByName() Exception '{0}'", e.Message);
+                    sErrorText = string.Format("GetThisStationByName() Exception '{0}'", e.Message);
                 }
                 break;
             }
 
             return oThisPlc;
         }
-        //Méthode pour compiler la station complète et de vérifier si pas d'erreur lors de la compilation
+
+        /// <summary>
+        /// Compiles the complete station and checks for any compilation errors.
+        /// </summary>
+        /// <param name="oThisPlc">The PLC software to compile.</param>
+        /// <param name="bAtLeastOneError">Outputs true if at least one error occurs.</param>
+        /// <param name="sErrorText">Outputs any error message.</param>
+        /// <returns>True if compilation succeeded with no errors, otherwise false.</returns>
         bool CompileStationAndGetErrors(PlcSoftware oThisPlc, ref bool bAtLeastOneError, ref string sErrorText)
         {
             bool bRet = true;
@@ -153,20 +196,26 @@ namespace AideAuDiagnostic.TiaExplorer
                 {
                     bRet = false;
                     bAtLeastOneError = true;
-                    sErrorText = string.Format(@"CompileStation Exception '{0}'", e.Message);
+                    sErrorText = string.Format("CompileStation Exception '{0}'", e.Message);
                     break;
                 }
-                // Test si des erreurs de compilation
                 if (bAtLeastOneError == true)
                 {
-                    sErrorText = @"Compilation errors found in station";
+                    sErrorText = "Compilation errors found in station";
                     bRet = false;
                 }
                 break;
             }
             return bRet;
         }
-        //Méthode pour générer le code TIA Portal
+
+        /// <summary>
+        /// Generates the diagnostic FC code and places it in the correct folder for the given PLC station.
+        /// </summary>
+        /// <param name="sStationName">Name of the target station.</param>
+        /// <param name="iCmptEntree">Outputs the number of entries generated.</param>
+        /// <param name="sErrorText">Outputs any error message.</param>
+        /// <returns>True if code generation succeeded, otherwise false.</returns>
         public bool GenerateTiaCodeForS71500_R(string sStationName, ref int iCmptEntree, ref string sErrorText)
         {
             bool bRet = true;
@@ -178,7 +227,6 @@ namespace AideAuDiagnostic.TiaExplorer
 
             while (true)
             {
-                //Recherche de la référence de la station passée en paramètre
                 oThisPlc = GetThisStationByName(sStationName, ref oStationDevice, ref oStationDeviceItem, ref sErrorText);
                 if (oThisPlc == null)
                 {
@@ -186,7 +234,6 @@ namespace AideAuDiagnostic.TiaExplorer
                     break;
                 }
 
-                //Test de la présence du folder BLK_JUMP et référence sur celui-ci
                 oThisOPCUAFolder = GetOrCreateOPCUAFolder(oThisPlc, ref sErrorText);
                 if (oThisOPCUAFolder == null)
                 {
@@ -194,9 +241,13 @@ namespace AideAuDiagnostic.TiaExplorer
                     break;
                 }
 
-                //Génération du bloc FC Test_BLK_JUMP
-                if (MakeFC_Receive_From_Gateway(oThisPlc, oThisOPCUAFolder,
-                                                sFCName_Receive_From_Gateway_1, sFCTitle_Receive_From_Gateway_1, ref iCmptEntree, ref sErrorText) == false)
+                if (MakeFC_Receive_From_Gateway(
+                    oThisPlc,
+                    oThisOPCUAFolder,
+                    sFCName_Receive_From_Gateway_1,
+                    sFCTitle_Receive_From_Gateway_1,
+                    ref iCmptEntree,
+                    ref sErrorText) == false)
                 {
                     bRet = false;
                     break;
@@ -205,8 +256,12 @@ namespace AideAuDiagnostic.TiaExplorer
             }
             return bRet;
         }
-        //Permet de récupérer la réference sur le folder 
-        //Le répertoire est créer s'il n'existe pas
+        /// <summary>
+        /// Returns a reference to the OPC UA folder in the PLC project, creating it if it does not exist.
+        /// </summary>
+        /// <param name="oThisPlc">The PLC software instance.</param>
+        /// <param name="sErrorText">Outputs any error encountered during folder retrieval or creation.</param>
+        /// <returns>The <see cref="PlcBlockUserGroup"/> representing the OPC UA folder.</returns>
         PlcBlockUserGroup GetOrCreateOPCUAFolder(PlcSoftware oThisPlc, ref string sErrorText)
         {
             PlcBlockUserGroup oGrpOPCUA = null;
@@ -217,18 +272,16 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 try
                 {
-                    // Parcourt tous les groupes existants
                     foreach (PlcBlockUserGroup oBlockUserFolder in oThisPlc.BlockGroup.Groups)
                     {
                         if (oBlockUserFolder.Name.Equals(sRootOPCUAFolder, StringComparison.OrdinalIgnoreCase))
                         {
                             oGrpOPCUA = oBlockUserFolder;
                             bRootFound = true;
-                            break; // Sort de la boucle si trouvé
+                            break;
                         }
                     }
 
-                    // Crée le groupe SEULEMENT SI non trouvé après avoir parcouru tous les éléments
                     if (!bRootFound)
                     {
                         oGrpOPCUA = oThisPlc.BlockGroup.Groups.Create(sRootOPCUAFolder);
@@ -237,16 +290,30 @@ namespace AideAuDiagnostic.TiaExplorer
                 catch (Exception e)
                 {
                     oGrpOPCUA = null;
-                    sErrorText = string.Format(@"GetOrCreateOPCUAFolder() Exception '{0}'", e.Message);
+                    sErrorText = string.Format("GetOrCreateOPCUAFolder() Exception '{0}'", e.Message);
                 }
                 break;
             }
             return oGrpOPCUA;
         }
-        //Méthode pour crée le bloc FC
-        bool MakeFC_Receive_From_Gateway(PlcSoftware oThisPLC, PlcBlockUserGroup oThisPlcUserFolder,
-                                         string sFC_Name_Receive_From_Gateway, string sFC_Title_Receive_From_Gateway, ref int iCmptEntree,
-                                         ref string sErrorText)
+
+        /// <summary>
+        /// Creates the diagnostic FC block, writes its source code, imports it into the TIA project, and updates the entry counter.
+        /// </summary>
+        /// <param name="oThisPLC">The PLC software instance.</param>
+        /// <param name="oThisPlcUserFolder">The target user folder for the block.</param>
+        /// <param name="sFC_Name_Receive_From_Gateway">The FC block name to create.</param>
+        /// <param name="sFC_Title_Receive_From_Gateway">The FC block title/description.</param>
+        /// <param name="iCmptEntree">Outputs the number of entries generated.</param>
+        /// <param name="sErrorText">Outputs any error encountered during generation or import.</param>
+        /// <returns>True if block creation and import succeeded, otherwise false.</returns>
+        bool MakeFC_Receive_From_Gateway(
+            PlcSoftware oThisPLC,
+            PlcBlockUserGroup oThisPlcUserFolder,
+            string sFC_Name_Receive_From_Gateway,
+            string sFC_Title_Receive_From_Gateway,
+            ref int iCmptEntree,
+            ref string sErrorText)
         {
             bool bRet = true;
             sErrorText = string.Empty;
@@ -256,10 +323,8 @@ namespace AideAuDiagnostic.TiaExplorer
 
             while (true)
             {
-                //Création de l'entête du bloc FC
                 lsSourceFC.AddRange(MakeFC_Header_For_Receive_From_PLC(sFC_Name_Receive_From_Gateway, sFC_Title_Receive_From_Gateway));
 
-                //Ajout dans le corps de la fonction
                 lsSourceFC.Add(@"// BLOC FONCTION D'AIDE AU DIAGNOSTIC");
                 lsSourceFC.Add(@"//");
                 lsSourceFC.Add(@"// Ce bloc permet de recepurer toutes les pattes d'entree se trouvant");
@@ -270,7 +335,6 @@ namespace AideAuDiagnostic.TiaExplorer
                 lsSourceFC.Add(@"");
                 lsSourceFC.Add(@"");
 
-                //Test si tous les éléments commencent par un "/"
                 bool bTest = false;
                 foreach (string sElement in lsDataCollection)
                 {
@@ -280,9 +344,9 @@ namespace AideAuDiagnostic.TiaExplorer
                         break;
                     }
                 }
-                //Si aucun élément n'est trouver ou qu'un élément commence par un "/", on ajoute un commentaire
+
                 if (lsDataCollection.Count == 0 || bTest == false)
-                { 
+                {
                     lsSourceFC.Add(@"//");
                     lsSourceFC.Add(@"// AUCUNE SOURCE LTU DETECTEE");
                     lsSourceFC.Add(@"//");
@@ -291,49 +355,47 @@ namespace AideAuDiagnostic.TiaExplorer
                 {
                     lsSourceFC.Add(@"IF (""FirstScan"" OR ""EnableBackJump"") THEN");
                     iCmptEntree = 0;
-                    //Ecriture du résultat de la recherche
                     foreach (string sElement in lsDataCollection)
                     {
-
                         lsSourceFC.Add(sElement);
-                        if(!sElement.Contains("//")) iCmptEntree++;
-                        
+                        if (!sElement.Contains("//")) iCmptEntree++;
                     }
                     lsSourceFC.Add(@"END_IF;");
                 }
 
-                //Ajout de la fin du bloc FC
                 lsSourceFC.AddRange(MakeFC_End());
 
-                //Sauvegarde du FC dans un fichier
                 if (CreateFCFile(sFC_Name_Receive_From_Gateway, lsSourceFC, ref sFCFileName, ref sErrorText) == false)
                 {
                     bRet = false;
                     break;
                 }
 
-                //Suppression du bloc FC dans le projet TIA Portal si déjà existant 
                 if (DeleteBlocFCInTiaPortalProject(oThisPlcUserFolder, sFC_Name_Receive_From_Gateway, ref sErrorText) == false)
                 {
                     bRet = false;
                     break;
                 }
 
-                //Importation de la source du FC dans le projet TIA Portal et génération du bloc dans la bonne arobrescence
                 if (ImportSourceDBAndGenerateItInTiaPortalProject(oThisPLC, oThisPlcUserFolder, sFC_Name_Receive_From_Gateway, sFCFileName, ref sErrorText) == false)
                 {
                     bRet = false;
                     break;
                 }
 
-                //Suppression du fichier FC
                 if (File.Exists(sFCFileName) == true) File.Delete(sFCFileName);
 
                 break;
             }
             return bRet;
         }
-        //Méthode pour générer l'entête du bloc FC
+
+        /// <summary>
+        /// Builds the header lines for the FC block source code.
+        /// </summary>
+        /// <param name="sFCName">The name of the FC block.</param>
+        /// <param name="sFCTitle">The title/description of the FC block.</param>
+        /// <returns>A list of strings representing the FC header.</returns>
         List<string> MakeFC_Header_For_Receive_From_PLC(string sFCName, string sFCTitle)
         {
             List<string> lsHeader = new List<string>();
@@ -351,7 +413,11 @@ namespace AideAuDiagnostic.TiaExplorer
 
             return lsHeader;
         }
-        //Méthode pour générer la fin du bloc FC
+
+        /// <summary>
+        /// Builds the footer/end lines for the FC block source code.
+        /// </summary>
+        /// <returns>A list of strings representing the FC end.</returns>
         List<string> MakeFC_End()
         {
             List<string> lsEnd = new List<string>
@@ -361,7 +427,15 @@ namespace AideAuDiagnostic.TiaExplorer
 
             return lsEnd;
         }
-        //Méthode pour créer le fichier du bloc FC dans le répertoire de l'application
+
+        /// <summary>
+        /// Creates a file for the FC block source code in the application directory.
+        /// </summary>
+        /// <param name="sBlocName">The block name for the file.</param>
+        /// <param name="lsFileLines">The list of code lines to write to the file.</param>
+        /// <param name="sFCFileName">Outputs the generated file name.</param>
+        /// <param name="sErrorText">Outputs any error encountered during file creation.</param>
+        /// <returns>True if the file was created successfully, otherwise false.</returns>
         bool CreateFCFile(string sBlocName, List<string> lsFileLines, ref string sFCFileName, ref string sErrorText)
         {
             bool bRet = true;
@@ -371,18 +445,15 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 try
                 {
-                    //Formatage du nom du fichier
                     sFCFileName = string.Format(@"{0}{1}.scl", oExploreTiaPLC.GetTiaProjectDefinitions().sPathApplication, sBlocName);
-                    //Effacement du fichier si déjà existant
                     if (File.Exists(sFCFileName) == true) File.Delete(sFCFileName);
-                    //Sauvegarde du contenu du fichier
                     File.WriteAllLines(sFCFileName, lsFileLines.ToArray());
 
                     break;
                 }
                 catch (Exception e)
                 {
-                    sErrorText = string.Format(@"Exception in CreateFCFile() : {0}", e.Message);
+                    sErrorText = string.Format("Exception in CreateFCFile() : {0}", e.Message);
                     bRet = false;
                     break;
                 }
@@ -390,7 +461,14 @@ namespace AideAuDiagnostic.TiaExplorer
 
             return bRet;
         }
-        //Méthode pour supprimer le bloc FC dans le projet TIA Portal si présent
+
+        /// <summary>
+        /// Deletes the FC block from the TIA Portal project if it already exists in the given folder.
+        /// </summary>
+        /// <param name="oThisPlcUserFolder">The folder user group in which to search for the block.</param>
+        /// <param name="sBlocName">The FC block name to delete.</param>
+        /// <param name="sErrorText">Outputs any error encountered during deletion.</param>
+        /// <returns>True if deletion was successful or block was not present, otherwise false.</returns>
         bool DeleteBlocFCInTiaPortalProject(PlcBlockUserGroup oThisPlcUserFolder, string sBlocName, ref string sErrorText)
         {
             bool bRet = true;
@@ -398,29 +476,24 @@ namespace AideAuDiagnostic.TiaExplorer
 
             while (true)
             {
-                //Enumération des blocs dans le folder
                 if (oExploreTiaPLC.GetTiainterface().EnumerateBlockUserProgramForThisFolder(oThisPlcUserFolder, ref loListBlocks, ref sErrorText) == false)
                 {
                     bRet = false;
                     break;
                 }
-                //Recherche du bloc dans la liste
                 foreach (PlcBlock oBlock in loListBlocks)
                 {
-                    //Test si le bloc est un FC
                     if (oBlock is FC)
                     {
                         try
                         {
-                            //Test si le bloc est le bloc recherché
                             if (oBlock.Name.ToUpper() == sBlocName.ToUpper())
                             {
-                                //Suppression du bloc
                                 oBlock.Delete();
                                 break;
                             }
                         }
-                        catch {; }
+                        catch { }
                     }
                 }
 
@@ -428,9 +501,21 @@ namespace AideAuDiagnostic.TiaExplorer
             }
             return bRet;
         }
-        //Méthode pour importer le bloc source et de le générer dans le bon répertoire cible
-        bool ImportSourceDBAndGenerateItInTiaPortalProject(PlcSoftware oThisPLC, PlcBlockUserGroup oThisBlocFolder,
-                                                           string sBlocName, string sDBFileName, ref string sErrorText)
+        /// <summary>
+        /// Imports the FC block source file and generates the block in the specified TIA Portal folder.
+        /// </summary>
+        /// <param name="oThisPLC">The PLC software instance.</param>
+        /// <param name="oThisBlocFolder">The destination folder for the imported block.</param>
+        /// <param name="sBlocName">The name of the block to import.</param>
+        /// <param name="sDBFileName">The FC block source file name.</param>
+        /// <param name="sErrorText">Outputs any error encountered during import or generation.</param>
+        /// <returns>True if the block was imported and generated successfully, otherwise false.</returns>
+        bool ImportSourceDBAndGenerateItInTiaPortalProject(
+            PlcSoftware oThisPLC,
+            PlcBlockUserGroup oThisBlocFolder,
+            string sBlocName,
+            string sDBFileName,
+            ref string sErrorText)
         {
             bool bRet = true;
             PlcExternalSource oSource = null;
@@ -439,9 +524,7 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 try
                 {
-                    //Incorporation du fichier source dans le projet TIA Portal
                     PlcExternalSourceSystemGroup oSystemeSourceFolder = oThisPLC.ExternalSourceGroup as PlcExternalSourceSystemGroup;
-                    //Recherche si la source est déjà présente
                     foreach (PlcExternalSource oSourceRead in oSystemeSourceFolder.ExternalSources)
                     {
                         if (oSourceRead.Name.ToUpper() == sBlocName.ToUpper())
@@ -450,21 +533,17 @@ namespace AideAuDiagnostic.TiaExplorer
                             break;
                         }
                     }
-                    //Insere la source à partir du fichier
                     if (oExploreTiaPLC.GetTiainterface().ImportSourceFileToSourceFolder(oSystemeSourceFolder, sBlocName, sDBFileName, ref oSource, ref sErrorText) == false)
                     {
                         bRet = false;
                         break;
                     }
-                    //Génération du bloc dans importé
                     if (oExploreTiaPLC.GetTiainterface().GenerateBlocFromSourceFile(oSource, ref sErrorText) == false)
                     {
                         bRet = false;
                         break;
                     }
-                    //Supression de la source
                     oSource.Delete();
-                    //Déplacement du bloc nouvellement créé dans le folder cible
                     if (MoveBlocFromRootFolderToSpecificFolder(oThisPLC, oThisBlocFolder, sBlocName, ref sErrorText) == false)
                     {
                         bRet = false;
@@ -473,7 +552,7 @@ namespace AideAuDiagnostic.TiaExplorer
                 }
                 catch (Exception e)
                 {
-                    sErrorText = string.Format(@"Exception in ImportSourceDBAndGenerateItInTiaPortalProject() : {0}", e.Message);
+                    sErrorText = string.Format("Exception in ImportSourceDBAndGenerateItInTiaPortalProject() : {0}", e.Message);
                     bRet = false;
                     break;
                 }
@@ -481,8 +560,20 @@ namespace AideAuDiagnostic.TiaExplorer
             }
             return bRet;
         }
-        //Méthode pour déplacer un bloc du répertoire root vers un répertoire spécifique
-        bool MoveBlocFromRootFolderToSpecificFolder(PlcSoftware oThisPLC, PlcBlockUserGroup oThisBlocFolder, string sBlocName, ref string sErrorText)
+
+        /// <summary>
+        /// Moves a block from the root folder to a specific user folder in the TIA Portal project.
+        /// </summary>
+        /// <param name="oThisPLC">The PLC software instance.</param>
+        /// <param name="oThisBlocFolder">The target destination folder.</param>
+        /// <param name="sBlocName">The name of the block to move.</param>
+        /// <param name="sErrorText">Outputs any error encountered during the move operation.</param>
+        /// <returns>True if the block was moved successfully, otherwise false.</returns>
+        bool MoveBlocFromRootFolderToSpecificFolder(
+            PlcSoftware oThisPLC,
+            PlcBlockUserGroup oThisBlocFolder,
+            string sBlocName,
+            ref string sErrorText)
         {
             bool bRet = true;
             PlcBlock oBlocToMove = null;
@@ -493,58 +584,45 @@ namespace AideAuDiagnostic.TiaExplorer
             {
                 try
                 {
-                    Console.WriteLine(sBlocName);
-
-                    //Recherche du bloc dans le répertoire root
                     oBlocToMove = FindAnBlocInSpecificFolder(true, oThisPLC, oThisBlocFolder, sBlocName);
                     if (oBlocToMove == null)
                     {
-                        sErrorText = string.Format(@"MoveBlocFromRootFolderToSpecificFolder() : Bloc {0} not found in root folder", sBlocName);
+                        sErrorText = string.Format("MoveBlocFromRootFolderToSpecificFolder() : Bloc {0} not found in root folder", sBlocName);
                         bRet = false;
                         break;
-
                     }
-                    //Avant de lancer l'export du bloc, il faut le compiler
-                    if(oBlocToMove.IsConsistent == false)
+                    if (oBlocToMove.IsConsistent == false)
                     {
-                        if(oExploreTiaPLC.GetTiainterface().CompileBloc(oBlocToMove, ref sErrorText) == false)
+                        if (oExploreTiaPLC.GetTiainterface().CompileBloc(oBlocToMove, ref sErrorText) == false)
                         {
                             bRet = false;
                             break;
                         }
                     }
-                    //Importation du bloc en XML pour ke reimporter au bon emplacement
                     sXmlBlocToMove = string.Format(@"{0}BlocToMove.XML", oExploreTiaPLC.GetTiaProjectDefinitions().sPathApplication);
-                    
-                    //Ajout du bloc dans la cible
-                    if(oExploreTiaPLC.GetTiainterface().ExportBlocToXml(oBlocToMove, sXmlBlocToMove, ref sErrorText) == false)
+
+                    if (oExploreTiaPLC.GetTiainterface().ExportBlocToXml(oBlocToMove, sXmlBlocToMove, ref sErrorText) == false)
                     {
                         bRet = false;
                         break;
                     }
-                    //On supprime le bloc de sa source
                     oBlocToMove.Delete();
 
-                    //On importe le bloc dans son emplacement définitif
-                    if(oExploreTiaPLC.GetTiainterface().ImportBlocFromXml(oThisBlocFolder.Blocks, sXmlBlocToMove, ref sErrorText) == false)
+                    if (oExploreTiaPLC.GetTiainterface().ImportBlocFromXml(oThisBlocFolder.Blocks, sXmlBlocToMove, ref sErrorText) == false)
                     {
                         bRet = false;
                         break;
                     }
-                    //On supprime le fichier XML
-                    if(File.Exists(sXmlBlocToMove) == true) File.Delete(sXmlBlocToMove);
+                    if (File.Exists(sXmlBlocToMove) == true) File.Delete(sXmlBlocToMove);
 
-                    //Après importation, on recompile le bloc ainsi importé
-                    //Recherche du bloc importé dans le répertoire cible
                     oBlocImport = FindAnBlocInSpecificFolder(false, oThisPLC, oThisBlocFolder, sBlocName);
                     if (oBlocImport == null)
                     {
-                        sErrorText = string.Format(@"MoveBlocFromRootFolderToSpecificFolder() : Bloc {0} not found in target folder", sBlocName);
+                        sErrorText = string.Format("MoveBlocFromRootFolderToSpecificFolder() : Bloc {0} not found in target folder", sBlocName);
                         bRet = false;
                         break;
                     }
-                    //On lance la compilation du bloc après importation
-                    if(oBlocImport.IsConsistent == false)
+                    if (oBlocImport.IsConsistent == false)
                     {
                         if (oExploreTiaPLC.GetTiainterface().CompileBloc(oBlocImport, ref sErrorText) == false)
                         {
@@ -555,7 +633,7 @@ namespace AideAuDiagnostic.TiaExplorer
                 }
                 catch (Exception e)
                 {
-                    sErrorText = string.Format(@"Exception in MoveBlocFromRootFolderToSpecificFolder() : {0}", e.Message);
+                    sErrorText = string.Format("Exception in MoveBlocFromRootFolderToSpecificFolder() : {0}", e.Message);
                     bRet = false;
                     break;
                 }
@@ -563,32 +641,40 @@ namespace AideAuDiagnostic.TiaExplorer
             }
             return bRet;
         }
-        //Méthode pour rechercher un bloc spécifique dans un répertoire spécifique
-        PlcBlock FindAnBlocInSpecificFolder(bool bInRoot, PlcSoftware oThisPLC, PlcBlockUserGroup oThisBlocFolder, string sBlocName)
+
+        /// <summary>
+        /// Searches for a block by name in a specific folder or in the root, depending on the flag.
+        /// </summary>
+        /// <param name="bInRoot">True to search in the root folder, false to search in the specific folder.</param>
+        /// <param name="oThisPLC">The PLC software instance.</param>
+        /// <param name="oThisBlocFolder">The folder to search, used when bInRoot is false.</param>
+        /// <param name="sBlocName">The name of the block to search for.</param>
+        /// <returns>The matching <see cref="PlcBlock"/>, or null if not found.</returns>
+        PlcBlock FindAnBlocInSpecificFolder(
+            bool bInRoot,
+            PlcSoftware oThisPLC,
+            PlcBlockUserGroup oThisBlocFolder,
+            string sBlocName)
         {
             PlcBlock oBlocToFound = null;
 
-            //Recherche du bloc dans le répertoire root
             if (!bInRoot)
             {
                 foreach (PlcBlock oBlock in oThisBlocFolder.Blocks)
                 {
                     if (oBlock.Name.ToUpper() == sBlocName.ToUpper())
                     {
-                        //Le bon bloc à été trouver
                         oBlocToFound = oBlock;
                         break;
                     }
                 }
             }
-            //Recherche du bloc dans le répertoire spécifique
             else
             {
                 foreach (PlcBlock oBloc in oThisPLC.BlockGroup.Blocks)
                 {
                     if (oBloc.Name.ToUpper() == sBlocName.ToUpper())
                     {
-                        //Le bon bloc à été trouver
                         oBlocToFound = oBloc;
                         break;
                     }

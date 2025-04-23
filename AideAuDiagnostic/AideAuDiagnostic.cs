@@ -2,81 +2,118 @@
 using GlobalsOPCUA;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using ClosedXML.Excel;
-using Siemens.Engineering.HW;
-using System.Collections.ObjectModel;
 using Common;
 
 namespace AideAuDiagnostic
 {
+    /// <summary>
+    /// User control for the Diagnostic Assistance feature.
+    /// Handles TIA project initialization, station selection, PLC code generation, and information display.
+    /// </summary>
     public partial class AideAuDiagnostic : UserControl
     {
         #region VARIABLES
-        // Debugview activation trace
+
+        /// <summary>
+        /// Indicates whether DebugView tracing is enabled.
+        /// </summary>
         private bool bWithDebugView = false;
+
+        /// <summary>
+        /// Gets whether DebugView tracing is enabled.
+        /// </summary>
         public bool GetWithDebugView { get { return bWithDebugView; } }
 
-        // Indication démarrage de l'application
+        /// <summary>
+        /// Indicates if the application has started.
+        /// </summary>
         private bool bApplicationIsStarted = false;
 
-        // Objet thread de démarrage
+        /// <summary>
+        /// Thread object for application startup.
+        /// </summary>
         private Thread oThreadStartApplication;
 
-        // Paramètres généraux pour l'application
+        /// <summary>
+        /// General project definitions for the PLC.
+        /// </summary>
         public static PLC_ProjectDefinitions oPLC_ProjectDefinitions = new PLC_ProjectDefinitions();
 
-        // Objet evenement de notification
+        /// <summary>
+        /// Event triggered at the end of the application start thread.
+        /// </summary>
         public event EventHandler oTaskEventEndThreadStartApplication;
 
-        // Objet interface Tia Portal
+        /// <summary>
+        /// TIA Portal interface explorer object.
+        /// </summary>
         private ExploreTiaPLC oExploreTiaPLC;
 
-        // Objet de définition de la CPU 
+        /// <summary>
+        /// CPU project definition object for TIA.
+        /// </summary>
         private TiaProjectForCPU oTiaProjectForCPU;
 
-        // Objet de génération du code pour les automates gateway
+        /// <summary>
+        /// Code generation object for gateway PLCs.
+        /// </summary>
         private PlcGenerateTiaCode oPlcGenerateTiaCode;
 
-        // Objet evenement de notification de fin de génération
+        /// <summary>
+        /// Event triggered at the end of code generation thread.
+        /// </summary>
         public event EventHandler oTaskEventEndThreadGenerationCode;
 
-        // Indication démarrage generation de code
+        /// <summary>
+        /// Indicates if code generation has started.
+        /// </summary>
         private bool bCodeGenerationIsStarted = false;
 
-        // Indication erreur lors de la génération
+        /// <summary>
+        /// Indicates if an error occurred during code generation.
+        /// </summary>
         private readonly bool bErrorWhenGeneratedCode = false;
 
-        // Objet thread de génération
+        /// <summary>
+        /// Thread object for PLC code generation.
+        /// </summary>
         private Thread oThreadStartGeneratePLC;
 
+        /// <summary>
+        /// Data dictionary for storing Excel or project data.
+        /// </summary>
         private readonly Dictionary<Tuple<int, int>, object> dData = new Dictionary<Tuple<int, int>, object>();
 
-        //Liste des instructions pour le FC
+        /// <summary>
+        /// List of FC instructions for data collection.
+        /// </summary>
         private readonly List<string> lsDataCollection = new List<string>();
+
         #endregion
+
+        /// <summary>
+        /// Initializes a new instance of the AideAuDiagnostic user control.
+        /// </summary>
         public AideAuDiagnostic()
         {
             InitializeComponent();
         }
 
-        #region DÉMARAGE APPLICATION
-        //**************************  Chargement de la vue  **************************//
+        #region APPLICATION STARTUP
+
+        /// <summary>
+        /// Loads the diagnostic view and starts the initialization process.
+        /// </summary>
         private void AideAuDiagnostic_Load(object sender, EventArgs e)
         {
             var tStartTime = DateTime.Now;
 
-            // Au démarage de l'application
             UpdateInfo("Démarrage de l'application...");
-            // Lancement du processus de l'application
             oTaskEventEndThreadStartApplication += ThreadConnectionIsFinishedTask;
             oThreadStartApplication = new Thread(() => StartApplication());
             try
@@ -97,23 +134,26 @@ namespace AideAuDiagnostic
                 UpdateInfo(string.Format("Temps de démarrage de l'application : {0} secondes", (tEndTime - tStartTime).TotalSeconds));
             }
         }
-        //**************************  Traitement de fin de thread  **************************//
+
+        /// <summary>
+        /// Marks the application as started upon thread completion.
+        /// </summary>
         private void ThreadConnectionIsFinishedTask(object sender, EventArgs arg)
         {
             bApplicationIsStarted = true;
         }
-        //**************************  Procedure au démarrage  **************************//
+
+        /// <summary>
+        /// Application startup procedure: reads configuration files, initializes objects, and prepares UI.
+        /// </summary>
         private void StartApplication()
         {
             string sError = string.Empty;
 
-            // Lecture du fichier ini de configuration
             TraceThreadUIPrincipal(@"Lecture du fichier de configuration...");
             ReadIniFile();
-            //LECTURE DU FICHIER EXCEL A L'INIT DE L'APP
             ReadExcel();
             TraceThreadUIPrincipal(@"Lecture du fichier excel : OK");
-            // Initialisation de tous les objets internes
             oExploreTiaPLC = new ExploreTiaPLC(oPLC_ProjectDefinitions, dData, lsDataCollection);
             oPlcGenerateTiaCode = new PlcGenerateTiaCode(oExploreTiaPLC, lsDataCollection);
 
@@ -122,7 +162,11 @@ namespace AideAuDiagnostic
 
             TIAAssemblyLoader.SetupControl(this);
         }
-        //**************************  Gestion de l'ecriture Thread secondaire  **************************//
+
+        /// <summary>
+        /// Thread-safe method for updating UI from background threads.
+        /// </summary>
+        /// <param name="sTrace">The message to display in the UI.</param>
         public void TraceThreadUIPrincipal(string sTrace)
         {
             if (InvokeRequired)
@@ -134,16 +178,17 @@ namespace AideAuDiagnostic
                 UpdateInfo(sTrace);
             }
         }
-        //**************************  Lecture du fichier Ini  **************************//
+
+        /// <summary>
+        /// Reads configuration values from the INI file and populates project definitions.
+        /// </summary>
         private void ReadIniFile()
         {
             string sTemp;
             IniFile oIniFile = new IniFile(AppDomain.CurrentDomain.BaseDirectory + @"\Using_Files\HMAOPCUAH.ini");
 
-            // Lecture du chemin d'installation de l'application
             oPLC_ProjectDefinitions.sPathApplication = AppDomain.CurrentDomain.BaseDirectory;
 
-            // Lecture si debugview est utilisé pour les traces
             sTemp = oIniFile.Read("WithDebugView", "GlobalParameters");
             try
             {
@@ -159,11 +204,6 @@ namespace AideAuDiagnostic
                 bWithDebugView = false;
             }
 
-            //*****************************************
-            // Read Tia portal settings
-            //*****************************************
-
-            // Read if tia Portal interface is visible
             sTemp = oIniFile.Read("WithUITiaPortal", "TIAPORTAL");
             try
             {
@@ -178,47 +218,20 @@ namespace AideAuDiagnostic
             {
                 oPLC_ProjectDefinitions.bWithUITiaPortal = false;
             }
-            // Read TIA Poral openness assemblies path
             oPLC_ProjectDefinitions.SetOpennessLibraryPath(oIniFile.Read("FolderOpennessAssemblies", "TIAPORTAL"));
-            // Read Extension project name Tia Portal
             oPLC_ProjectDefinitions.sExtensionProjectName = oIniFile.Read("ExtensionProjectName", "TIAPORTAL");
 
-            //*****************************************
-            // Read Project definitions
-            //*****************************************
-            // Read Mark OPC UA search string for Family Bloc
             oPLC_ProjectDefinitions.sFamilyBlocMarck = oIniFile.Read("FamilyBlocMarckDef", "Project_Definitions");
-            // Read String parameter define new bloc name
             oPLC_ProjectDefinitions.sFamillyStrResearchNewBlocName = oIniFile.Read("FamillyStrResearchNewBlocNameDef", "Project_Definitions");
-            // Read Mark OPC UA search string for Commentar Bloc Parameter
             oPLC_ProjectDefinitions.sCommentarBlocParameterMarck = oIniFile.Read("CommentarBlocParameterMarckDef", "Project_Definitions");
-            // Read Mark OPC UA search string for Commentar Tag variable
             oPLC_ProjectDefinitions.sCommentarTagVariableMarck = oIniFile.Read("CommentarTagVariableMarckDef", "Project_Definitions");
 
-            //*****************************************
-            // Read OPCUA_Server Specification
-            //*****************************************
-            // Read Root Folder for Blocks in OPC UA server
             oPLC_ProjectDefinitions.sRootFolderBlocOPCUAServer = oIniFile.Read("RootFolderBlocOPCUAServer", "OPCUA_Server_Specification");
-            // Read Root Folder for Tags in OPC UA server
             oPLC_ProjectDefinitions.sRootFolderTagsOPCUAServer = oIniFile.Read("RootFolderTagsOPCUAServer", "OPCUA_Server_Specification");
 
-            //*****************************************
-            // Read DB OPC UA mapping
-            //*****************************************
-            // Read DB OPC UA mapping name
             oPLC_ProjectDefinitions.sDBNameMappingOPCUA = oIniFile.Read("DBNameMappingOPCU", "OPCUA_Server_Specification");
-
-            //*****************************************
-            // Read Namespace for OPC UA Server
-            //*****************************************
-            // Read namespace OPC UA server
             oPLC_ProjectDefinitions.sOPCUAServerNamespace = oIniFile.Read("OPCUAServerNamespace", "OPCUA_Server_Specification");
 
-            //*************************************************************
-            // Read flag to validate new name familly only for node id tag
-            //*************************************************************
-            // Read flag to validate new name familly only for node id tag
             sTemp = oIniFile.Read("NewNameBlockOnlyForTagNodeId", "OPCUA_Server_Specification");
             try
             {
@@ -234,20 +247,15 @@ namespace AideAuDiagnostic
                 oPLC_ProjectDefinitions.bNewNameBlockOnlyForTagNodeId = false;
             }
 
-
-            //****************************************************
-            // Read Credentials informations for Tia Portal access
-            //****************************************************
-            // Read Username to access Tia Portal project
             oPLC_ProjectDefinitions.SetUserName(oIniFile.Read("UserName", "Credentials"));
-            // Read Crypt password for user to access Tia portal project
             oPLC_ProjectDefinitions.SetUncryptPasswordUser(oIniFile.Read("Password", "Credentials"));
         }
-        //**************************  Lecture du fichier Excel  **************************//
+
+        /// <summary>
+        /// Reads the Excel file with additional configuration or project data.
+        /// </summary>
         private void ReadExcel()
         {
-
-            //Chemin dans l'application en cours d'exe
             string sFilePath = AppDomain.CurrentDomain.BaseDirectory + @"Liste_LTU_BackJump.xlsx";
 
             using (XLWorkbook wb = new XLWorkbook(sFilePath))
@@ -268,14 +276,17 @@ namespace AideAuDiagnostic
                         }
                         dData.Add(new Tuple<int, int>(i, j), ws.Cell(i, j).Value);
                     }
-
                 }
             }
-
         }
         #endregion
-        #region SÉLECTION DE LA CIBLE
-        //**************************  Méthode appuie sur le bouton Select  **************************//
+
+        #region TARGET SELECTION
+
+        /// <summary>
+        /// Handles the click event for station selection button.
+        /// Selects a target S7-1500 station from the TIA project.
+        /// </summary>
         private void bPSelectStation_Click(object sender, EventArgs e)
         {
             string sStation = string.Empty;
@@ -295,40 +306,46 @@ namespace AideAuDiagnostic
                 txBStation.Text = string.Empty;
             }
         }
-        //**************************  Gestion de la selection de la cible  **************************//
+
+        /// <summary>
+        /// Performs the selection and validation of the S7-1500 target station from the TIA project.
+        /// </summary>
+        /// <param name="sStationName">The output station name if found.</param>
+        /// <returns>True if station is successfully selected, otherwise false.</returns>
         private bool GetS71500_Station(ref string sStationName)
         {
             bool bRet = true;
             string sError = string.Empty;
 
             sStationName = string.Empty;
-            
+
             while (true)
             {
-                // Test si le projet Tia Portal est déja sélectionné ?
                 if (oExploreTiaPLC.GetTiaPortalProjectIsSelected() == false)
                 {
-                    // Sélection du projet Tia Portal
                     if (oExploreTiaPLC.ChooseTiaProject(ref sError) == false)
                     {
                         bRet = false;
                         break;
                     }
                 }
-                // Récupération de la station S7-1500 dans le projet sélectionné
                 if (oExploreTiaPLC.GetTiaStationFromProjectList(ref sStationName, ref sError) == false)
                 {
                     bRet = false;
                 }
                 break;
             }
-            // Affichage du nom du projet selectionné
             txBProjet.Text = oExploreTiaPLC.oTiainterface.m_oTiaProject.Name;
             return bRet;
         }
         #endregion
-        #region GÉNÉRATION DU CODE
-        //**************************  Méthode appuie sur le bouton Génération  **************************//
+
+        #region CODE GENERATION
+
+        /// <summary>
+        /// Handles the click event for the code generation (export) button.
+        /// Starts the code export and analysis process.
+        /// </summary>
         private void bPExport_Click(object sender, EventArgs e)
         {
             bool projetSelectionner = oExploreTiaPLC.bTiaPortalProjectIsSelected;
@@ -340,7 +357,6 @@ namespace AideAuDiagnostic
             {
                 TraceThreadUIPrincipal(@"Demarrage de la recherche des Blocs FC pour export et analyse");
 
-                // Lancemement de la lecture des blocs FC  et import du FC dans la CPU  
                 StartPLCCodeGenerator();
                 TraceThreadUIPrincipal(@"Fin de l'import du bloc : FC Aide au diagnostic");
 
@@ -352,9 +368,12 @@ namespace AideAuDiagnostic
                 TraceThreadUIPrincipal(@"ATTENTION : Veuillez selectionner un projet et une CPU avant de lancer l'execution du programme");
             }
         }
-        //**************************  Gestion de la génération du code  **************************//
+
+        /// <summary>
+        /// Starts the PLC code generator in a separate thread and manages UI state.
+        /// </summary>
         private void StartPLCCodeGenerator()
-        { 
+        {
             oTaskEventEndThreadGenerationCode += ThreadGenerationCodeIsFinishedTask;
             oThreadStartGeneratePLC = new Thread(() => WaitForEndCodeGeneration());
             try
@@ -386,7 +405,10 @@ namespace AideAuDiagnostic
                 }
             }
         }
-        //**************************  Attente de la fin de la génération du code  **************************//
+
+        /// <summary>
+        /// Waits for the PLC code generation process to complete.
+        /// </summary>
         private void WaitForEndCodeGeneration()
         {
             while (bCodeGenerationIsStarted == false)
@@ -394,7 +416,10 @@ namespace AideAuDiagnostic
                 Application.DoEvents();
             }
         }
-        //**************************  Génération du code  **************************//
+
+        /// <summary>
+        /// Main PLC code generation workflow, including compilation, code reading, and export.
+        /// </summary>
         private void GeneratePLCCodeMain()
         {
             string sErrorText = string.Empty;
@@ -402,10 +427,6 @@ namespace AideAuDiagnostic
             {
                 while (true)
                 {
-                    // Avant le lancement de la génération, il est necessaire de vérifier que le programme dans la Cpu
-                    // est bien compilé sans erreur
-                    
-                    // Lancement de la compilation du S7-1500
                     TraceThreadUIPrincipal(@"Compilation de la CPU avant generation...");
                     if (oPlcGenerateTiaCode.CompileThisPlcAndCheckErrors(oPLC_ProjectDefinitions.sPLCS71500HTargetStationName, ref sErrorText) == false)
                     {
@@ -413,8 +434,7 @@ namespace AideAuDiagnostic
                         break;
                     }
                     TraceThreadUIPrincipal(@"La CPU est bien compilée sans erreur");
-                    
-                    // Lancement de la lecture + Export du code de la CPU S7-1500 
+
                     if (StartExamineS71500PLCCode(ref sErrorText) == false)
                     {
                         TraceThreadUIPrincipal(string.Format(@"Erreur à la lecture du code de la CPU : {0}", sErrorText));
@@ -422,7 +442,6 @@ namespace AideAuDiagnostic
                     }
                     TraceThreadUIPrincipal(@"L'export et l'analyse du programme CPU s'est bien déroulé");
 
-                    // Lancement de la génération du code dans la CPU S7-1500 
                     if (StartGeneratePLCProgramInPLCS71500(ref sErrorText) == false)
                     {
                         TraceThreadUIPrincipal(string.Format(@"Erreur à la génération de code dans la CPU : {0}", sErrorText));
@@ -433,39 +452,49 @@ namespace AideAuDiagnostic
                     break;
                 }
             }
-            finally            
+            finally
             {
-                // Indication de fin du thread
                 this.BeginInvoke(oTaskEventEndThreadGenerationCode, EventArgs.Empty);
             }
         }
-        //**************************  Gestion de la fin de la génération du code  **************************//
+
+        /// <summary>
+        /// Sets the flag indicating code generation is complete.
+        /// </summary>
         private void ThreadGenerationCodeIsFinishedTask(object sender, EventArgs arg)
         {
             bCodeGenerationIsStarted = true;
         }
-        //**************************  Examen du code de la CPU S7-1500  **************************//
+
+        /// <summary>
+        /// Reads and analyzes the S7-1500 CPU code structure and updates project definitions.
+        /// </summary>
+        /// <param name="sErrorText">Output error message if any.</param>
+        /// <returns>True if successful, otherwise false.</returns>
         private bool StartExamineS71500PLCCode(ref string sErrorText)
         {
             bool bRet;
             sErrorText = string.Empty;
             oTiaProjectForCPU = new TiaProjectForCPU(oExploreTiaPLC.GetTiainterface().GetTIAPortalProject(),
                                                         txBStation.Text, oPLC_ProjectDefinitions.sRootFolderBlocOPCUAServer,
-                                                        oPLC_ProjectDefinitions.sRootFolderBlocOPCUAServer, 
+                                                        oPLC_ProjectDefinitions.sRootFolderBlocOPCUAServer,
                                                         oPLC_ProjectDefinitions.sDBNameMappingOPCUA);
             bRet = oExploreTiaPLC.EnumerateFoldersBlocksParametersAndTagsForOPCUA(ref oTiaProjectForCPU, txBStation.Text, ref sErrorText);
-            // Affectation des informations de blocs et tags présents dans le projet TIA du S7-1500
             oPlcGenerateTiaCode.SetTiaProjectForCPU(oTiaProjectForCPU);
             return bRet;
         }
-        //**************************  Génération du code dans la CPU S7-1500  **************************//
+
+        /// <summary>
+        /// Generates the new PLC program in the S7-1500 CPU.
+        /// </summary>
+        /// <param name="serrorText">Output error message if any.</param>
+        /// <returns>True if successful, otherwise false.</returns>
         private bool StartGeneratePLCProgramInPLCS71500(ref string serrorText)
         {
             bool bRet;
             string sErrorInterne = string.Empty;
             int iCmptEntree = 0;
 
-            // Lancement de la génération du code dans la CPU
             TraceThreadUIPrincipal(@"Lancement de la generation de code dans la CPU");
 
             while (true)
@@ -479,14 +508,20 @@ namespace AideAuDiagnostic
                 UpdateInfo(string.Format(@"Nombre d'entreé générer : {0}", iCmptEntree));
                 break;
             }
-        return bRet;
+            return bRet;
         }
         #endregion
-        #region InformationsBox
+
+        #region INFORMATION DISPLAY
+
+        /// <summary>
+        /// Appends a message to the information box with a timestamp.
+        /// </summary>
+        /// <param name="sMessage">Message to display.</param>
         public void UpdateInfo(string sMessage)
         {
-            var now = DateTime.Now; // Actual date and time
-            string sCurrentDateTime = $"{ now.Year}/{now.Month:D2}/{now.Day:D2} {now.Hour:D2}:{now.Minute:D2}:{now.Second:D2} - ";
+            var now = DateTime.Now;
+            string sCurrentDateTime = $"{now.Year}/{now.Month:D2}/{now.Day:D2} {now.Hour:D2}:{now.Minute:D2}:{now.Second:D2} - ";
             string sFullMessage;
 
             if (sMessage == "-")
@@ -497,23 +532,24 @@ namespace AideAuDiagnostic
             {
                 sFullMessage = $"{sCurrentDateTime} {sMessage}\n";
             }
-            // Ajoute le message au RichTextBox
             txBInformations.AppendText(sFullMessage);
 
-            // Défile automatiquement vers le bas
             txBInformations.SelectionStart = txBInformations.Text.Length;
             txBInformations.ScrollToCaret();
         }
+
+        /// <summary>
+        /// Maximizes the information group box for better visibility.
+        /// </summary>
         private void bPMaximizeInfo_Click(object sender, EventArgs e)
         {
-            //Maximize Information Group Box
             gBTarget.Enabled = false;
             gBTarget.Visible = false;
             gBExport.Enabled = false;
             gBExport.Visible = false;
 
             gBInformations.Location = new Point(40, 23);
-            gBInformations.Height = 415; 
+            gBInformations.Height = 415;
             gBInformations.Width = 1020;
 
             txBInformations.Width = 1000;
@@ -528,11 +564,13 @@ namespace AideAuDiagnostic
             txBInformations.Font = new Font("Microsoft Sans Serif", 16);
         }
 
+        /// <summary>
+        /// Minimizes the information group box to its default size.
+        /// </summary>
         private void bPMinimize_Click(object sender, EventArgs e)
         {
-            //Minimize Information Group Box
             gBInformations.Location = new Point(725, 23);
-            gBInformations.Height = 225; 
+            gBInformations.Height = 225;
             gBInformations.Width = 332;
 
             txBInformations.Width = 282;
@@ -552,29 +590,7 @@ namespace AideAuDiagnostic
             txBInformations.Font = new Font("Microsoft Sans Serif", 10);
         }
 
-
         #endregion
 
-        /* 
-        // Test Chargement dynamique des références
-       private void InitializeAssemblies()
-       {
-           try
-           {
-               // Utilisation de la bibliothèque partagée
-               Type targetType = SharedLibrary.AssemblyManager.GetType("Siemens.Automation.YourTypeName");
-               if (targetType != null)
-               {
-                   // Utilisez le type comme nécessaire
-                   object instance = Activator.CreateInstance(targetType);
-                   // ... autres opérations
-               }
-           }
-           catch (Exception ex)
-           {
-               MessageBox.Show($"Erreur d'initialisation: {ex.Message}");
-           }
-       }
-       */
     }
 }
