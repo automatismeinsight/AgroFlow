@@ -71,22 +71,65 @@ namespace ReceptionDeProjet
                         var automate = CreateAutomateFromModule(mainModule);
 
                         // Analyse et récupération des blocs OB
-                        AnalyzeObBlocks(mainModule, automate);
+                        try
+                        {
+                            AnalyzeObBlocks(mainModule, automate);
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Erreur lors de l'analyse des blocs OB; Automate : " + automate.sName);
+                        }
+
 
                         // Calcul des statistiques
-                        CalculStatPLC(automate);
+                        try
+                        {
+                            CalculStatPLC(automate);
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Erreur lors du calcul des statistiques; Automate : " + automate.sName);
+                        }
 
                         // Vérification de la présence de PID dans OB1
-                        PIDOB1(automate);
+                        try
+                        {
+                            PIDOB1(automate);
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Erreur lors de la vérification de la présence de PID dans OB1; Automate : " + automate.sName);
+                        }
 
                         // Protection des blocs
-                        BlockProtection(mainModule, automate);
+                        try
+                        {
+                            BlockProtection(mainModule, automate);
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Erreur lors de la protection des blocs; Automate : " + automate.sName);
+                        }
 
                         // Interface réseau
-                        InterfaceNetwork(mainModule, automate);
+                        try
+                        {
+                            InterfaceNetwork(mainModule, automate);
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Erreur lors de la récupération de l'interface réseau; Automate : " + automate.sName);
+                        }
 
-                        // Affichage de debug
-                        DebugObBlocks(automate);
+                        //Affichage de debug
+                        try
+                        {
+                            DebugObBlocks(automate);
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Erreur lors de l'affichage de debug; Automate : " + automate.sName);
+                        }
 
                         resultProject.AddAutomate(automate);
                     }
@@ -269,6 +312,9 @@ namespace ReceptionDeProjet
                 if (onlineProvider.Configuration.IsConfigured)
                 {
                     onlineProvider.GoOnline();
+                }else
+                {
+                    return "False";
                 }
                 onlineProvider.GoOffline();
                 return "True";
@@ -277,7 +323,6 @@ namespace ReceptionDeProjet
             {
                 OnlineProvider onlineProvider = mainModule.GetService<OnlineProvider>();
                 onlineProvider.GoOffline();
-                Console.WriteLine($"Erreur lors de la récupération de l'OnlineAccess : {e.Message}");
                 return "False";
             }
         }
@@ -597,29 +642,38 @@ namespace ReceptionDeProjet
                     if (item.GetAttribute("Name").ToString().Contains("1"))
                     {
                         var networkInterface = item.GetService<NetworkInterface>();
-                        if (networkInterface?.GetAttribute("TimeSynchronizationNtp").ToString() == "True")
+                        try
                         {
-                            if (networkInterface?.GetAttribute("TimeSynchronizationServer1").ToString() != "")
+                            if (networkInterface?.GetAttribute("TimeSynchronizationNtp").ToString() == "True")
                             {
-                                automate.sNtpServer1 = networkInterface?.GetAttribute("TimeSynchronizationServer1").ToString();
+                                if (networkInterface?.GetAttribute("TimeSynchronizationServer1").ToString() != "")
+                                {
+                                    automate.sNtpServer1 = networkInterface?.GetAttribute("TimeSynchronizationServer1").ToString();
+                                }
+                                else automate.sNtpServer1 = "Non";
+                                if (networkInterface?.GetAttribute("TimeSynchronizationServer2").ToString() != "")
+                                {
+                                    automate.sNtpServer2 = networkInterface?.GetAttribute("TimeSynchronizationServer2").ToString();
+                                }
+                                else automate.sNtpServer2 = "Non";
+                                if (networkInterface?.GetAttribute("TimeSynchronizationServer3").ToString() != "")
+                                {
+                                    automate.sNtpServer3 = networkInterface?.GetAttribute("TimeSynchronizationServer3").ToString();
+                                }
+                                else automate.sNtpServer3 = "Non";
                             }
-                            else automate.sNtpServer1 = "Non";
-                            if (networkInterface?.GetAttribute("TimeSynchronizationServer2").ToString() != "")
+                            else
                             {
-                                automate.sNtpServer2 = networkInterface?.GetAttribute("TimeSynchronizationServer2").ToString();
+                                automate.sNtpServer1 = "Option désactivée";
+                                automate.sNtpServer2 = "Option désactivée";
+                                automate.sNtpServer3 = "Option désactivée";
                             }
-                            else automate.sNtpServer2 = "Non";
-                            if (networkInterface?.GetAttribute("TimeSynchronizationServer3").ToString() != "")
-                            {
-                                automate.sNtpServer3 = networkInterface?.GetAttribute("TimeSynchronizationServer3").ToString();
-                            }
-                            else automate.sNtpServer3 = "Non";
                         }
-                        else
+                        catch
                         {
-                            automate.sNtpServer1 = "Option désactivée";
-                            automate.sNtpServer2 = "Option désactivée";
-                            automate.sNtpServer3 = "Option désactivée";
+                            automate.sNtpServer1 = "Non trouvé";
+                            automate.sNtpServer2 = "Non trouvé";
+                            automate.sNtpServer3 = "Non trouvé";
                         }
 
                         var node = networkInterface.Nodes.FirstOrDefault();
@@ -641,7 +695,6 @@ namespace ReceptionDeProjet
                                     sNameConnectedDevice = nodeX.GetAttribute("PnDeviceName").ToString().Split('.')[0];
                                     if (string.Compare(sNameConnectedDevice, automate.sName, StringComparison.OrdinalIgnoreCase) != 0)
                                     {
-                                        Console.WriteLine($"Appareil connecté : {sNameConnectedDevice}");
                                         automate.sConnectedDeviceX1 = sNameConnectedDevice;
                                     }
                                 }
@@ -680,7 +733,6 @@ namespace ReceptionDeProjet
                                     sNameConnectedDevice = nodeX.GetAttribute("PnDeviceName").ToString().Split('.')[0];
                                     if (string.Compare(sNameConnectedDevice, automate.sName, StringComparison.OrdinalIgnoreCase) != 0)
                                     {
-                                        Console.WriteLine($"Appareil connecté : {sNameConnectedDevice}");
                                         automate.sConnectedDeviceX2 = sNameConnectedDevice;
                                     }
                                 }
