@@ -1,17 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO.Packaging;
 using System.Linq;
-using System.Security.Cryptography.Xml;
 using System.Text;
-using System.Threading.Tasks;
-using System.Web.UI;
-using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Drawing;
-using DocumentFormat.OpenXml.Presentation;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Google.Protobuf.WellKnownTypes;
 using OpennessV16;
 using Siemens.Engineering.CrossReference;
 using Siemens.Engineering.HW;
@@ -19,18 +9,35 @@ using Siemens.Engineering.HW.Features;
 using Siemens.Engineering.Online;
 using Siemens.Engineering.SW;
 using Siemens.Engineering.SW.Blocks;
-using System.Globalization;
 using Siemens.Engineering;
 
 namespace ReceptionDeProjet
 {
+    /// <summary>
+    /// Provides methods for analyzing and comparing PLC devices information from a TIA Portal project.
+    /// </summary>
     public class CompareTIA
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CompareTIA"/> class.
+        /// </summary>
         public CompareTIA()
         { }
+
+        /// <summary>
+        /// Retrieves information about PLC devices from the given TIA Portal interface and constructs a <see cref="Project"/> object.
+        /// </summary>
+        /// <param name="tiaInterface">The TIA Openness interface used to interact with the TIA Portal project.</param>
+        /// <param name="sError">A string for reporting or handling errors during the process.</param>
+        /// <returns>
+        /// A <see cref="Project"/> instance containing information about the project and its PLC devices.
+        /// </returns>
+        /// <remarks>
+        /// This method collects project metadata, language, version, and analyzes each device. 
+        /// It extracts main module properties, executes various analyses, and fills the project structure with detailed device data.
+        /// </remarks>
         public Project GetPlcDevicesInfo(HMATIAOpenness_V16 tiaInterface, string sError)
         {
-            // Création de l'objet Project
             var resultProject = new Project
             {
                 sName = tiaInterface.m_oTiaProject.Name,
@@ -40,113 +47,109 @@ namespace ReceptionDeProjet
                 sSize = tiaInterface.m_oTiaProject.GetAttribute("Size").ToString()
             };
 
-            //Ajout de la version
             resultProject.sVersion = resultProject.sProjectPath.Split('p').Last();
 
             Language oLangueProjet = tiaInterface.m_oTiaProject.LanguageSettings.GetAttribute("ReferenceLanguage") as Language;
             resultProject.sLanguage = oLangueProjet.GetAttribute("Culture").ToString().Split('-')[0];
 
-            //Ajout des devices
             try
             {
                 foreach (var device in tiaInterface.m_oTiaProject.Devices)
                 {
-                    // Évite de traiter les devices vides
                     if (device.DeviceItems.Count <= 1)
                     {
-                        Console.WriteLine("Le device est vide");
+                        Console.WriteLine("Empty device detected");
                         continue;
                     }
 
-                    // Recherche du module principal
                     var mainModule = FindMainModule(device);
                     if (mainModule == null)
                     {
-                        Console.WriteLine("Erreur module vide");
+                        Console.WriteLine("Main module not found");
                         continue;
                     }
-                    // Création de l'objet Automate et récupération des propriétés
                     try
                     {
                         var automate = CreateAutomateFromModule(mainModule);
 
-                        // Analyse et récupération des blocs OB
                         try
                         {
                             AnalyzeObBlocks(mainModule, automate);
                         }
                         catch
                         {
-                            Console.WriteLine("Erreur lors de l'analyse des blocs OB; Automate : " + automate.sName);
+                            Console.WriteLine("Error analyzing OB blocks; Automate: " + automate.sName);
                         }
 
-
-                        // Calcul des statistiques
                         try
                         {
                             CalculStatPLC(automate);
                         }
                         catch
                         {
-                            Console.WriteLine("Erreur lors du calcul des statistiques; Automate : " + automate.sName);
+                            Console.WriteLine("Error calculating PLC statistics; Automate: " + automate.sName);
                         }
 
-                        // Vérification de la présence de PID dans OB1
                         try
                         {
                             PIDOB1(automate);
                         }
                         catch
                         {
-                            Console.WriteLine("Erreur lors de la vérification de la présence de PID dans OB1; Automate : " + automate.sName);
+                            Console.WriteLine("Error checking PID in OB1; Automate: " + automate.sName);
                         }
 
-                        // Protection des blocs
                         try
                         {
                             BlockProtection(mainModule, automate);
                         }
                         catch
                         {
-                            Console.WriteLine("Erreur lors de la protection des blocs; Automate : " + automate.sName);
+                            Console.WriteLine("Error during block protection; Automate: " + automate.sName);
                         }
 
-                        // Interface réseau
                         try
                         {
                             InterfaceNetwork(mainModule, automate);
                         }
                         catch
                         {
-                            Console.WriteLine("Erreur lors de la récupération de l'interface réseau; Automate : " + automate.sName);
+                            Console.WriteLine("Error retrieving network interface; Automate: " + automate.sName);
                         }
 
-                        //Affichage de debug
                         try
                         {
                             DebugObBlocks(automate);
                         }
                         catch
                         {
-                            Console.WriteLine("Erreur lors de l'affichage de debug; Automate : " + automate.sName);
+                            Console.WriteLine("Error during debug display; Automate: " + automate.sName);
                         }
 
                         resultProject.AddAutomate(automate);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Erreur lors de l'accès aux propriétés de sécurité: {ex.Message} {device.Name}");
+                        Console.WriteLine($"Error accessing security properties: {ex.Message} {device.Name}");
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erreur lors de la récupération des informations des PLC : {ex.Message}");
+                Console.WriteLine($"Error retrieving PLC information: {ex.Message}");
             }
 
             return resultProject;
         }
+
+        /// <summary>
+        /// Finds and returns the main module (CPU) from a given device.
+        /// </summary>
+        /// <param name="device">The device to search for the main module.</param>
+        /// <returns>
+        /// The main <see cref="DeviceItem"/> if found; otherwise, <c>null</c>.
+        /// </returns>
         private DeviceItem FindMainModule(Device device)
         {
             foreach (var item in device.DeviceItems)
@@ -158,6 +161,17 @@ namespace ReceptionDeProjet
             }
             return null;
         }
+
+        /// <summary>
+        /// Creates and populates an <see cref="Automate"/> object from the specified main module.
+        /// </summary>
+        /// <param name="mainModule">The main module from which to extract properties.</param>
+        /// <returns>
+        /// An instance of <see cref="Automate"/> filled with properties and configuration details from the main module.
+        /// </returns>
+        /// <remarks>
+        /// This method extracts and organizes hardware, firmware, configuration, and sub-item information for the automate.
+        /// </remarks>
         private Automate CreateAutomateFromModule(DeviceItem mainModule)
         {
             string gamme = FindGamme(mainModule);
@@ -177,7 +191,7 @@ namespace ReceptionDeProjet
             }
             catch
             {
-                automate.sWatchDog = "Non trouvé";
+                automate.sWatchDog = "Not found";
             }
             try
             {
@@ -185,7 +199,7 @@ namespace ReceptionDeProjet
             }
             catch
             {
-                automate.sWebServer = "Non trouvé";
+                automate.sWebServer = "Not found";
             }
             try
             {
@@ -193,7 +207,7 @@ namespace ReceptionDeProjet
             }
             catch
             {
-                automate.sRestart = "Non trouvé";
+                automate.sRestart = "Not found";
             }
             try
             {
@@ -201,7 +215,7 @@ namespace ReceptionDeProjet
             }
             catch
             {
-                automate.sCadenceM0 = "Non trouvé";
+                automate.sCadenceM0 = "Not found";
             }
             try
             {
@@ -209,7 +223,7 @@ namespace ReceptionDeProjet
             }
             catch
             {
-                automate.sCadenceM1 = "Non trouvé";
+                automate.sCadenceM1 = "Not found";
             }
             try
             {
@@ -217,7 +231,7 @@ namespace ReceptionDeProjet
             }
             catch
             {
-                automate.sLocalHour = "Non trouvé";
+                automate.sLocalHour = "Not found";
             }
             try
             {
@@ -225,13 +239,13 @@ namespace ReceptionDeProjet
             }
             catch
             {
-                automate.sHourChange = "Non trouvé";
+                automate.sHourChange = "Not found";
             }
 
             if (!gammesAutorisees.Any(g => gamme.Contains(g)))
             {
                 automate.sName = mainModule.GetAttribute("Name").ToString();
-                automate.sGamme = gamme + " | Hors gamme";
+                automate.sGamme = gamme + " | Out of range";
             }
 
             try
@@ -242,14 +256,13 @@ namespace ReceptionDeProjet
                     var configuration = provider.GetAttribute("PlcAccessControlConfiguration");
                     automate.sControlAccess = configuration.ToString();
                 }
-                else automate.sControlAccess = "Option non disponible";
+                else automate.sControlAccess = "Option not available";
             }
             catch
             {
-                automate.sControlAccess = "Option non disponible";
+                automate.sControlAccess = "Option not available";
             }
 
-            // Analyse des sous-éléments (MMC, écran, etc.)
             foreach (var item in mainModule.DeviceItems)
             {
                 var itemName = item.GetAttribute("Name").ToString();
@@ -261,11 +274,11 @@ namespace ReceptionDeProjet
                         {
                             automate.sMMCLife = item.GetAttribute("DiagnosticsAgingSimaticMemoryCardThreshold").ToString();
                         }
-                        else automate.sMMCLife = "Option desactivé";
+                        else automate.sMMCLife = "Option disabled";
                     }
                     catch
                     {
-                        automate.sMMCLife = "Non trouvé";
+                        automate.sMMCLife = "Not found";
                     }
                 }
                 try
@@ -274,11 +287,11 @@ namespace ReceptionDeProjet
                     {
                         automate.sScreenWrite = item.GetAttribute("DisplayWriteAccess").ToString();
                     }
-                    else automate.sScreenWrite = "Option non disponible";
+                    else automate.sScreenWrite = "Option not available";
                 }
                 catch
                 {
-                    automate.sScreenWrite = "Option non disponible";
+                    automate.sScreenWrite = "Option not available";
                 }
 
                 try
@@ -287,22 +300,36 @@ namespace ReceptionDeProjet
                 }
                 catch
                 {
-                    automate.sOnlineAccess = "Connexion Impossible";
+                    automate.sOnlineAccess = "Connection unavailable";
                 }
             }
 
-            return automate; 
+            return automate;
         }
+
+        /// <summary>
+        /// Determines the product range (series) of the specified main module.
+        /// </summary>
+        /// <param name="mainModule">The main <see cref="DeviceItem"/> for which to find the range.</param>
+        /// <returns>
+        /// A <see cref="string"/> representing the range of the device (e.g., "S7-1200", "S7-1500"), or "Non trouvé" if not found.
+        /// </returns>
         private string FindGamme(DeviceItem mainModule)
         {
             string sGamme = "Non trouvé";
-
             Device parent = (Device)mainModule.Parent;
             sGamme = parent.GetAttribute("TypeName").ToString();
             Console.WriteLine($"Gamme : {sGamme}");
-
             return sGamme;
         }
+
+        /// <summary>
+        /// Tests the online accessibility of the given main module.
+        /// </summary>
+        /// <param name="mainModule">The <see cref="DeviceItem"/> to test online access for.</param>
+        /// <returns>
+        /// "True" if the online connection can be established; otherwise, "False".
+        /// </returns>
         private string TestOnlineAccess(DeviceItem mainModule)
         {
             try
@@ -312,7 +339,8 @@ namespace ReceptionDeProjet
                 if (onlineProvider.Configuration.IsConfigured)
                 {
                     onlineProvider.GoOnline();
-                }else
+                }
+                else
                 {
                     return "False";
                 }
@@ -326,6 +354,16 @@ namespace ReceptionDeProjet
                 return "False";
             }
         }
+
+        /// <summary>
+        /// Analyzes OB and FC blocks from the specified main module, and populates the automate with the related information.
+        /// </summary>
+        /// <param name="mainModule">The <see cref="DeviceItem"/> representing the CPU/main module.</param>
+        /// <param name="automate">The <see cref="Automate"/> object to be populated with block analysis results.</param>
+        /// <remarks>
+        /// This method analyzes all Function (FC) and Organization Block (OB) objects, extracts their cross-references, 
+        /// and builds up the internal structure of the automate including nested and referenced blocks.
+        /// </remarks>
         private void AnalyzeObBlocks(DeviceItem mainModule, Automate automate)
         {
             foreach (var block in GetAllBlocksFromCPU(mainModule))
@@ -341,7 +379,6 @@ namespace ReceptionDeProjet
                         sType = "FC",
                     };
 
-                    // Recherche des références par croisement
                     var crossRefServiceFC = block.GetService<CrossReferenceService>() as CrossReferenceService;
                     var crossRefResultFC = crossRefServiceFC?.GetCrossReferences(CrossReferenceFilter.AllObjects);
                     var sourceObjectFC = crossRefResultFC?.Sources?.FirstOrDefault(s => s.Name == block.Name);
@@ -361,7 +398,6 @@ namespace ReceptionDeProjet
                         {
                             if (!(location.GetAttribute("ReferenceType").ToString() == "UsedBy"))
                             {
-                                // Choix du type selon la référence
                                 if (refType != "Instruction" && !refAddress.Contains("FC") && !refAddress.Contains("FB"))
                                     continue;
 
@@ -389,13 +425,13 @@ namespace ReceptionDeProjet
 
                 if (block.GetType().ToString() == "Siemens.Engineering.SW.Blocks.InstanceDB")
                 {
-
+                    // Placeholder for InstanceDB analysis if needed in the future
                 }
             }
 
             foreach (MyFC fc in automate.oFCs)
             {
-                var blocsACopier = fc.oInternalBlocs.ToList(); // Copie de la liste avant itération
+                var blocsACopier = fc.oInternalBlocs.ToList();
 
                 foreach (MyBloc bloc in blocsACopier)
                 {
@@ -408,7 +444,7 @@ namespace ReceptionDeProjet
                                 fc.AddBloc(fcInternal);
                                 fc.iNbLTU += fcInternal.iNbLTU;
                                 fc.iNbBloc += fcInternal.iNbBloc;
-                                fc.oInternalBlocs.Remove(bloc); // Modification autorisée car on itère sur une copie
+                                fc.oInternalBlocs.Remove(bloc);
                             }
                         }
                     }
@@ -426,7 +462,6 @@ namespace ReceptionDeProjet
                         iID = obNumber
                     };
 
-                    // Recherche des références par croisement
                     var crossRefService = block.GetService<CrossReferenceService>() as CrossReferenceService;
                     var crossRefResult = crossRefService?.GetCrossReferences(CrossReferenceFilter.AllObjects);
                     var sourceObject = crossRefResult?.Sources?.FirstOrDefault(s => s.Name == block.Name);
@@ -442,7 +477,6 @@ namespace ReceptionDeProjet
                         var refType = referenceObject.GetAttribute("TypeName").ToString();
                         var refAddress = referenceObject.GetAttribute("Address").ToString();
 
-                        // Choix du type selon la référence
                         if (refType != "Instruction" && !refAddress.Contains("FC") && !refAddress.Contains("FB"))
                             continue;
 
@@ -472,7 +506,6 @@ namespace ReceptionDeProjet
                                     vObObject.AddBloc(fc);
                                 }
                             }
-
                         }
                         else vObObject.AddBloc(myBloc);
                     }
@@ -481,9 +514,16 @@ namespace ReceptionDeProjet
                 }
             }
         }
+
+        /// <summary>
+        /// Calculates statistics for LTU and OB blocks in the specified automate.
+        /// </summary>
+        /// <param name="automate">The <see cref="Automate"/> object containing OBs and block data.</param>
+        /// <remarks>
+        /// The method calculates the percentage of LTU blocks, and the percentage of blocks in OB1 and OB35 relative to the total.
+        /// </remarks>
         private void CalculStatPLC(Automate automate)
         {
-            //% LTU
             int iNbLTU = 0;
             int iNbBloc = 0;
             int iTotalBlocOB1 = 0;
@@ -501,36 +541,49 @@ namespace ReceptionDeProjet
                 automate.iBlocOb1 = 0;
                 automate.iBlocOb35 = 0;
             }
-            else {
+            else
+            {
                 automate.iStandardLTU = (iNbLTU * 100) / iNbBloc;
                 automate.iBlocOb1 = (iTotalBlocOB1 * 100) / iNbBloc;
                 automate.iBlocOb35 = (iTotalBlocOB35 * 100) / iNbBloc;
             }
         }
+
+        /// <summary>
+        /// Outputs debug information for OB blocks and their nested bloc structures within the automate.
+        /// </summary>
+        /// <param name="automate">The <see cref="Automate"/> whose OB blocks will be debugged and displayed.</param>
+        /// <remarks>
+        /// Shows detailed block structure and LTU percentage for each OB, as well as summary statistics for the automate.
+        /// </remarks>
         private void DebugObBlocks(Automate automate)
         {
             var sb = new StringBuilder();
 
-            // Parcours des OBs
             foreach (var myObTest in automate.oOBs)
             {
                 sb.AppendLine($">OB{myObTest.iID} : {myObTest.sName}");
 
-                // Appel de la fonction récursive pour afficher les blocs
                 foreach (var myBlocTest in myObTest.oBlocList)
                 {
                     AppendBlocInfo(sb, myBlocTest, 1);
                 }
 
-                sb.AppendLine($"%LTU dans l'OB{myObTest.iID} = {myObTest.Ltu100}");
+                sb.AppendLine($"%LTU in OB{myObTest.iID} = {myObTest.Ltu100}");
             }
 
             Console.WriteLine(sb.ToString());
-            Console.WriteLine($"Pourcentage de blocs LTU dans l'automate : {automate.iStandardLTU}%");
-            Console.WriteLine($"Pourcentage de blocs OB1 dans l'automate : {automate.iBlocOb1}%");
-            Console.WriteLine($"Nombre de blocs protégés : {automate.ProtectedBlocs.Count}");
+            Console.WriteLine($"LTU blocks percentage in automate: {automate.iStandardLTU}%");
+            Console.WriteLine($"OB1 blocks percentage in automate: {automate.iBlocOb1}%");
+            Console.WriteLine($"Number of protected blocks: {automate.ProtectedBlocs.Count}");
         }
-        // Fonction récursive pour afficher les blocs et sous-blocs
+
+        /// <summary>
+        /// Recursively appends information about a block and its sub-blocks to the specified <see cref="StringBuilder"/>.
+        /// </summary>
+        /// <param name="sb">The <see cref="StringBuilder"/> receiving output.</param>
+        /// <param name="myBloc">The <see cref="MyBloc"/> to display.</param>
+        /// <param name="niveau">The current recursion depth for indentation.</param>
         private void AppendBlocInfo(StringBuilder sb, MyBloc myBloc, int niveau)
         {
             string indentation = new string('\t', niveau);
@@ -538,7 +591,6 @@ namespace ReceptionDeProjet
 
             if (myBloc is MyFC fcBloc)
             {
-                // Création d'une copie avant l'itération
                 var internalBlocs = fcBloc.oInternalBlocs.ToList();
 
                 foreach (var subBloc in internalBlocs)
@@ -547,18 +599,23 @@ namespace ReceptionDeProjet
                 }
             }
         }
+
+        /// <summary>
+        /// Retrieves all <see cref="PlcBlock"/> objects from the specified CPU device item, including those in subfolders.
+        /// </summary>
+        /// <param name="cpuDeviceItem">The <see cref="DeviceItem"/> representing the CPU.</param>
+        /// <returns>
+        /// A list of all <see cref="PlcBlock"/> objects found in the device and its group hierarchy.
+        /// </returns>
         public List<PlcBlock> GetAllBlocksFromCPU(DeviceItem cpuDeviceItem)
         {
             var allBlocks = new List<PlcBlock>();
 
-            // Récupération du conteneur de software pour accéder aux blocs
             var softwareContainer = cpuDeviceItem.GetService<SoftwareContainer>() as SoftwareContainer;
-            var plcSoftware = softwareContainer?.Software as PlcSoftware ?? throw new Exception("Impossible de récupérer PlcSoftware pour la CPU spécifiée.");
+            var plcSoftware = softwareContainer?.Software as PlcSoftware ?? throw new Exception("Unable to retrieve PlcSoftware for the specified CPU.");
 
-            // 1) Récupérer tout ce qui est dans la racine
             allBlocks.AddRange(plcSoftware.BlockGroup.Blocks);
 
-            // 2) Parcourir récursivement les sous-dossiers
             foreach (PlcBlockUserGroup userGroup in plcSoftware.BlockGroup.Groups)
             {
                 GatherBlocksFromGroup(userGroup, allBlocks);
@@ -566,31 +623,41 @@ namespace ReceptionDeProjet
 
             return allBlocks;
         }
-        // Méthode récursive pour parcourir les sous-dossiers
+
+        /// <summary>
+        /// Recursively gathers all <see cref="PlcBlock"/> objects from the specified group and its subgroups.
+        /// </summary>
+        /// <param name="group">The <see cref="PlcBlockUserGroup"/> to search.</param>
+        /// <param name="allBlocks">The list to which found blocks are added.</param>
         private void GatherBlocksFromGroup(PlcBlockUserGroup group, List<PlcBlock> allBlocks)
         {
-            // Ajouter les blocs directement dans le dossier
             foreach (PlcBlock block in group.Blocks)
             {
                 allBlocks.Add(block);
             }
 
-            // Parcourir les sous-groupes
             foreach (PlcBlockUserGroup subGroup in group.Groups)
             {
                 GatherBlocksFromGroup(subGroup, allBlocks);
             }
         }
+
+        /// <summary>
+        /// Calculates the percentage of LTU blocks in the specified <see cref="MyOB"/> block list.
+        /// </summary>
+        /// <param name="myOb">The <see cref="MyOB"/> object for which to calculate the percentage.</param>
+        /// <returns>
+        /// A <see cref="double"/> representing the LTU block percentage. Returns 0.0 if no blocks are present.
+        /// </returns>
         public double CalculerPourcentageDeBlocsLTU(MyOB myOb)
         {
             if (myOb == null || myOb.oBlocList == null || myOb.oBlocList.Count == 0) return 0.0;
-            // Compter le nombre de blocs dont le nom commence par "LTU"
-            int totalBlocs = 0; // myOb.oBlocList.Count;
-            int ltuCount = 0; // myOb.oBlocList.Count(b => b.sName.StartsWith("LTU", StringComparison.OrdinalIgnoreCase));
+
+            int totalBlocs = 0;
+            int ltuCount = 0;
 
             foreach (var bloc in myOb.oBlocList)
             {
-
                 totalBlocs++;
                 if (bloc.sName.StartsWith("LTU", StringComparison.OrdinalIgnoreCase)) ltuCount++;
                 if (bloc.sType == "FC")
@@ -603,13 +670,17 @@ namespace ReceptionDeProjet
             myOb.iNbLTU = ltuCount;
             myOb.iNbBloc = totalBlocs;
 
-            // Calculer le pourcentage
             if (totalBlocs == 0) return 0.0;
             else return (double)ltuCount / totalBlocs * 100.0;
         }
+
+        /// <summary>
+        /// Checks for the presence of PID blocks in OB1 and updates the automate accordingly.
+        /// </summary>
+        /// <param name="automate">The <see cref="Automate"/> object to update.</param>
         private void PIDOB1(Automate automate)
         {
-            automate.sOB1PID = "Aucun bloc PID trouvé";
+            automate.sOB1PID = "No PID block found";
             foreach (MyOB myOb in automate.oOBs)
             {
                 if (myOb.iID == 1)
@@ -625,14 +696,30 @@ namespace ReceptionDeProjet
                 }
             }
         }
+
+        /// <summary>
+        /// Checks each block for know-how protection and updates the automate's protected block list.
+        /// </summary>
+        /// <param name="mainModule">The <see cref="DeviceItem"/> representing the main module.</param>
+        /// <param name="automate">The <see cref="Automate"/> object to update.</param>
         private void BlockProtection(DeviceItem mainModule, Automate automate)
         {
-            automate.sProgramProtection = "Aucune protection trouvée";
+            automate.sProgramProtection = "No protection found";
             foreach (var block in GetAllBlocksFromCPU(mainModule))
             {
-                if (bool.Parse(block.GetAttribute("IsKnowHowProtected").ToString())) automate.AddProtectedBloc(block.GetAttribute("Name").ToString());
+                if (bool.Parse(block.GetAttribute("IsKnowHowProtected").ToString()))
+                    automate.AddProtectedBloc(block.GetAttribute("Name").ToString());
             }
         }
+
+        /// <summary>
+        /// Extracts network interface and VLAN/subnet information from the main module and updates the automate accordingly.
+        /// </summary>
+        /// <param name="mainModule">The <see cref="DeviceItem"/> representing the main module.</param>
+        /// <param name="automate">The <see cref="Automate"/> object to update with network interface details.</param>
+        /// <remarks>
+        /// This method processes PROFINET interfaces, retrieves NTP server settings, VLAN, and connected device details for both X1 and X2 interfaces when available.
+        /// </remarks>
         private void InterfaceNetwork(DeviceItem mainModule, Automate automate)
         {
             foreach (var item in mainModule.DeviceItems)
@@ -688,7 +775,6 @@ namespace ReceptionDeProjet
                             NodeAssociation nodeSubnet = subnet.GetAttribute("Nodes") as NodeAssociation;
                             if (nodeSubnet != null)
                             {
-                                // Appareil trouvé 
                                 string sNameConnectedDevice;
                                 foreach (Node nodeX in nodeSubnet)
                                 {
@@ -726,7 +812,6 @@ namespace ReceptionDeProjet
                             NodeAssociation nodeSubnet = subnet2.GetAttribute("Nodes") as NodeAssociation;
                             if (nodeSubnet != null)
                             {
-                                // Appareil trouvé 
                                 string sNameConnectedDevice;
                                 foreach (Node nodeX in nodeSubnet)
                                 {
@@ -752,26 +837,56 @@ namespace ReceptionDeProjet
         }
     }
 
-
-
-    public class Project
+/// <summary>
+/// Represents a project containing PLCs, HMIs, SCADAs, and related project information.
+/// </summary>
+public class Project
     {
+        /// <summary>
+        /// Gets or sets the project name.
+        /// </summary>
         public string sName { get; set; }
+        /// <summary>
+        /// Gets or sets the project file path.
+        /// </summary>
         public string sProjectPath { get; set; }
+        /// <summary>
+        /// Gets or sets the version of the project.
+        /// </summary>
         public string sVersion { get; set; }
+        /// <summary>
+        /// Gets or sets the creation date of the project.
+        /// </summary>
         public string sDateCreation { get; set; }
+        /// <summary>
+        /// Gets or sets the reference language of the project.
+        /// </summary>
         public string sLanguage { get; set; }
+        /// <summary>
+        /// Gets or sets the project file size.
+        /// </summary>
         public string sSize { get; set; }
+        /// <summary>
+        /// Gets or sets whether simulation is enabled during block compilation.
+        /// </summary>
         public string sSimulation { get; set; }
 
-        //Liste des réseaux et liaisons
-
-
-        //Liste des automates
+        /// <summary>
+        /// Gets the list of PLC automates in the project.
+        /// </summary>
         public List<Automate> oAutomates;
+        /// <summary>
+        /// Gets the list of HMIs in the project.
+        /// </summary>
         public List<HMI> oHMIs;
+        /// <summary>
+        /// Gets the list of SCADAs in the project.
+        /// </summary>
         public List<SCADA> oSCADAs;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Project"/> class.
+        /// </summary>
         public Project()
         {
             oAutomates = new List<Automate>();
@@ -779,79 +894,220 @@ namespace ReceptionDeProjet
             oSCADAs = new List<SCADA>();
         }
 
+        /// <summary>
+        /// Adds a PLC automate to the project.
+        /// </summary>
+        /// <param name="automate">The <see cref="Automate"/> to add.</param>
         public void AddAutomate(Automate automate)
         {
             oAutomates.Add(automate);
         }
 
+        /// <summary>
+        /// Adds an HMI to the project.
+        /// </summary>
+        /// <param name="hmi">The <see cref="HMI"/> to add.</param>
         public void AddHMI(HMI hmi)
         {
             oHMIs.Add(hmi);
         }
 
+        /// <summary>
+        /// Adds a SCADA to the project.
+        /// </summary>
+        /// <param name="scada">The <see cref="SCADA"/> to add.</param>
         public void AddSCADA(SCADA scada)
         {
             oSCADAs.Add(scada);
         }
     }
+
+    /// <summary>
+    /// Represents a network or endpoint connection.
+    /// </summary>
     public class Connexion
     {
+        /// <summary>
+        /// Gets or sets the connection name.
+        /// </summary>
         public string sName { get; set; }
+        /// <summary>
+        /// Gets or sets the endpoint address.
+        /// </summary>
         public string sEndPoint { get; set; }
+        /// <summary>
+        /// Gets or sets the partner name.
+        /// </summary>
         public string sPartener { get; set; }
+        /// <summary>
+        /// Gets or sets the connection type.
+        /// </summary>
         public string sType { get; set; }
     }
+
+    /// <summary>
+    /// Represents a PLC automate with identification, network, and statistical properties.
+    /// </summary>
     public class Automate
     {
-        #region VARIABLES
-        //Variable d'identification
+        #region Identification properties
+        /// <summary>
+        /// Gets or sets the automate name.
+        /// </summary>
         public string sName { get; set; }
+        /// <summary>
+        /// Gets or sets the product range.
+        /// </summary>
         public string sGamme { get; set; }
+        /// <summary>
+        /// Gets or sets the hardware reference.
+        /// </summary>
         public string sReference { get; set; }
+        /// <summary>
+        /// Gets or sets the firmware version.
+        /// </summary>
         public string sFirmware { get; set; }
-
-        //Variable d'heure
-        public string sNtpServer1 { get; set; }
-        public string sNtpServer2 { get; set; }
-        public string sNtpServer3 { get; set; }
-
-        public string sLocalHour { get; set; }
-        public string sHourChange { get; set; }
-
-        //Variable réseau
-        public string sInterfaceX1 { get; set; }
-        public string sVlanX1 { get; set; }
-        public string sConnectedDeviceX1 { get; set; }
-        public string sInterfaceX2 { get; set; }
-        public string sConnectedDeviceX2 { get; set; }
-        public string sVlanX2 { get; set; }
-
-        //Variable systéme
-        public string sMMCLife { get; set; }
-        public string sWatchDog { get; set; }
-        public string sRestart { get; set; }
-        public string sCadenceM0 { get; set; }
-        public string sCadenceM1 { get; set; }
-
-        //Variables d'accès au programme
-        public string sProgramProtection { get; set; }
-        public string sWebServer { get; set; }
-        public string sControlAccess { get; set; }
-        public string sApiHmiCom { get; set; } 
-        public string sOnlineAccess { get; set; }
-        public string sScreenWrite { get; set; }
-        public string sInstantVar { get; set; }
-
-        //Statistiques
-        public int iStandardLTU { get; set; }
-        public string sOB1PID { get; set; }
-        public int iBlocOb1 { get; set; }   
-        public int iBlocOb35 { get; set; }
-
-        public List<MyOB> oOBs;
-        public List<MyFC> oFCs;
-        public List<string> ProtectedBlocs;
         #endregion
+
+        #region Time properties
+        /// <summary>
+        /// Gets or sets the first NTP server address.
+        /// </summary>
+        public string sNtpServer1 { get; set; }
+        /// <summary>
+        /// Gets or sets the second NTP server address.
+        /// </summary>
+        public string sNtpServer2 { get; set; }
+        /// <summary>
+        /// Gets or sets the third NTP server address.
+        /// </summary>
+        public string sNtpServer3 { get; set; }
+        /// <summary>
+        /// Gets or sets the local time zone.
+        /// </summary>
+        public string sLocalHour { get; set; }
+        /// <summary>
+        /// Gets or sets the daylight saving time change indicator.
+        /// </summary>
+        public string sHourChange { get; set; }
+        #endregion
+
+        #region Network properties
+        /// <summary>
+        /// Gets or sets the X1 interface address.
+        /// </summary>
+        public string sInterfaceX1 { get; set; }
+        /// <summary>
+        /// Gets or sets the VLAN associated with X1.
+        /// </summary>
+        public string sVlanX1 { get; set; }
+        /// <summary>
+        /// Gets or sets the name of the device connected to X1.
+        /// </summary>
+        public string sConnectedDeviceX1 { get; set; }
+        /// <summary>
+        /// Gets or sets the X2 interface address.
+        /// </summary>
+        public string sInterfaceX2 { get; set; }
+        /// <summary>
+        /// Gets or sets the name of the device connected to X2.
+        /// </summary>
+        public string sConnectedDeviceX2 { get; set; }
+        /// <summary>
+        /// Gets or sets the VLAN associated with X2.
+        /// </summary>
+        public string sVlanX2 { get; set; }
+        #endregion
+
+        #region System properties
+        /// <summary>
+        /// Gets or sets the MMC card lifetime threshold.
+        /// </summary>
+        public string sMMCLife { get; set; }
+        /// <summary>
+        /// Gets or sets the watchdog setting.
+        /// </summary>
+        public string sWatchDog { get; set; }
+        /// <summary>
+        /// Gets or sets the startup action after power on.
+        /// </summary>
+        public string sRestart { get; set; }
+        /// <summary>
+        /// Gets or sets the system memory byte (M0).
+        /// </summary>
+        public string sCadenceM0 { get; set; }
+        /// <summary>
+        /// Gets or sets the clock memory byte (M1).
+        /// </summary>
+        public string sCadenceM1 { get; set; }
+        #endregion
+
+        #region Program access properties
+        /// <summary>
+        /// Gets or sets the program protection information.
+        /// </summary>
+        public string sProgramProtection { get; set; }
+        /// <summary>
+        /// Gets or sets the web server activation state.
+        /// </summary>
+        public string sWebServer { get; set; }
+        /// <summary>
+        /// Gets or sets the PLC access control configuration.
+        /// </summary>
+        public string sControlAccess { get; set; }
+        /// <summary>
+        /// Gets or sets the HMI communication API state.
+        /// </summary>
+        public string sApiHmiCom { get; set; }
+        /// <summary>
+        /// Gets or sets the online access state.
+        /// </summary>
+        public string sOnlineAccess { get; set; }
+        /// <summary>
+        /// Gets or sets the screen write access state.
+        /// </summary>
+        public string sScreenWrite { get; set; }
+        /// <summary>
+        /// Gets or sets the instant variable status.
+        /// </summary>
+        public string sInstantVar { get; set; }
+        #endregion
+
+        #region Statistics properties
+        /// <summary>
+        /// Gets or sets the standard LTU percentage.
+        /// </summary>
+        public int iStandardLTU { get; set; }
+        /// <summary>
+        /// Gets or sets the name of the PID block found in OB1, if any.
+        /// </summary>
+        public string sOB1PID { get; set; }
+        /// <summary>
+        /// Gets or sets the percentage of blocks in OB1.
+        /// </summary>
+        public int iBlocOb1 { get; set; }
+        /// <summary>
+        /// Gets or sets the percentage of blocks in OB35.
+        /// </summary>
+        public int iBlocOb35 { get; set; }
+        #endregion
+
+        /// <summary>
+        /// Gets the list of OBs for this automate.
+        /// </summary>
+        public List<MyOB> oOBs;
+        /// <summary>
+        /// Gets the list of FCs for this automate.
+        /// </summary>
+        public List<MyFC> oFCs;
+        /// <summary>
+        /// Gets the list of protected block names.
+        /// </summary>
+        public List<string> ProtectedBlocs;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Automate"/> class.
+        /// </summary>
         public Automate()
         {
             oOBs = new List<MyOB>();
@@ -859,99 +1115,197 @@ namespace ReceptionDeProjet
             ProtectedBlocs = new List<string>();
         }
 
-        #region GETTER & SETTER
-        
-
-
+        /// <summary>
+        /// Adds an <see cref="MyOB"/> to the automate.
+        /// </summary>
+        /// <param name="oOb">The OB to add.</param>
         public void AddOb(MyOB oOb)
         {
             oOBs.Add(oOb);
         }
 
+        /// <summary>
+        /// Adds an <see cref="MyFC"/> to the automate.
+        /// </summary>
+        /// <param name="oFc">The FC to add.</param>
         public void AddFc(MyFC oFc)
         {
             oFCs.Add(oFc);
         }
 
+        /// <summary>
+        /// Adds a block name to the protected blocks list.
+        /// </summary>
+        /// <param name="blocName">The block name to add.</param>
         public void AddProtectedBloc(string blocName)
         {
             ProtectedBlocs.Add(blocName);
         }
-        #endregion
     }
 
-    // Classe de base : MyBloc
+    /// <summary>
+    /// Represents a generic PLC block (base class).
+    /// </summary>
     public class MyBloc
     {
+        /// <summary>
+        /// Gets or sets the block name.
+        /// </summary>
         public string sName { get; set; }
+        /// <summary>
+        /// Gets or sets the block type (e.g., OB, FC, FB).
+        /// </summary>
         public string sType { get; set; }
+        /// <summary>
+        /// Gets or sets the network number.
+        /// </summary>
         public int iNetwork { get; set; }
     }
 
-    // Classe MyOB qui hérite de MyBloc
+    /// <summary>
+    /// Represents an Organization Block (OB), inheriting from <see cref="MyBloc"/>.
+    /// </summary>
     public class MyOB : MyBloc
     {
+        /// <summary>
+        /// Gets or sets the OB ID (number).
+        /// </summary>
         public int iID { get; set; }
+        /// <summary>
+        /// Gets or sets the number of networks in this OB.
+        /// </summary>
         public int iNbNetwork { get; set; }
+        /// <summary>
+        /// Gets or sets the LTU block percentage in this OB.
+        /// </summary>
         public double Ltu100 { get; set; }
+        /// <summary>
+        /// Gets or sets the number of LTU blocks in this OB.
+        /// </summary>
         public int iNbLTU { get; set; }
+        /// <summary>
+        /// Gets or sets the number of blocks in this OB.
+        /// </summary>
         public int iNbBloc { get; set; }
+        /// <summary>
+        /// Gets the list of contained blocs (FC/FB/Instruction).
+        /// </summary>
         public List<MyBloc> oBlocList { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MyOB"/> class.
+        /// </summary>
         public MyOB()
         {
             oBlocList = new List<MyBloc>();
         }
 
+        /// <summary>
+        /// Adds a block to the OB's block list.
+        /// </summary>
+        /// <param name="bloc">The block to add.</param>
         public void AddBloc(MyBloc bloc)
         {
             oBlocList.Add(bloc);
         }
     }
 
-    // Classe MyFC qui hérite de MyBloc
+    /// <summary>
+    /// Represents a Function block (FC) inheriting from <see cref="MyBloc"/>.
+    /// </summary>
     public class MyFC : MyBloc
     {
+        /// <summary>
+        /// Gets or sets the FC ID (number).
+        /// </summary>
         public int iID { get; set; }
+        /// <summary>
+        /// Gets or sets the number of LTU blocks in this FC.
+        /// </summary>
         public int iNbLTU { get; set; }
+        /// <summary>
+        /// Gets or sets the number of blocks in this FC.
+        /// </summary>
         public int iNbBloc { get; set; }
+        /// <summary>
+        /// Gets the list of internal blocs (FCs, FBs, etc.) used inside this FC.
+        /// </summary>
         public List<MyBloc> oInternalBlocs { get; set; }
-        
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MyFC"/> class.
+        /// </summary>
         public MyFC()
         {
             oInternalBlocs = new List<MyBloc>();
         }
 
+        /// <summary>
+        /// Adds a block to the FC's internal block list.
+        /// </summary>
+        /// <param name="bloc">The block to add.</param>
         public void AddBloc(MyBloc bloc)
         {
             oInternalBlocs.Add(bloc);
         }
     }
 
+    /// <summary>
+    /// Represents a Data Block (DB) that inherits from <see cref="MyOB"/>.
+    /// </summary>
     public class MyDB : MyOB
     {
+        /// <summary>
+        /// Gets or sets the last instance name.
+        /// </summary>
         public string sLastInst { get; set; }
+        /// <summary>
+        /// Gets or sets the first instance name.
+        /// </summary>
         public string sFirstInst { get; set; }
     }
 
+    /// <summary>
+    /// Represents an HMI device.
+    /// </summary>
     public class HMI
     {
-        //Variable d'identification
+        /// <summary>
+        /// Gets or sets the HMI name.
+        /// </summary>
         public string sName { get; set; }
+        /// <summary>
+        /// Gets or sets the hardware reference.
+        /// </summary>
         public string sReference { get; set; }
+        /// <summary>
+        /// Gets or sets the firmware version.
+        /// </summary>
         public string sFirmware { get; set; }
 
-        //Variable d'heure
-
-        //Variable réseau
+        /// <summary>
+        /// Gets or sets the X1 interface address.
+        /// </summary>
         public string sInterfaceX1 { get; set; }
+        /// <summary>
+        /// Gets or sets the VLAN associated with X1.
+        /// </summary>
         public string sVlanX1 { get; set; }
+        /// <summary>
+        /// Gets or sets the X2 interface address.
+        /// </summary>
         public string sInterfaceX2 { get; set; }
+        /// <summary>
+        /// Gets or sets the VLAN associated with X2.
+        /// </summary>
         public string sVlanX2 { get; set; }
     }
 
+    /// <summary>
+    /// Represents a SCADA device.
+    /// </summary>
     public class SCADA
     {
     }
+
 }

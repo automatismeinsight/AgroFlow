@@ -10,31 +10,88 @@ using System.Reflection;
 
 namespace ReceptionDeProjet
 {
-    public partial class ReceptionDeProjet: UserControl
+    /// <summary>
+    /// UserControl for the "Project Reception" function in AgroFlow.
+    /// <para>
+    /// This module allows users to:
+    /// <list type="bullet">
+    ///   <item>Load and analyze a TIA Portal project.</item>
+    ///   <item>Verify compliance and retrieve detailed information (project info, PLCs, settings, etc.).</item>
+    ///   <item>Export all relevant configuration and hardware data into a standardized Excel file for traceability and documentation.</item>
+    /// </list>
+    /// Typical workflow:
+    /// <list type="number">
+    ///   <item>Select a CDC Excel file (project requirements/specs).</item>
+    ///   <item>Select the TIA Portal project to analyze.</item>
+    ///   <item>Run the verification step, which collects and displays project information and device details.</item>
+    ///   <item>Export the gathered data back into the provided Excel file for archiving or transfer.</item>
+    /// </list>
+    /// This feature ensures project conformity to standards (Agro Mousquetaires, LTU library, etc.) and provides automatic documentation of PLC hardware and configuration.
+    /// </para>
+    /// <remarks>
+    /// Key components:
+    /// <list type="bullet">
+    ///   <item><see cref="ExploreTiaPLC"/>: Handles TIA Portal project exploration and selection.</item>
+    ///   <item><see cref="CompareTIA"/>: Compares and extracts device information from the selected project.</item>
+    ///   <item><see cref="PLC_ProjectDefinitions"/>: Holds configuration and mapping definitions for the PLC project.</item>
+    /// </list>
+    /// </remarks>
+    /// </summary>
+    public partial class ReceptionDeProjet : UserControl
     {
+        /// <summary>
+        /// Path to the loaded CDC Excel file.
+        /// </summary>
         protected string sCdcFilePath = null;
 
-        // Objet interface Tia Portal
+        /// <summary>
+        /// Interface for exploring the TIA Portal project.
+        /// </summary>
         public ExploreTiaPLC oExploreTiaPLC;
+
+        /// <summary>
+        /// Interface for comparing the TIA project and retrieving device information.
+        /// </summary>
         public CompareTIA oCompareTiaPLC;
-        // Paramètres généraux pour l'application
+
+        /// <summary>
+        /// Global configuration and mapping settings for the PLC project.
+        /// </summary>
         public static PLC_ProjectDefinitions oPLC_ProjectDefinitions = new PLC_ProjectDefinitions();
+
+        /// <summary>
+        /// Data storage dictionary for internal processing.
+        /// </summary>
         private readonly Dictionary<Tuple<int, int>, object> dData = new Dictionary<Tuple<int, int>, object>();
-        //Liste des instructions pour le FC
+
+        /// <summary>
+        /// List of instructions to be generated for the FC (function code).
+        /// </summary>
         private readonly List<string> lsDataCollection = new List<string>();
 
+        /// <summary>
+        /// Stores the loaded TIA Project information.
+        /// </summary>
         Project oTiaProject = new Project();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ReceptionDeProjet"/> UserControl.
+        /// Sets up assembly loading and initializes project exploration and comparison interfaces.
+        /// </summary>
         public ReceptionDeProjet()
         {
             InitializeComponent();
 
             TIAAssemblyLoader.SetupControl(this);
- 
+
             oExploreTiaPLC = new ExploreTiaPLC(oPLC_ProjectDefinitions, dData, lsDataCollection);
             oCompareTiaPLC = new CompareTIA();
         }
 
+        /// <summary>
+        /// Handles the "Load CDC" button click event.
+        /// Allows the user to select a CDC Excel file and stores its path.
+        /// </summary>
         private void BpCdcLoad_Click(object sender, EventArgs e)
         {
             var filePath = string.Empty;
@@ -57,6 +114,10 @@ namespace ReceptionDeProjet
             UpdateInfo($"Fichier {sCdcFilePath.Split('\\').Last()} chargé");
         }
 
+        /// <summary>
+        /// Handles the "Select Project" button click event.
+        /// Prompts the user to select a TIA Portal project and updates the info panel.
+        /// </summary>
         private void BpSelectProject_Click(object sender, EventArgs e)
         {
             string sProjectName = string.Empty;
@@ -69,10 +130,14 @@ namespace ReceptionDeProjet
             else
             {
                 UpdateInfo("Le projet cible n'est pas sélectionné");
-               
             }
         }
 
+        /// <summary>
+        /// Selects a TIA Portal project via the <see cref="ExploreTiaPLC"/> interface.
+        /// </summary>
+        /// <param name="sProjectName">Returns the selected project name if successful.</param>
+        /// <returns>True if a project is selected, otherwise false.</returns>
         private bool GetTiaProject(ref string sProjectName)
         {
             bool bRet = false;
@@ -80,10 +145,10 @@ namespace ReceptionDeProjet
 
             sProjectName = string.Empty;
 
-            // Test si le projet Tia Portal est déja sélectionné ?
+            // Test if a TIA Portal project is already selected
             if (oExploreTiaPLC.GetTiaPortalProjectIsSelected() == false)
             {
-                // Sélection du projet Tia Portal
+                // Prompt user to select a TIA Portal project
                 if (oExploreTiaPLC.ChooseTiaProject(ref sError) == true)
                 {
                     bRet = true;
@@ -93,6 +158,10 @@ namespace ReceptionDeProjet
             return bRet;
         }
 
+        /// <summary>
+        /// Handles the "Verification" button click event.
+        /// Retrieves project and PLC device information, updates the info panel, and exports data to Excel.
+        /// </summary>
         private void BpVerification_Click(object sender, EventArgs e)
         {
             string sError = null;
@@ -101,10 +170,11 @@ namespace ReceptionDeProjet
             txBInformations.Refresh();
 
             oTiaProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
- 
+
             UpdateInfo("-");
-            // Affiche les informations du projet
-            if (oTiaProject == null) {
+            // Display project information
+            if (oTiaProject == null)
+            {
                 UpdateInfo("Erreur lors de la récupération des informations du projet");
                 return;
             }
@@ -153,12 +223,14 @@ namespace ReceptionDeProjet
                 UpdateInfo($"BlocOb35: {plc.iBlocOb35}");
             }
             UpdateInfo("-");
-            //CompareProject();
-
-            //Export DATA To Excel
+            // Export DATA To Excel
             ExportDataToExcel();
         }
 
+        /// <summary>
+        /// Exports project and PLC device data to the loaded CDC Excel file.
+        /// Writes project info and device details into the appropriate worksheets.
+        /// </summary>
         void ExportDataToExcel()
         {
             UpdateInfo("Exportation des données vers Excel...");
@@ -166,9 +238,9 @@ namespace ReceptionDeProjet
             {
                 using (XLWorkbook wb = new XLWorkbook(sCdcFilePath))
                 {
-                    // Infos Projet
-                    var ws = wb.Worksheet("PROJECT"); // Get the first worksheet in the workbook
-                    var range = ws.RangeUsed(); // Get the range of cells used in the worksheet
+                    // Project Info
+                    var ws = wb.Worksheet("PROJECT");
+                    var range = ws.RangeUsed();
 
                     ws.Cell(2, 1).Value = oTiaProject.sName;
                     ws.Cell(2, 2).Value = oTiaProject.sProjectPath;
@@ -179,19 +251,18 @@ namespace ReceptionDeProjet
                     ws.Cell(2, 7).Value = oTiaProject.sSimulation;
                     ws.Cell(2, 8).Value = oTiaProject.oAutomates.Count;
 
-                    // Infos automates
-                    int currentRow = 2; // Start at row 2
-                    ws = wb.Worksheet("PLC"); // Get the first worksheet in the workbook
-                    range = ws.RangeUsed(); // Get the range of cells used in the worksheet
+                    // PLC Info
+                    int currentRow = 2;
+                    ws = wb.Worksheet("PLC");
+                    range = ws.RangeUsed();
 
                     for (int i = 2; i <= range.LastRowUsed().RowNumber(); i++)
                     {
-                        ws.Row(i).Clear(); // Clear the row
+                        ws.Row(i).Clear();
                     }
 
                     foreach (Automate plc in oTiaProject.oAutomates)
                     {
-
                         ws.Cell(currentRow, 1).Value = plc.sName;
                         ws.Cell(currentRow, 2).Value = plc.sGamme;
                         ws.Cell(currentRow, 3).Value = plc.sReference;
@@ -223,9 +294,9 @@ namespace ReceptionDeProjet
                         ws.Cell(currentRow, 29).Value = plc.sOB1PID;
                         ws.Cell(currentRow, 30).Value = plc.iBlocOb1;
                         ws.Cell(currentRow, 31).Value = plc.iBlocOb35;
-                        currentRow++; // Go to the next row
+                        currentRow++;
                     }
-                    wb.Save(); //Save file
+                    wb.Save();
                 }
                 UpdateInfo("Exportation des données vers Excel terminée");
             }
@@ -235,6 +306,11 @@ namespace ReceptionDeProjet
             }
         }
 
+        /// <summary>
+        /// Resets the column titles for the PLC worksheet in the provided Excel workbook.
+        /// </summary>
+        /// <param name="wb">The Excel workbook.</param>
+        /// <param name="sheet">The sheet index for the PLC worksheet.</param>
         public void ResetPlcTitleExcel(XLWorkbook wb, int sheet)
         {
             var ws = wb.Worksheet(sheet);
@@ -270,9 +346,13 @@ namespace ReceptionDeProjet
             ws.Cell(1, 33).Value = "iBlocOb35";
         }
 
+        /// <summary>
+        /// Adds an informational message to the information RichTextBox and scrolls to the latest message.
+        /// </summary>
+        /// <param name="sMessage">The message to display. Use "-" for a section separator.</param>
         public void UpdateInfo(string sMessage)
         {
-            var now = DateTime.Now; // Actual date and time
+            var now = DateTime.Now;
             string sCurrentDateTime = $"{now.Year}/{now.Month:D2}/{now.Day:D2} {now.Hour:D2}:{now.Minute:D2}:{now.Second:D2} - ";
             string sFullMessage;
 
@@ -284,10 +364,10 @@ namespace ReceptionDeProjet
             {
                 sFullMessage = $"{sCurrentDateTime} {sMessage}\n";
             }
-            // Ajoute le message au RichTextBox
+            // Add the message to the RichTextBox
             txBInformations.AppendText(sFullMessage);
 
-            // Défile automatiquement vers le bas
+            // Auto-scroll to the bottom
             txBInformations.SelectionStart = txBInformations.Text.Length;
             txBInformations.ScrollToCaret();
         }

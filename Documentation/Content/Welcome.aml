@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<topic id="28b8d0e6-785d-420a-8d17-e13b2dda1c65" revisionNumber="3">
+	<developerConceptualDocument xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink="http://www.w3.org/1999/xlink">
+		<introduction>
+			<para>
+				<strong>AgroFlow</strong> is an internal application developed for the Agro Mousquetaires group. Its goal is to optimize project manager and automation engineer workflows by automating and centralizing the management of <strong>TIA Portal</strong> projects using the <strong>Openness API</strong>.
+			</para>
+			<para>
+				This documentation presents the architecture, objectives, main modules, and overall usage of AgroFlow. It serves as an entry point for all users and maintainers of the application.
+			</para>
+		</introduction>
+
+		<section>
+			<title>Context and Objectives</title>
+			<content>
+				<para>
+					The AgroFlow project addresses the growing need for integration between IT (Information Technology) and OT (Operational Technology) systems in the food industry.
+					It enables:
+				</para>
+				<list class="bullet">
+					<listItem>
+						<para>Easy interconnection between IT/OT teams and streamlined data exchanges.</para>
+					</listItem>
+					<listItem>
+						<para>Centralized management of Agro Mousquetaires TIA Portal projects and simplified configuration.</para>
+					</listItem>
+					<listItem>
+						<para>Automation of recurring tasks (import/export, code generation, diagnostics) using robust scripts.</para>
+					</listItem>
+					<listItem>
+						<para>Reduced implementation time, reliable deployments, and guaranteed compliance with internal standards.</para>
+					</listItem>
+				</list>
+			</content>
+		</section>
+
+		<section>
+			<title>Architecture and Main Modules</title>
+			<content>
+				<para>
+					The application consists of several major modules:
+				</para>
+				<list class="bullet">
+					<listItem>
+						<para>
+							<strong>Main Interface:</strong> Centralized access management, function navigation, user/admin session management, dynamic TIA Portal version selection.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Diagnostic Assistance:</strong> Automated generation of BLKJump variables in the diagnostic FC for quick and reliable diagnostics.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Project Reception:</strong> Seamless integration of new projects, compliance checks (LTU library), and automated initial configuration.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Dynamic TIA Portal Version Management:</strong> Enables usage of multiple TIA Portal versions without changing applications, through smart Openness DLL loading.
+						</para>
+					</listItem>
+				</list>
+				<para>
+					Key classes include: <codeInline>ExploreTIA</codeInline>, <codeInline>PlcGenerateTiaCode</codeInline>, <codeInline>HMATIAOpenness</codeInline>, <codeInline>TIAVersionManager</codeInline>, and <codeInline>TIAAssemblyLoader</codeInline>.
+				</para>
+			</content>
+		</section>
+
+		<section>
+			<title>Technical Prerequisites</title>
+			<content>
+				<list class="bullet">
+					<listItem>
+						<para>
+							<strong>TIA Portal</strong> version 17 or higher, with Openness license enabled.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>AgroFlow</strong> application installed on the workstation.
+						</para>
+					</listItem>
+					<listItem>
+						<para>TIA project compliant with Agro Mousquetaires standards, including the LTU library.</para>
+					</listItem>
+					<listItem>
+						<para>Windows 10/11, .NET 7.0, and Windows Forms (.NET 4.8) for the user interface.</para>
+					</listItem>
+				</list>
+			</content>
+		</section>
+
+		<section>
+			<title>Key Features</title>
+			<content>
+				<list class="bullet">
+					<listItem>
+						<para>
+							<strong>Time savings and simplicity:</strong> A single tool for all TIA Portal versions, automation of repetitive tasks, centralized management.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Intuitive interface:</strong> Fast navigation, user profile management, direct access to main functions (diagnostics, import/export, logs, etc.).
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Robustness and scalability:</strong> Modular architecture, dynamic TIA version management, easy addition of new modules.
+						</para>
+					</listItem>
+				</list>
+			</content>
+		</section>
+
+		<section>
+			<title>Further Information</title>
+			<content>
+				<para>
+					XML documentation generated from the source code (<codeInline>&lt;summary&gt;</codeInline>) provides detailed information about each class, method, and property.
+					This document serves as a technical reference for any development, maintenance, or future evolution of AgroFlow.
+				</para>
+			</content>
+		</section>
+	</developerConceptualDocument>
+</topic>

@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReceptionDeProjet", "Recept
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{F841B6E5-7B6B-4AB6-9D52-17F95BBDDA8B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Outils", "Outils", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{7CF6DF6D-3B04-46F8-A40B-537D21BCA0B4}") = "Documentation", "Documentation\Documentation.shfbproj", "{AA3102F2-F95A-4526-990C-0EE77888B4E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,9 +54,19 @@ Global
 		{F841B6E5-7B6B-4AB6-9D52-17F95BBDDA8B}.DefaultBuild|Any CPU.Build.0 = Release|Any CPU
 		{F841B6E5-7B6B-4AB6-9D52-17F95BBDDA8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F841B6E5-7B6B-4AB6-9D52-17F95BBDDA8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA3102F2-F95A-4526-990C-0EE77888B4E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA3102F2-F95A-4526-990C-0EE77888B4E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA3102F2-F95A-4526-990C-0EE77888B4E1}.DefaultBuild|Any CPU.ActiveCfg = Release|Any CPU
+		{AA3102F2-F95A-4526-990C-0EE77888B4E1}.DefaultBuild|Any CPU.Build.0 = Release|Any CPU
+		{AA3102F2-F95A-4526-990C-0EE77888B4E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA3102F2-F95A-4526-990C-0EE77888B4E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7F89A0FD-A0D2-4E37-ADF6-143CE54F9393} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{AA3102F2-F95A-4526-990C-0EE77888B4E1} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6F6BC606-AED3-41BC-AA6C-E59304B9D495}
