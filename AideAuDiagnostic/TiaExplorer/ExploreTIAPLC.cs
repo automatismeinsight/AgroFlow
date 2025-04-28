@@ -451,7 +451,7 @@ namespace AideAuDiagnostic.TiaExplorer
         {
             bool bRet = true;
             string sCurrentPath = string.Empty;
-
+            List<string> sTagList = GetAllPlcTag(oControllerTarget);
             while (true)
             {
                 if (!File.Exists(sXmlFile))
@@ -495,7 +495,8 @@ namespace AideAuDiagnostic.TiaExplorer
                                                     ref sCurrentPath,
                                                     true,
                                                     dData,
-                                                    lsDataCollection
+                                                    lsDataCollection, 
+                                                    sTagList
                                                 );
                                             }
                                         }
@@ -508,6 +509,26 @@ namespace AideAuDiagnostic.TiaExplorer
                 break;
             }
             return bRet;
+        }
+        /// <summary>
+        /// Retrieves all PLC tags from the controller target and adds them to a list.
+        /// </summary>
+        public List<string> GetAllPlcTag(PlcSoftware oControllerTarget)
+        {
+            var TagList = new List<string>();
+
+            foreach (PlcTagTable oTagTable in oControllerTarget.TagTableGroup.TagTables)
+            {
+                foreach (PlcTag oTag in oTagTable.Tags)
+                {
+                    if (oTag.Name != null)
+                    {
+                        TagList.Add(oTag.Name);
+                    }
+                }
+            }
+
+            return TagList;
         }
 
         /// <summary>
@@ -522,6 +543,7 @@ namespace AideAuDiagnostic.TiaExplorer
         /// <param name="bFirstLevel">Indicates whether this is the first recursion level.</param>
         /// <param name="dData">Excel data dictionary for mapping.</param>
         /// <param name="lsDataCollection">List for collecting data about FCs.</param>
+        /// <param name="sTagList">List of PLC tags for reference.</param>
         public void EnumerateMembers(
             XmlNode oListOfNodeMembers,
             PlcSoftware oControllerTarget,
@@ -530,7 +552,8 @@ namespace AideAuDiagnostic.TiaExplorer
             ref string sCurrentPath,
             bool bFirstLevel,
             Dictionary<Tuple<int, int>, object> dData,
-            List<string> lsDataCollection
+            List<string> lsDataCollection, 
+            List<string> sTagList
         )
         {
             var variableByUID = new Dictionary<string, VariableInfo>();
@@ -718,7 +741,15 @@ namespace AideAuDiagnostic.TiaExplorer
                         for (int i = 0; i < orderedColumns.Count; i++)
                         {
                             int columnIndex = orderedColumns[i];
-                            lsDataCollection.Add($"\"{block.DBiName}\".sHmiUdt.backJump[{columnIndex - 1}] := '{excelColumnToDb[columnIndex]}';");
+                            string tag = excelColumnToDb[columnIndex];
+                            if (!sTagList.Contains(tag))
+                            {
+                               lsDataCollection.Add($"\"{block.DBiName}\".sHmiUdt.backJump[{columnIndex - 1}] := '{excelColumnToDb[columnIndex]}';");
+                            }
+                            else
+                            {
+                                //Variable automate => V3
+                            }
                         }
                     }
                 }

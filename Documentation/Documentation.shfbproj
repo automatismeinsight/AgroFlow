@@ -60,14 +60,15 @@
     <SdkLinkTarget>Blank</SdkLinkTarget>
     <NamespaceSummaries>
       <NamespaceSummaryItem name="(global)" isDocumented="False">Aide au diagnostic</NamespaceSummaryItem>
-<NamespaceSummaryItem name="AideAuDiagnostic" isDocumented="True" />
-<NamespaceSummaryItem name="AideAuDiagnostic.TiaExplorer" isDocumented="True" />
-<NamespaceSummaryItem name="Common" isDocumented="True" />
-<NamespaceSummaryItem name="GlobalsOPCUA" isDocumented="True" />
-<NamespaceSummaryItem name="InterfaceLoginTest" isDocumented="False" />
-<NamespaceSummaryItem name="InterfaceMain" isDocumented="True" />
-<NamespaceSummaryItem name="OpennessV16" isDocumented="True" />
-<NamespaceSummaryItem name="ReceptionDeProjet" isDocumented="True" /></NamespaceSummaries>
+      <NamespaceSummaryItem name="AideAuDiagnostic" isDocumented="True" />
+      <NamespaceSummaryItem name="AideAuDiagnostic.TiaExplorer" isDocumented="True" />
+      <NamespaceSummaryItem name="Common" isDocumented="True" />
+      <NamespaceSummaryItem name="GlobalsOPCUA" isDocumented="True" />
+      <NamespaceSummaryItem name="InterfaceLoginTest" isDocumented="False" />
+      <NamespaceSummaryItem name="InterfaceMain" isDocumented="True" />
+      <NamespaceSummaryItem name="OpennessV16" isDocumented="True" />
+      <NamespaceSummaryItem name="ReceptionDeProjet" isDocumented="True" />
+    </NamespaceSummaries>
     <HtmlHelp1xCompilerPath>..\..\..\..\..\Program Files (x86)\HTML Help Workshop\</HtmlHelp1xCompilerPath>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
     <ComponentConfigurations>
