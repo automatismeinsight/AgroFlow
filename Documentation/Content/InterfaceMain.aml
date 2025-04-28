@@ -1,0 +1,235 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="94b409b4-52a9-4b45-a7d6-3dd193c7e832" revisionNumber="1">
+  <developerConceptualDocument
+    xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+
+	  <introduction>
+		  <para>
+			  Le module <strong>Interface Principale</strong> d’AgroFlow constitue le point d’entrée graphique de l’application. Il centralise l’accès à toutes les fonctionnalités clés, assure la gestion multi-utilisateur (admin/utilisateur standard) et permet une navigation rapide et intuitive entre les modules métier de la solution. Cette documentation présente la structure, le fonctionnement et l’architecture technique de l’interface, conçue pour répondre aux besoins des automaticiens et chefs de projet du groupe Agro Mousquetaires.
+		  </para>
+	  </introduction>
+
+	  <section address="Presentation">
+		  <title>Présentation et Objectifs</title>
+		  <content>
+			  <para>
+				  L’interface principale vise à :
+			  </para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>Offrir une expérience utilisateur moderne et adaptée aux standards Agro Mousquetaires</para>
+				  </listItem>
+				  <listItem>
+					  <para>Centraliser l’accès aux fonctions critiques (diagnostic, réception de projet, etc.)</para>
+				  </listItem>
+				  <listItem>
+					  <para>Gérer efficacement les droits d’accès (distinction admin/utilisateur standard)</para>
+				  </listItem>
+				  <listItem>
+					  <para>Garantir une navigation fluide entre les modules métiers</para>
+				  </listItem>
+				  <listItem>
+					  <para>Historiser toutes les actions importantes via un module de log accessible</para>
+				  </listItem>
+			  </list>
+		  </content>
+	  </section>
+
+	  <section address="FonctionnementGeneral">
+		  <title>Fonctionnement Général</title>
+		  <content>
+			  <para>
+				  L’interface principale AgroFlow repose sur plusieurs principes de fonctionnement :
+			  </para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>
+						  <strong>Interface graphique Windows Forms personnalisée</strong> : Respecte la charte graphique Agro Mousquetaires, avec menu principal rétractable/étirable et gestion avancée de la fenêtre (redimensionnement, déplacement, maximisation).
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Gestion des sessions</strong> : Distinction claire entre utilisateur standard et administrateur, adaptation dynamique des fonctionnalités disponibles selon le statut.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Sélection dynamique de la version TIA Portal</strong> : L’utilisateur choisit la version installée, mémorisée entre les sessions.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Navigation modulaire</strong> : Chaque fonction métier s’ouvre sous forme de UserControl pour garantir clarté et rapidité d’accès.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Gestion centralisée des logs</strong> : Toutes les actions importantes sont tracées et consultables à tout moment.
+					  </para>
+				  </listItem>
+			  </list>
+		  </content>
+	  </section>
+
+	  <section address="ArchitectureTechnique">
+		  <title>Architecture Technique</title>
+		  <content>
+			  <para>
+				  L’architecture de l’interface principale s’appuie sur plusieurs composants principaux :
+			  </para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>
+						  <strong>
+							  <codeInline>LoadReferences</codeInline>
+						  </strong> : Gère la détection et la sélection dynamique des versions TIA Portal installées, via la méthode <codeInline>InitializeApp</codeInline> et le scan du répertoire Siemens Automation.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>
+							  <codeInline>UserControl</codeInline>
+						  </strong> : Chaque module métier (diagnostic, réception de projet, etc.) est encapsulé dans un UserControl, intégré dynamiquement dans l’interface principale.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>
+							  <codeInline>SessionManager</codeInline>
+						  </strong> : Assure la gestion des sessions, droits utilisateurs, et l’adaptation de l’interface à chaque profil.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>
+							  <codeInline>Logger</codeInline>
+						  </strong> : Centralise l’historique des actions, accessible depuis l’interface.
+					  </para>
+				  </listItem>
+			  </list>
+			  <para>
+				  D’autres composants assurent la gestion de la personnalisation (logo, couleurs), la sauvegarde des préférences et l’extension modulaire de l’application.
+			  </para>
+		  </content>
+	  </section>
+
+	  <section address="InterfaceUtilisateur">
+		  <title>Interface Utilisateur</title>
+		  <content>
+			  <para>
+				  L’interface utilisateur est organisée en plusieurs zones :
+			  </para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>
+						  <strong>Menu principal</strong> : Rétractable/étirable, permet la navigation rapide entre les modules et l’accès aux fonctions avancées (admin, terminal, logs).
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Zone centrale</strong> : Affiche le module métier sélectionné (diagnostic, réception de projet, etc.), sous forme de UserControl.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Barre supérieure</strong> : Informations sur la session, options de connexion/déconnexion, gestion de la fenêtre.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Zone de logs</strong> : Historique des actions, accessible à tout moment.
+					  </para>
+				  </listItem>
+			  </list>
+			  <para>
+				  L’ergonomie a été pensée pour maximiser la productivité, avec une gestion intuitive des fenêtres et une adaptation automatique de l’affichage selon le profil utilisateur.
+			  </para>
+		  </content>
+	  </section>
+
+	  <section address="Prerequis">
+		  <title>Prérequis et Compatibilité</title>
+		  <content>
+			  <para>Pour utiliser l’interface principale, il faut :</para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>Que l’application AgroFlow soit installée sur le poste de travail</para>
+				  </listItem>
+				  <listItem>
+					  <para>Que TIA Portal (V17 minimum) soit installé, avec éventuellement plusieurs versions détectées automatiquement</para>
+				  </listItem>
+				  <listItem>
+					  <para>Accès aux références internes Agro Mousquetaires (bibliothèque LTU, standards de projet)</para>
+				  </listItem>
+			  </list>
+		  </content>
+	  </section>
+
+	  <section address="GuideUtilisation">
+		  <title>Guide d'Utilisation</title>
+		  <content>
+			  <para>Étapes principales d’utilisation de l’interface :</para>
+			  <list class="ordered">
+				  <listItem>
+					  <para>
+						  <strong>Sélection de la version TIA Portal</strong> : Au démarrage, choisissez la version à utiliser (le choix est mémorisé).
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Connexion utilisateur ou admin</strong> : Selon le profil, accédez aux fonctions adaptées.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Navigation entre les modules</strong> : Sélectionnez la fonction souhaitée (diagnostic, réception de projet, etc.) via le menu principal.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Utilisation des modules</strong> : Chaque module s’ouvre dans la zone centrale, avec gestion des logs et navigation simplifiée.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Consultation des logs</strong> : Suivez l’historique des actions et opérations réalisées via l’interface.
+					  </para>
+				  </listItem>
+			  </list>
+		  </content>
+	  </section>
+
+	  <section address="ExtensionPersonnalisation">
+		  <title>Extension et Personnalisation</title>
+		  <content>
+			  <para>
+				  L’interface principale est conçue pour être évolutive et personnalisable :
+			  </para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>Ajout facile de nouveaux modules (UserControls)</para>
+				  </listItem>
+				  <listItem>
+					  <para>Gestion centralisée des droits et profils utilisateurs</para>
+				  </listItem>
+				  <listItem>
+					  <para>Personnalisation des couleurs, logos, messages conformément à la charte Agro Mousquetaires</para>
+				  </listItem>
+			  </list>
+		  </content>
+	  </section>
+
+	  <relatedTopics>
+		  <link xlink:href="7fc9e716-d8f3-4b5a-a9a2-b6eca2315756">Aide au Diagnostic</link>
+		  <link xlink:href="3ebb3c45-4a6c-46b6-ada1-bc0b872031c5">Réception de Projet</link>
+		  <externalLink>
+			  <linkText>Guide Windows Forms Microsoft</linkText>
+			  <linkUri>https://learn.microsoft.com/fr-fr/dotnet/desktop/winforms/</linkUri>
+		  </externalLink>
+		  <codeEntityReference>T:InterfaceMain.LoadReferences</codeEntityReference>
+		  <codeEntityReference>T:InterfaceMain.SessionManager</codeEntityReference>
+		  <codeEntityReference>T:InterfaceMain.Logger</codeEntityReference>
+	  </relatedTopics>
+  </developerConceptualDocument>
+</topic>

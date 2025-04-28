@@ -1,0 +1,244 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="7fc9e716-d8f3-4b5a-a9a2-b6eca2315756" revisionNumber="1">
+	<developerConceptualDocument
+	  xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+	  xmlns:xlink="http://www.w3.org/1999/xlink">
+
+		<introduction>
+			<para>
+				Le module <strong>Aide au Diagnostic</strong> est une fonctionnalité clé d'AgroFlow qui permet d'automatiser la génération des variables <strong>BLKJump</strong> dans les projets TIA Portal.
+				Cette documentation présente en détail le fonctionnement, l'utilisation et l'architecture technique de ce module essentiel pour les automaticiens d'Agro Mousquetaires.
+			</para>
+		</introduction>
+
+		<section address="Presentation">
+			<title>Présentation et Objectifs</title>
+			<content>
+				<para>
+					L'Aide au Diagnostic est spécifiquement conçue pour faciliter la mise en place de diagnostics dans les automates Siemens S7-1500 utilisés dans les usines Agro Mousquetaires.
+					Elle répond aux problématiques suivantes :
+				</para>
+				<list class="bullet">
+					<listItem>
+						<para>Réduction du temps de configuration des FC d'aide au diagnostic</para>
+					</listItem>
+					<listItem>
+						<para>Garantie de conformité avec les standards de programmation Agro Mousquetaires</para>
+					</listItem>
+					<listItem>
+						<para>Élimination des erreurs manuelles lors de la configuration des variables BLKJump</para>
+					</listItem>
+					<listItem>
+						<para>Fiabilisation du processus de maintenance et de support sur site</para>
+					</listItem>
+				</list>
+			</content>
+		</section>
+
+		<section address="FonctionnementGeneral">
+			<title>Fonctionnement Général</title>
+			<content>
+				<para>
+					Le module Aide au Diagnostic utilise l'API Openness de TIA Portal pour automatiser des tâches qui seraient autrement fastidieuses et sources d'erreurs. Son fonctionnement se déroule en trois phases principales :
+				</para>
+
+				<list class="ordered">
+					<listItem>
+						<para>
+							<strong>Sélection du projet et de la station</strong> : L'utilisateur commence par choisir le projet TIA Portal et la station S7-1500 cible via l'interface utilisateur.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Analyse du projet</strong> : L'application parcourt l'intégralité du projet à la recherche des blocs fonctionnels et des informations nécessaires au diagnostic.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Génération automatique</strong> : Le module génère les instructions BLKJump dans le FC "Aide au Diagnostic" et met à jour les références nécessaires.
+						</para>
+					</listItem>
+				</list>
+
+				<para>
+					Tout ce processus est accompagné d'informations détaillées dans la fenêtre de log, permettant à l'utilisateur de suivre l'avancement et d'identifier rapidement d'éventuelles anomalies.
+				</para>
+			</content>
+		</section>
+
+		<section address="ArchitectureTechnique">
+			<title>Architecture Technique</title>
+			<content>
+				<para>
+					Le module repose sur trois classes principales qui travaillent en synergie :
+				</para>
+
+				<list class="bullet">
+					<listItem>
+						<para>
+							<strong>
+								<codeInline>ExploreTIA</codeInline>
+							</strong> : Cette classe est responsable de l'exploration du projet TIA Portal. Elle analyse la structure du projet, identifie les blocs fonctionnels et récupère toutes les informations nécessaires à la génération des variables BLKJump.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>
+								<codeInline>PlcGenerateTiaCode</codeInline>
+							</strong> : Cette classe prend en charge la génération effective du code TIA Portal, notamment les instructions BLKJump dans le FC dédié. Elle assure également la validation du code généré.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>
+								<codeInline>HMATIAOpenness</codeInline>
+							</strong> : Cette classe gère l'interface avec TIA Portal via l'API Openness. Elle permet d'ouvrir les projets, d'accéder aux objets du projet et de sauvegarder les modifications.
+						</para>
+					</listItem>
+				</list>
+
+				<para>
+					Ces classes interagissent étroitement avec d'autres composants tels que <codeInline>TiaProjectForCPU</codeInline> et <codeInline>TIAAssemblyLoader</codeInline> pour assurer une intégration optimale avec TIA Portal et ses différentes versions.
+				</para>
+			</content>
+		</section>
+
+		<section address="InterfaceUtilisateur">
+			<title>Interface Utilisateur</title>
+			<content>
+				<para>
+					L'interface utilisateur du module Aide au Diagnostic est organisée en trois zones principales :
+				</para>
+
+				<list class="bullet">
+					<listItem>
+						<para>
+							<strong>Zone Cible</strong> : Permet de sélectionner la station S7-1500 sur laquelle travailler. Elle affiche le nom du projet TIA Portal et de la station sélectionnée.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Zone Export</strong> : Contient le bouton permettant de lancer le processus de génération des variables BLKJump dans le FC d'aide au diagnostic.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Zone Informations</strong> : Affiche les logs détaillés de l'opération en cours, avec horodatage. Cette zone peut être agrandie pour une meilleure lisibilité des messages.
+						</para>
+					</listItem>
+				</list>
+
+				<para>
+					Le design de l'interface est intuitif et guide l'utilisateur à travers les étapes nécessaires, avec des indicateurs visuels de progression pendant les opérations longues.
+				</para>
+			</content>
+		</section>
+
+		<section address="Prerequis">
+			<title>Prérequis et Compatibilité</title>
+			<content>
+				<para>Pour utiliser efficacement le module Aide au Diagnostic, les éléments suivants sont requis :</para>
+
+				<list class="bullet">
+					<listItem>
+						<para>TIA Portal V17 ou supérieur avec licence Openness activée</para>
+					</listItem>
+					<listItem>
+						<para>Projet TIA Portal conforme aux standards Agro Mousquetaires</para>
+					</listItem>
+					<listItem>
+						<para>Bibliothèque LTU intégrée au projet</para>
+					</listItem>
+					<listItem>
+						<para>Structure de FC d'aide au diagnostic respectant la nomenclature standard</para>
+					</listItem>
+					<listItem>
+						<para>Accès en écriture au projet TIA Portal</para>
+					</listItem>
+				</list>
+
+				<para>
+					Le fichier de configuration <codeInline>HMAOPCUAH.ini</codeInline> doit être correctement paramétré, notamment pour définir le chemin des assemblies Openness et les spécifications du projet.
+				</para>
+			</content>
+		</section>
+
+		<section address="GuideUtilisation">
+			<title>Guide d'Utilisation</title>
+			<content>
+				<para>Pour utiliser le module Aide au Diagnostic, suivez ces étapes :</para>
+
+				<list class="ordered">
+					<listItem>
+						<para>
+							<strong>Démarrage</strong> : Lancez l'application AgroFlow et accédez au module Aide au Diagnostic.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Sélection de la station</strong> : Cliquez sur le bouton "Sélectionner une Station" pour choisir le projet TIA Portal et la station S7-1500 cible.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Génération</strong> : Une fois la station sélectionnée, cliquez sur "Export" pour lancer le processus de génération des variables BLKJump.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Vérification</strong> : Suivez l'avancement dans la fenêtre d'informations. Une fois le processus terminé, le FC d'aide au diagnostic est mis à jour avec les variables BLKJump générées automatiquement.
+						</para>
+					</listItem>
+				</list>
+
+				<para>
+					Pendant le processus, l'application compile le programme automate pour vérifier l'absence d'erreurs, puis analyse la structure du projet avant de générer les instructions BLKJump. Le temps de traitement dépend de la taille du projet, mais il est généralement de quelques minutes.
+				</para>
+			</content>
+		</section>
+
+		<section address="CasUtilisation">
+			<title>Cas d'Utilisation Concrets</title>
+			<content>
+				<para>Le module Aide au Diagnostic est particulièrement utile dans les scénarios suivants :</para>
+
+				<list class="bullet">
+					<listItem>
+						<para>
+							<strong>Mise en service d'une nouvelle installation</strong> : Lors de la mise en service d'une nouvelle ligne de production, configurez rapidement l'aide au diagnostic pour faciliter les interventions futures.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Migration de projets existants</strong> : Lors de la migration d'anciens projets vers les standards actuels, générez automatiquement les variables BLKJump conformes.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Mise à jour après modification</strong> : Après l'ajout de nouveaux blocs fonctionnels ou la modification de la structure du projet, mettez à jour facilement le FC d'aide au diagnostic.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Formation et standardisation</strong> : Utilisez l'outil pour former les nouveaux automaticiens aux standards de programmation Agro Mousquetaires.
+						</para>
+					</listItem>
+				</list>
+			</content>
+		</section>
+
+		<relatedTopics>
+			<link xlink:href="28b8d0e6-785d-420a-8d17-e13b2dda1c65">Accueil AgroFlow</link>
+			<link xlink:href="3ebb3c45-4a6c-46b6-ada1-bc0b872031c5">Réception de Projet</link>
+
+			<externalLink>
+				<linkText>Documentation TIA Portal Openness</linkText>
+				<linkUri>https://support.industry.siemens.com/cs/document/109792902/simatic-tia-portal-openness-api-reference</linkUri>
+			</externalLink>
+
+			<codeEntityReference>T:AideAuDiagnostic.TiaExplorer.ExploreTiaPLC</codeEntityReference>
+			<codeEntityReference>T:AideAuDiagnostic.TiaExplorer.PlcGenerateTiaCode</codeEntityReference>
+			<codeEntityReference>T:OpennessV16.HMATIAOpenness_V16</codeEntityReference>
+		</relatedTopics>
+	</developerConceptualDocument>
+</topic>

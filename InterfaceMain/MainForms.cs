@@ -5,6 +5,8 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Common;
+using System.Diagnostics;
+using System.IO;
 
 namespace InterfaceMain
 {
@@ -62,6 +64,7 @@ namespace InterfaceMain
             BottomBorder.BackColor = AgroM_Green;
             LoginIconButton.BackColor = AgroM_Green;
             LogoutIconButton.BackColor = AgroM_Green;
+            InfoPictureButton.BackColor = AgroM_Green;
         }
 
         /// <summary>
@@ -440,6 +443,26 @@ namespace InterfaceMain
                     CbFunction.Items.Add(item);
                 }
             }
+        }
+
+        private void InfoPictureButton_Click(object sender, EventArgs e)
+        {
+            string path = ".\\..\\..\\..\\Documentation\\Help\\index.html";
+            string fullPath = Path.GetFullPath(path);
+
+            try
+            {
+                System.Diagnostics.Process.Start(new ProcessStartInfo
+                {
+                    FileName = fullPath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Impossible d'ouvrir le fichier d'aide : " + ex.Message);
+            }
+
         }
         #endregion
     }

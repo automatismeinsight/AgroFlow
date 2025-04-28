@@ -1,0 +1,326 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="3ebb3c45-4a6c-46b6-ada1-bc0b872031c5" revisionNumber="1">
+	<developerConceptualDocument
+	  xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+	  xmlns:xlink="http://www.w3.org/1999/xlink">
+
+		<introduction>
+			<para>
+				Le module <strong>Réception de Projet</strong> est un composant essentiel d'AgroFlow qui permet d'analyser et de documenter automatiquement les projets TIA Portal lors de leur réception.
+				Cette fonctionnalité assure la conformité des projets aux standards Agro Mousquetaires, facilite la documentation et simplifie le processus de validation des nouveaux projets d'automation.
+			</para>
+		</introduction>
+
+		<section address="Presentation">
+			<title>Présentation et Objectifs</title>
+			<content>
+				<para>
+					Le module Réception de Projet répond à plusieurs problématiques critiques dans le processus de réception et de validation des projets d'automatisme :
+				</para>
+				<list class="bullet">
+					<listItem>
+						<para>Vérification automatisée de la conformité des projets aux standards techniques Agro Mousquetaires</para>
+					</listItem>
+					<listItem>
+						<para>Extraction et documentation des paramètres matériels et logiciels des automates S7-1200, S7-1500 et ET 200SP</para>
+					</listItem>
+					<listItem>
+						<para>Analyse détaillée de la structure et de l'architecture des programmes automates (OB, FC, blocs LTU)</para>
+					</listItem>
+					<listItem>
+						<para>Exportation des données collectées vers un fichier Excel standardisé pour archivage et traçabilité</para>
+					</listItem>
+					<listItem>
+						<para>Identification proactive des écarts par rapport aux standards de programmation définis</para>
+					</listItem>
+				</list>
+			</content>
+		</section>
+
+		<section address="FonctionnementGeneral">
+			<title>Fonctionnement Général</title>
+			<content>
+				<para>
+					Le module de Réception de Projet suit un flux de travail structuré en quatre étapes principales :
+				</para>
+
+				<list class="ordered">
+					<listItem>
+						<para>
+							<strong>Chargement du fichier CDC (Cahier Des Charges)</strong> : L'utilisateur commence par sélectionner un fichier Excel contenant les spécifications du projet. Ce fichier servira à la fois de référence pour les exigences et de destination pour l'exportation des données collectées.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Sélection du projet TIA Portal</strong> : L'application permet ensuite de sélectionner le projet TIA Portal à analyser via l'interface Openness. Le nom du projet est affiché et confirmé à l'utilisateur.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Vérification et analyse</strong> : Le système parcourt l'ensemble du projet, collecte les informations sur les automates, analyse la structure des programmes (OB, FC), vérifie la présence des blocs LTU standard, et inspecte les paramètres de configuration matérielle.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Exportation des résultats</strong> : Les données collectées sont formatées et exportées dans le fichier Excel CDC initial, dans des feuilles dédiées pour les informations projet et les détails des automates.
+						</para>
+					</listItem>
+				</list>
+
+				<para>
+					Tout au long du processus, l'interface utilisateur affiche des informations détaillées sur les opérations en cours et les résultats obtenus, permettant de suivre l'avancement de l'analyse et d'identifier rapidement les points d'attention.
+				</para>
+			</content>
+		</section>
+
+		<section address="ArchitectureTechnique">
+			<title>Architecture Technique</title>
+			<content>
+				<para>
+					Le module Réception de Projet s'appuie sur plusieurs classes spécialisées qui collaborent pour analyser en profondeur les projets TIA Portal :
+				</para>
+
+				<list class="bullet">
+					<listItem>
+						<para>
+							<strong>
+								<codeInline>ExploreTiaPLC</codeInline>
+							</strong> : Cette classe gère l'interface avec TIA Portal via Openness, permettant de sélectionner un projet et d'y accéder.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>
+								<codeInline>CompareTIA</codeInline>
+							</strong> : Classe centrale qui analyse les automates et leurs configurations. Elle intègre des méthodes pour :
+							<list class="bullet">
+								<listItem>
+									<para>Extraire les informations des appareils (modèle, version firmware, paramètres réseau)</para>
+								</listItem>
+								<listItem>
+									<para>Analyser les blocs OB, FC et leurs références croisées</para>
+								</listItem>
+								<listItem>
+									<para>Calculer les statistiques d'utilisation des blocs LTU standard</para>
+								</listItem>
+								<listItem>
+									<para>Détecter les configurations de sécurité et protection</para>
+								</listItem>
+								<listItem>
+									<para>Analyser les interfaces réseau et leurs connexions</para>
+								</listItem>
+							</list>
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>
+								<codeInline>Project</codeInline>
+							</strong> : Classe de données qui encapsule toutes les informations du projet, incluant les métadonnées du projet et les collections d'automates.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>
+								<codeInline>Automate</codeInline>
+							</strong> : Représente un automate individuel avec toutes ses propriétés (identification, réseau, configuration système, statistiques de programmation).
+						</para>
+					</listItem>
+				</list>
+
+				<para>
+					Ces classes utilisent l'API Openness de TIA Portal pour accéder aux données du projet, aux structures de programme, aux configurations matérielles et aux paramètres réseau, permettant une analyse complète sans intervention manuelle.
+				</para>
+			</content>
+		</section>
+
+		<section address="DonneesAnalysees">
+			<title>Données Analysées et Vérifiées</title>
+			<content>
+				<para>
+					Le module Réception de Projet analyse de nombreux aspects du projet TIA Portal, notamment :
+				</para>
+
+				<list class="bullet">
+					<listItem>
+						<para>
+							<strong>Informations générales du projet</strong> : Nom, chemin, version, date de création, langue, taille, état de simulation
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Données d'identification des automates</strong> : Nom, gamme (S7-1200/S7-1500/ET 200SP), référence, version firmware
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Configuration réseau</strong> : Adresses IP des interfaces PROFINET X1/X2, VLAN, serveurs NTP configurés, appareils connectés
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Paramètres système</strong> : Chien de garde (watchdog), redémarrage automatique, octets mémoire système (M0, M1), fuseau horaire
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Sécurité et accès</strong> : Protection du programme, serveur Web, contrôle d'accès, APIs de communication HMI, accès en ligne
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Structure de programme</strong> : OBs utilisés, FCs, blocs LTU standard, blocs protégés, blocs PID dans OB1
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Statistiques de conformité</strong> : Pourcentage de blocs LTU standard, distribution des blocs dans OB1 et OB35
+						</para>
+					</listItem>
+				</list>
+
+				<para>
+					Ces données sont essentielles pour vérifier la conformité aux standards Agro Mousquetaires et assurer la qualité et la maintenabilité des projets d'automatisme.
+				</para>
+			</content>
+		</section>
+
+		<section address="GuideUtilisation">
+			<title>Guide d'Utilisation</title>
+			<content>
+				<para>Pour utiliser le module Réception de Projet, suivez ces étapes :</para>
+
+				<list class="ordered">
+					<listItem>
+						<para>
+							<strong>Préparation du fichier CDC</strong> : Assurez-vous de disposer d'un fichier Excel compatible contenant au minimum les feuilles "PROJECT" et "PLC" avec les en-têtes appropriés.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Chargement du CDC</strong> : Cliquez sur le bouton "Charger CDC" et sélectionnez le fichier Excel préparé. Le système confirme le chargement du fichier.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Sélection du projet</strong> : Cliquez sur "Sélectionner Projet" pour choisir le projet TIA Portal à analyser. Le nom du projet s'affiche une fois la sélection confirmée.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Lancement de la vérification</strong> : Cliquez sur "Vérification" pour démarrer l'analyse du projet. Les informations collectées s'affichent dans la zone de log en temps réel.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Consultation des résultats</strong> : Examinez les informations affichées dans l'interface, qui incluent les détails du projet et les caractéristiques de chaque automate détecté.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Vérification de l'export</strong> : À la fin du processus, vérifiez que les données ont bien été exportées dans le fichier Excel CDC. Un message confirme la fin de l'exportation.
+						</para>
+					</listItem>
+				</list>
+
+				<para>
+					La durée de l'analyse dépend de la taille et de la complexité du projet, mais le processus est généralement rapide et entièrement automatisé.
+				</para>
+			</content>
+		</section>
+
+		<section address="BeneficesOperationnels">
+			<title>Bénéfices Opérationnels</title>
+			<content>
+				<para>L'utilisation du module Réception de Projet apporte de nombreux avantages :</para>
+
+				<list class="bullet">
+					<listItem>
+						<para>
+							<strong>Gain de temps significatif</strong> : L'analyse et la documentation automatiques remplacent des heures de vérification manuelle.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Standardisation améliorée</strong> : Détection systématique des écarts par rapport aux standards Agro Mousquetaires.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Documentation complète</strong> : Génération automatique d'une documentation technique exhaustive pour chaque projet.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Traçabilité assurée</strong> : Conservation des caractéristiques techniques de chaque projet dans un format standardisé.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Facilitation de la maintenance</strong> : Meilleure connaissance des projets pour les interventions futures.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Amélioration de la qualité</strong> : Détection précoce des anomalies ou des configurations non optimales.
+						</para>
+					</listItem>
+				</list>
+
+				<para>
+					Ces bénéfices contribuent directement à l'efficacité des équipes d'automatisme et à la fiabilité des installations industrielles d'Agro Mousquetaires.
+				</para>
+			</content>
+		</section>
+
+		<section address="CasUtilisation">
+			<title>Cas d'Utilisation Types</title>
+			<content>
+				<para>Le module Réception de Projet est particulièrement utile dans les scénarios suivants :</para>
+
+				<list class="bullet">
+					<listItem>
+						<para>
+							<strong>Réception d'un nouveau projet</strong> : Validation technique des livrables d'un intégrateur externe avant mise en production.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Audit technique</strong> : Analyse des projets existants pour identifier les points d'amélioration et les non-conformités.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Documentation de l'existant</strong> : Création rapide d'une documentation technique pour des projets mal documentés.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Transition entre équipes</strong> : Facilitation du transfert de connaissances lors de changements d'équipe ou d'intégrateurs.
+						</para>
+					</listItem>
+					<listItem>
+						<para>
+							<strong>Préparation de migrations</strong> : Analyse des projets avant mise à niveau vers de nouvelles versions de TIA Portal.
+						</para>
+					</listItem>
+				</list>
+			</content>
+		</section>
+
+		<relatedTopics>
+			<link xlink:href="28b8d0e6-785d-420a-8d17-e13b2dda1c65">Accueil AgroFlow</link>
+			<link xlink:href="7fc9e716-d8f3-4b5a-a9a2-b6eca2315756">Aide au Diagnostic</link>
+
+			<externalLink>
+				<linkText>Documentation TIA Portal Openness</linkText>
+				<linkUri>https://support.industry.siemens.com/cs/document/109792902/simatic-tia-portal-openness-api-reference</linkUri>
+			</externalLink>
+
+			<codeEntityReference>T:ReceptionDeProjet.CompareTIA</codeEntityReference>
+			<codeEntityReference>T:ReceptionDeProjet.ReceptionDeProjet</codeEntityReference>
+			<codeEntityReference>T:ReceptionDeProjet.Project</codeEntityReference>
+			<codeEntityReference>T:ReceptionDeProjet.Automate</codeEntityReference>
+		</relatedTopics>
+	</developerConceptualDocument>
+</topic>

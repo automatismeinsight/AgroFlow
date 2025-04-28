@@ -32,7 +32,7 @@
     </TransformComponentArguments>
     <HelpFileFormat>Website</HelpFileFormat>
     <SyntaxFilters>C#</SyntaxFilters>
-    <PresentationStyle>VS2013</PresentationStyle>
+    <PresentationStyle>Default2022</PresentationStyle>
     <CleanIntermediates>True</CleanIntermediates>
     <KeepLogFile>True</KeepLogFile>
     <DisableCodeBlockComponent>False</DisableCodeBlockComponent>
@@ -110,6 +110,11 @@
     <Folder Include="media" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Content\AideauDiagnostic.aml" />
+    <None Include="Content\CommonDLL.aml" />
+    <None Include="Content\InterfaceMain.aml" />
+    <None Include="Content\UserGuide.aml" />
+    <None Include="Content\ReceptiondeProjet.aml" />
     <None Include="Content\VersionHistory\v1.0.0.0.aml" />
     <None Include="Content\VersionHistory\VersionHistory.aml" />
     <None Include="Content\Welcome.aml" />

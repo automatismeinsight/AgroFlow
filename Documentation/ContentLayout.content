@@ -1,8 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Topics>
-  <Topic id="28b8d0e6-785d-420a-8d17-e13b2dda1c65" visible="True" isDefault="true" isSelected="true" title="Welcome to the AgroFlow documentaion">
+  <Topic id="28b8d0e6-785d-420a-8d17-e13b2dda1c65" visible="True" isDefault="true" isSelected="true" title="Bienvenue sur la documentation AgroFlow (V1.2)">
     <HelpKeywords>
       <HelpKeyword index="K" term="Welcome" />
     </HelpKeywords>
   </Topic>
+  <Topic id="94b409b4-52a9-4b45-a7d6-3dd193c7e832" visible="True" />
+  <Topic id="9f873db9-c89b-4a7c-8da9-1e3e93d0f18d" visible="True" />
+  <Topic id="7fc9e716-d8f3-4b5a-a9a2-b6eca2315756" visible="True" title="Aide au Diagnostic" />
+  <Topic id="3ebb3c45-4a6c-46b6-ada1-bc0b872031c5" visible="True" title="Reception de Projet" />
+  <Topic id="5878cc09-8151-492a-b1f4-75e919cb2e0c" visible="True" title="Manuel utilisateur" />
 </Topics>

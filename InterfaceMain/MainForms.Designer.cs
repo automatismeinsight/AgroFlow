@@ -48,6 +48,7 @@
             this.DeveloppIconButton = new System.Windows.Forms.PictureBox();
             this.LoginIconButton = new System.Windows.Forms.PictureBox();
             this.LogoutIconButton = new System.Windows.Forms.PictureBox();
+            this.InfoPictureButton = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.AgromIcon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.CloseIconButton)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.MaximizeIconButton)).BeginInit();
@@ -59,6 +60,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.DeveloppIconButton)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.LoginIconButton)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.LogoutIconButton)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.InfoPictureButton)).BeginInit();
             this.SuspendLayout();
             // 
             // LbTitle
@@ -284,11 +286,24 @@
             this.LogoutIconButton.Visible = false;
             this.LogoutIconButton.Click += new System.EventHandler(this.LogoutIconButton_Click);
             // 
+            // InfoPictureButton
+            // 
+            this.InfoPictureButton.BackColor = System.Drawing.SystemColors.Control;
+            this.InfoPictureButton.Image = ((System.Drawing.Image)(resources.GetObject("InfoPictureButton.Image")));
+            this.InfoPictureButton.Location = new System.Drawing.Point(900, 0);
+            this.InfoPictureButton.Name = "InfoPictureButton";
+            this.InfoPictureButton.Size = new System.Drawing.Size(50, 50);
+            this.InfoPictureButton.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.InfoPictureButton.TabIndex = 14;
+            this.InfoPictureButton.TabStop = false;
+            this.InfoPictureButton.Click += new System.EventHandler(this.InfoPictureButton_Click);
+            // 
             // MainForms
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1150, 700);
+            this.Controls.Add(this.InfoPictureButton);
             this.Controls.Add(this.LogoutIconButton);
             this.Controls.Add(this.LoginIconButton);
             this.Controls.Add(this.CloseFullIconButton);
@@ -322,6 +337,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.DeveloppIconButton)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.LoginIconButton)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.LogoutIconButton)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.InfoPictureButton)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -347,6 +363,7 @@
         private System.Windows.Forms.PictureBox TerminalIconButton;
         private System.Windows.Forms.PictureBox LoginIconButton;
         private System.Windows.Forms.PictureBox LogoutIconButton;
+        private System.Windows.Forms.PictureBox InfoPictureButton;
     }
 }
 

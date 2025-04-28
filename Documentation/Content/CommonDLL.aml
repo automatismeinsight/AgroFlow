@@ -1,0 +1,187 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="9f873db9-c89b-4a7c-8da9-1e3e93d0f18d" revisionNumber="1">
+  <developerConceptualDocument
+    xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+
+
+	  <introduction>
+		  <para>
+			  Le module <strong>Common</strong> d’AgroFlow regroupe les utilitaires transverses essentiels pour la gestion des versions TIA Portal, le chargement dynamique des assemblies Openness, et le contrôle de la compatibilité technique. Cette documentation détaille le rôle, l’architecture et l’utilisation de ces utilitaires, qui assurent la robustesse de l’application face à la diversité des environnements TIA Portal installés.
+		  </para>
+	  </introduction>
+
+	  <section address="Presentation">
+		  <title>Présentation et Objectifs</title>
+		  <content>
+			  <para>
+				  Le module Common vise à :
+			  </para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>Centraliser la gestion de la version TIA Portal courante et sa validation</para>
+				  </listItem>
+				  <listItem>
+					  <para>Automatiser la détection et la vérification des DLLs Openness nécessaires</para>
+				  </listItem>
+				  <listItem>
+					  <para>Proposer des outils robustes de gestion de changement de version, indispensables pour la stabilité des modules métiers AgroFlow</para>
+				  </listItem>
+				  <listItem>
+					  <para>Faciliter le chargement dynamique et sécurisé des assemblies Siemens.Engineering</para>
+				  </listItem>
+			  </list>
+		  </content>
+	  </section>
+
+	  <section address="FonctionnementGeneral">
+		  <title>Fonctionnement Général</title>
+		  <content>
+			  <para>
+				  Le module Common s’articule autour de deux classes principales :
+			  </para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>
+						  <strong>
+							  <codeInline>TIAVersionManager</codeInline>
+						  </strong> : Cette classe statique gère la version TIA Portal sélectionnée, déclenche des événements lors de changements, et valide la présence des DLLs Openness requises (<codeInline>Siemens.Engineering.dll</codeInline>, <codeInline>Siemens.Engineering.Hmi.dll</codeInline>).
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>
+							  <codeInline>TIAAssemblyLoader</codeInline>
+						  </strong> : Cette classe statique gère le chargement dynamique des assemblies Openness selon la version sélectionnée, via des mécanismes d’assembly resolve au runtime, et s’assure que les UserControls liés soient toujours compatibles avec la version courante.
+					  </para>
+				  </listItem>
+			  </list>
+			  <para>
+				  Ces utilitaires garantissent que tous les modules d’AgroFlow chargent les bonnes dépendances selon la version TIA Portal sélectionnée par l’utilisateur.
+			  </para>
+		  </content>
+	  </section>
+
+	  <section address="ArchitectureTechnique">
+		  <title>Architecture Technique</title>
+		  <content>
+			  <para>
+				  <codeInline>TIAVersionManager</codeInline> expose :
+			  </para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>
+						  <strong>CurrentVersion</strong> : Version TIA Portal actuellement sélectionnée, modifiable dynamiquement.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>VersionChanged</strong> : Événement notifié à chaque changement de version, pour permettre aux modules d’adapter leur comportement.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>GetOpennessDllPath</strong> : Renvoie le chemin complet d’une DLL Openness pour la version en cours.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>AreAllDllsAvailable</strong> : Vérifie la présence effective de toutes les DLLs critiques.
+					  </para>
+				  </listItem>
+			  </list>
+			  <para>
+				  <codeInline>TIAAssemblyLoader</codeInline> propose :
+			  </para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>
+						  <strong>ResolveAssembly</strong> : Résolution dynamique des dépendances Siemens.Engineering au runtime.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>ForceLoadAssemblies</strong> : Chargement explicite de toutes les DLLs critiques à l’ouverture d’un module.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>SetupControl</strong> : Liaison d’un UserControl à la gestion dynamique des assemblies et à la gestion de version (déchargement automatique lors de changement de version).
+					  </para>
+				  </listItem>
+			  </list>
+			  <para>
+				  Cette architecture garantit la stabilité de l’application lors du changement de version, même si plusieurs versions de TIA Portal coexistent sur le poste.
+			  </para>
+		  </content>
+	  </section>
+
+	  <section address="GuideUtilisation">
+		  <title>Guide d’Utilisation</title>
+		  <content>
+			  <para>
+				  Pour initialiser la gestion de version et l’intégration Openness dans un module :
+			  </para>
+			  <list class="ordered">
+				  <listItem>
+					  <para>
+						  <strong>Sélection de la version TIA Portal</strong> : Affectez la version sélectionnée à <codeInline>TIAVersionManager.CurrentVersion</codeInline>.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Vérification des DLLs</strong> : Utilisez <codeInline>TIAVersionManager.AreAllDllsAvailable()</codeInline> pour s’assurer de la présence des dépendances.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Chargement dynamique</strong> : Appelez <codeInline>TIAAssemblyLoader.SetupControl()</codeInline> sur votre UserControl pour intégrer le mécanisme de résolution dynamique des assemblies.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Gestion du changement de version</strong> : Gérez les événements <codeInline>VersionChanged</codeInline> pour décharger/recharger proprement les modules graphiques concernés.
+					  </para>
+				  </listItem>
+			  </list>
+		  </content>
+	  </section>
+
+	  <section address="CasUtilisation">
+		  <title>Cas d’Utilisation Concrets</title>
+		  <content>
+			  <para>
+				  Le module Common est indispensable dans les cas suivants :
+			  </para>
+			  <list class="bullet">
+				  <listItem>
+					  <para>
+						  <strong>Multi-version TIA Portal</strong> : Plusieurs versions installées sur le poste, nécessité de basculer dynamiquement selon le projet.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Robustesse au runtime</strong> : Sécurisation du chargement des DLLs critiques pour éviter les crashs liés à la mauvaise version.
+					  </para>
+				  </listItem>
+				  <listItem>
+					  <para>
+						  <strong>Extensibilité</strong> : Ajout de nouveaux modules métier nécessitant une compatibilité Openness sans modifier le code existant.
+					  </para>
+				  </listItem>
+			  </list>
+		  </content>
+	  </section>
+
+	  <relatedTopics>
+		  <link xlink:href="b7a72d23-2f2a-4a2b-9170-1c6e2c0e1e22">Interface Principale</link>
+		  <link xlink:href="7fc9e716-d8f3-4b5a-a9a2-b6eca2315756">Aide au Diagnostic</link>
+		  <externalLink>
+			  <linkText>Documentation TIA Portal Openness</linkText>
+			  <linkUri>https://support.industry.siemens.com/cs/document/109792902/simatic-tia-portal-openness-api-reference</linkUri>
+		  </externalLink>
+		  <codeEntityReference>T:Common.TIAVersionManager</codeEntityReference>
+		  <codeEntityReference>T:Common.TIAAssemblyLoader</codeEntityReference>
+	  </relatedTopics>
+  </developerConceptualDocument>
+</topic>
