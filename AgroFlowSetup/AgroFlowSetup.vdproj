@@ -1006,12 +1006,6 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_EFFCD1A5306ACC6AE03A8DB2EF362424"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_9C1F4F28625D4308BDEF85154F8093C9"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -1759,6 +1753,12 @@
         "OwnerKey" = "8:_456F18DC98D05F6BFB4ECDDFF3F98590"
         "MsmSig" = "8:_UNDEFINED"
         }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_EFFCD1A5306ACC6AE03A8DB2EF362424"
+        "MsmSig" = "8:_UNDEFINED"
+        }
     }
     "Configurations"
     {
@@ -1777,6 +1777,22 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
+            }
         }
         "Release"
         {
@@ -1793,6 +1809,14 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+            }
         }
     }
     "Deployable"
@@ -5918,7 +5942,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:AgroFlowSetup"
         "ProductCode" = "8:{5847FC7E-3D5E-412B-BF54-0CD68F574936}"
-        "PackageCode" = "8:{7349CEE9-C77C-42B1-94CB-8C39A068FCD2}"
+        "PackageCode" = "8:{6BE34C9D-411F-4341-9A19-269383B5FE19}"
         "UpgradeCode" = "8:{28A4BB7F-4343-4B9B-A1D6-351699448E14}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -6038,6 +6062,20 @@
         }
         "Shortcut"
         {
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_1B622D7707BD492E87A8A3596D856D14"
+            {
+            "Name" = "8:AgroFlow"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_9C1F4F28625D4308BDEF85154F8093C9"
+            "Folder" = "8:_660055403C124209981AF0D31BC2266E"
+            "WorkingFolder" = "8:_A867E3A1F248451780A5958783A29AC2"
+            "Icon" = "8:_55FCE971CB764667B8574CFF1BC11CBA"
+            "Feature" = "8:"
+            }
         }
         "UserInterface"
         {

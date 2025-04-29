@@ -125,6 +125,8 @@ namespace ReceptionDeProjet
             {
                 UpdateInfo(string.Format($"Le projet cible : {sProjectName} est bien sélectionné"));
                 UpdateInfo("-");
+
+                BpVerification.Enabled = true;
             }
             else
             {
@@ -298,6 +300,7 @@ namespace ReceptionDeProjet
                     wb.Save();
                 }
                 UpdateInfo("Exportation des données vers Excel terminée");
+                BpDownloadFile.Enabled = true;
             }
             catch (Exception ex)
             {
@@ -345,6 +348,10 @@ namespace ReceptionDeProjet
             ws.Cell(1, 33).Value = "iBlocOb35";
         }
 
+        /// <summary>
+        /// Handles the "Download" button click event.
+        /// Copy the result Excel file to a user-defined location.
+        /// </summary>
         private void BpDownloadFile_Click(object sender, EventArgs e)
         {
             var now = DateTime.Now;
@@ -384,7 +391,7 @@ namespace ReceptionDeProjet
 
             if (sMessage == "-")
             {
-                sFullMessage = "------------------------------------------------------------------------------------------------------------------\n";
+                sFullMessage = "----------------------------------------------------------------------------------------------------------------------------------------------\n";
             }
             else
             {

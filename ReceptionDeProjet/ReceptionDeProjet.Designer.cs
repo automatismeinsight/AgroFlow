@@ -29,63 +29,65 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txBInformations = new System.Windows.Forms.RichTextBox();
             this.BpSelectProject = new System.Windows.Forms.Button();
             this.BpVerification = new System.Windows.Forms.Button();
             this.BpDownloadFile = new System.Windows.Forms.Button();
-            this.txBInformations = new System.Windows.Forms.RichTextBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.txBInformations);
-            this.groupBox1.Location = new System.Drawing.Point(199, 14);
+            this.groupBox1.Location = new System.Drawing.Point(180, 3);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(188, 163);
+            this.groupBox1.Size = new System.Drawing.Size(229, 189);
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Informations";
             // 
+            // txBInformations
+            // 
+            this.txBInformations.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txBInformations.Location = new System.Drawing.Point(5, 18);
+            this.txBInformations.Margin = new System.Windows.Forms.Padding(2);
+            this.txBInformations.Name = "txBInformations";
+            this.txBInformations.ReadOnly = true;
+            this.txBInformations.Size = new System.Drawing.Size(219, 166);
+            this.txBInformations.TabIndex = 4;
+            this.txBInformations.Text = "";
+            // 
             // BpSelectProject
             // 
-            this.BpSelectProject.Location = new System.Drawing.Point(99, 33);
+            this.BpSelectProject.Location = new System.Drawing.Point(33, 21);
             this.BpSelectProject.Name = "BpSelectProject";
-            this.BpSelectProject.Size = new System.Drawing.Size(75, 23);
+            this.BpSelectProject.Size = new System.Drawing.Size(117, 29);
             this.BpSelectProject.TabIndex = 7;
-            this.BpSelectProject.Text = "ProjectSelect";
+            this.BpSelectProject.Text = "Sélectionner le projet";
             this.BpSelectProject.UseVisualStyleBackColor = true;
             this.BpSelectProject.Click += new System.EventHandler(this.BpSelectProject_Click);
             // 
             // BpVerification
             // 
-            this.BpVerification.Location = new System.Drawing.Point(18, 33);
+            this.BpVerification.Enabled = false;
+            this.BpVerification.Location = new System.Drawing.Point(33, 73);
             this.BpVerification.Name = "BpVerification";
-            this.BpVerification.Size = new System.Drawing.Size(75, 23);
+            this.BpVerification.Size = new System.Drawing.Size(117, 29);
             this.BpVerification.TabIndex = 8;
-            this.BpVerification.Text = "Compare";
+            this.BpVerification.Text = "Comparer le projet";
             this.BpVerification.UseVisualStyleBackColor = true;
             this.BpVerification.Click += new System.EventHandler(this.BpVerification_Click);
             // 
             // BpDownloadFile
             // 
-            this.BpDownloadFile.Location = new System.Drawing.Point(56, 82);
+            this.BpDownloadFile.Enabled = false;
+            this.BpDownloadFile.Location = new System.Drawing.Point(33, 125);
             this.BpDownloadFile.Name = "BpDownloadFile";
-            this.BpDownloadFile.Size = new System.Drawing.Size(75, 23);
+            this.BpDownloadFile.Size = new System.Drawing.Size(117, 48);
             this.BpDownloadFile.TabIndex = 10;
-            this.BpDownloadFile.Text = "button1";
+            this.BpDownloadFile.Text = "Télécharger le fichier d\'export";
             this.BpDownloadFile.UseVisualStyleBackColor = true;
             this.BpDownloadFile.Click += new System.EventHandler(this.BpDownloadFile_Click);
-            // 
-            // txBInformations
-            // 
-            this.txBInformations.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txBInformations.Location = new System.Drawing.Point(5, 19);
-            this.txBInformations.Margin = new System.Windows.Forms.Padding(2);
-            this.txBInformations.Name = "txBInformations";
-            this.txBInformations.ReadOnly = true;
-            this.txBInformations.Size = new System.Drawing.Size(178, 139);
-            this.txBInformations.TabIndex = 4;
-            this.txBInformations.Text = "";
             // 
             // ReceptionDeProjet
             // 
