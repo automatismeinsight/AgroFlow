@@ -7,6 +7,8 @@ using GlobalsOPCUA;
 using ClosedXML.Excel;
 using Common;
 using System.Reflection;
+using System.IO;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace ReceptionDeProjet
 {
@@ -86,32 +88,29 @@ namespace ReceptionDeProjet
 
             oExploreTiaPLC = new ExploreTiaPLC(oPLC_ProjectDefinitions, dData, lsDataCollection);
             oCompareTiaPLC = new CompareTIA();
+
+            InitExcel();
         }
 
         /// <summary>
         /// Handles the "Load CDC" button click event.
         /// Allows the user to select a CDC Excel file and stores its path.
         /// </summary>
-        private void BpCdcLoad_Click(object sender, EventArgs e)
+        private void InitExcel()
         {
-            var filePath = string.Empty;
+            var filePath = @".\copy_of_source.xlsm";
+            var sourcePath = @".\source.xlsm";
 
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            try
             {
-                openFileDialog.InitialDirectory = "c:\\";
-                openFileDialog.Filter = "Excel Files (*.xlsx;*.xlsm)|*.xlsx;*.xlsm";
-                openFileDialog.FilterIndex = 2;
-                openFileDialog.RestoreDirectory = true;
-
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    //Get the path of specified file
-                    filePath = openFileDialog.FileName;
-                }
+                File.Copy(sourcePath, filePath, overwrite: true);
+                sCdcFilePath += filePath;
+                UpdateInfo($"Fichier {filePath.Split('\\').Last()} chargé");
             }
-
-            sCdcFilePath += filePath;
-            UpdateInfo($"Fichier {sCdcFilePath.Split('\\').Last()} chargé");
+            catch (IOException ex)
+            {
+                Console.WriteLine($"Erreur lors de la copie : {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -344,6 +343,33 @@ namespace ReceptionDeProjet
             ws.Cell(1, 20).Value = "sOB1PID";
             ws.Cell(1, 33).Value = "iBlocOb1";
             ws.Cell(1, 33).Value = "iBlocOb35";
+        }
+
+        private void BpDownloadFile_Click(object sender, EventArgs e)
+        {
+            var now = DateTime.Now;
+            using (var saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.Title = "Enregistrer le fichier sous";
+                saveFileDialog.Filter = "Fichiers Excel Macro (*.xlsm)|*.xlsm|Tous les fichiers (*.*)|*.*";
+                saveFileDialog.FileName = "Export_" + oTiaProject.sName + "_" + $"{now.Day}{now.Month:D2}{now.Year:D2}";
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string destinationPath = saveFileDialog.FileName;
+                    string sourcePath = sCdcFilePath;
+
+                    try
+                    {
+                        File.Copy(sourcePath, destinationPath, true);
+                        UpdateInfo("Fichier enregistré avec succès.");
+                    }
+                    catch (Exception ex)
+                    {
+                        UpdateInfo($"Erreur lors de l'enregistrement : {ex.Message}");
+                    }
+                }
+            }
         }
 
         /// <summary>

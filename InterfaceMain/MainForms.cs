@@ -7,6 +7,8 @@ using System.Windows.Forms;
 using Common;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
+using System.Net;
 
 namespace InterfaceMain
 {
@@ -42,6 +44,58 @@ namespace InterfaceMain
         public MainForms()
         {
             InitializeComponent();
+            Updater();
+            RemoveDll();
+        }
+
+        public void Updater()
+        {
+            WebClient webClient = new WebClient();
+            var client = new WebClient();
+
+            if (!webClient.DownloadString("https://raw.githubusercontent.com/SamBzd/AgroFlow/refs/heads/master/Update.txt").Contains("1.2.2"))
+            {
+                if(MessageBox.Show("Une nouvelle version est disponible. Voulez-vous la télécharger ?", "Mise à jour", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    try
+                    {
+                        if(File.Exists(@".\AgroFlowSetup.msi"))
+                        {
+                            File.Delete(@".\AgroFlowSetup.msi");
+                        }
+                        client.DownloadFile("https://github.com/SamBzd/AgroFlow/raw/refs/heads/master/AgroFlowSetup.zip", @"AgroFlowSetup.zip");
+                        string zipPath = @".\AgroFlowSetup.zip";
+                        string extractPath = @".\";
+                        ZipFile.ExtractToDirectory(zipPath, extractPath);
+
+                        Process process = new Process();
+                        process.StartInfo.FileName = "msiexec";
+                        process.StartInfo.Arguments = String.Format("/i AgroFlowSetup.msi");
+
+                        this.Close();
+                        process.Start();
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Erreur lors du téléchargement de la mise à jour.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        public void RemoveDll()
+        {
+            var dll1 = @".\Siemens.Engineering.dll";
+            var dll2 = @".\Siemens.Engineering.Hmi.dll";
+
+            if (File.Exists(dll1))
+            {
+                File.Delete(dll1);
+            }
+            if (File.Exists(dll2))
+            {
+                File.Delete(dll2);
+            }
         }
 
         /// <summary>
@@ -445,14 +499,39 @@ namespace InterfaceMain
             }
         }
 
+
+
+
         private void InfoPictureButton_Click(object sender, EventArgs e)
         {
-            string path = ".\\..\\..\\..\\Documentation\\Help\\index.html";
+            if (!Directory.Exists(@".\Help"))
+            {
+                WebClient webClient = new WebClient();
+                var client = new WebClient();
+
+                if (MessageBox.Show("Voulez-vous télécharger la documentation?", "Documentatio", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    try
+                    {
+                        
+                        client.DownloadFile("https://raw.githubusercontent.com/SamBzd/AgroFlow/6d4dec02a5ad27bb83d288bf76f1c28ae34ffbd4/Help.zip", @"Help.zip");
+                        string zipPath = @".\Help.zip";
+                        string extractPath = @".\";
+                        ZipFile.ExtractToDirectory(zipPath, extractPath);
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Erreur lors du téléchargement de la documentation.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+
+            string path = @".\Help\index.html";
             string fullPath = Path.GetFullPath(path);
 
             try
             {
-                System.Diagnostics.Process.Start(new ProcessStartInfo
+                Process.Start(new ProcessStartInfo
                 {
                     FileName = fullPath,
                     UseShellExecute = true
@@ -462,7 +541,6 @@ namespace InterfaceMain
             {
                 MessageBox.Show("Impossible d'ouvrir le fichier d'aide : " + ex.Message);
             }
-
         }
         #endregion
     }

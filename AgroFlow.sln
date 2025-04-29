@@ -7,15 +7,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MainInterface", "InterfaceM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AideAuDiagnostic", "AideAuDiagnostic\AideAuDiagnostic.csproj", "{CAFFC2FD-CA95-45DD-AB84-CF6F6F1E956D}"
 EndProject
-Project("{840C416C-B8F3-42BC-B0DD-F6BB14C9F8CB}") = "AgroFlowInstaller", "AgroFlowInstaller\AgroFlowInstaller.aiproj", "{7F89A0FD-A0D2-4E37-ADF6-143CE54F9393}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReceptionDeProjet", "ReceptionDeProjet\ReceptionDeProjet.csproj", "{F060C7B2-E0DE-4BAD-9A52-AC2ECC5D3A22}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{F841B6E5-7B6B-4AB6-9D52-17F95BBDDA8B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Outils", "Outils", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		Plaquette.md = Plaquette.md
+	EndProjectSection
 EndProject
 Project("{7CF6DF6D-3B04-46F8-A40B-537D21BCA0B4}") = "Documentation", "Documentation\Documentation.shfbproj", "{AA3102F2-F95A-4526-990C-0EE77888B4E1}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "AgroFlowSetup", "AgroFlowSetup\AgroFlowSetup.vdproj", "{9F2597E0-D6C6-1B99-764E-9673288EF3F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,12 +39,6 @@ Global
 		{CAFFC2FD-CA95-45DD-AB84-CF6F6F1E956D}.DefaultBuild|Any CPU.Build.0 = Release|Any CPU
 		{CAFFC2FD-CA95-45DD-AB84-CF6F6F1E956D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CAFFC2FD-CA95-45DD-AB84-CF6F6F1E956D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7F89A0FD-A0D2-4E37-ADF6-143CE54F9393}.Debug|Any CPU.ActiveCfg = DefaultBuild
-		{7F89A0FD-A0D2-4E37-ADF6-143CE54F9393}.Debug|Any CPU.Build.0 = DefaultBuild
-		{7F89A0FD-A0D2-4E37-ADF6-143CE54F9393}.DefaultBuild|Any CPU.ActiveCfg = DefaultBuild
-		{7F89A0FD-A0D2-4E37-ADF6-143CE54F9393}.DefaultBuild|Any CPU.Build.0 = DefaultBuild
-		{7F89A0FD-A0D2-4E37-ADF6-143CE54F9393}.Release|Any CPU.ActiveCfg = DefaultBuild
-		{7F89A0FD-A0D2-4E37-ADF6-143CE54F9393}.Release|Any CPU.Build.0 = DefaultBuild
 		{F060C7B2-E0DE-4BAD-9A52-AC2ECC5D3A22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F060C7B2-E0DE-4BAD-9A52-AC2ECC5D3A22}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F060C7B2-E0DE-4BAD-9A52-AC2ECC5D3A22}.DefaultBuild|Any CPU.ActiveCfg = Release|Any CPU
@@ -60,13 +57,16 @@ Global
 		{AA3102F2-F95A-4526-990C-0EE77888B4E1}.DefaultBuild|Any CPU.Build.0 = Release|Any CPU
 		{AA3102F2-F95A-4526-990C-0EE77888B4E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA3102F2-F95A-4526-990C-0EE77888B4E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F2597E0-D6C6-1B99-764E-9673288EF3F6}.Debug|Any CPU.ActiveCfg = Debug
+		{9F2597E0-D6C6-1B99-764E-9673288EF3F6}.DefaultBuild|Any CPU.ActiveCfg = Release
+		{9F2597E0-D6C6-1B99-764E-9673288EF3F6}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{7F89A0FD-A0D2-4E37-ADF6-143CE54F9393} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{AA3102F2-F95A-4526-990C-0EE77888B4E1} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{9F2597E0-D6C6-1B99-764E-9673288EF3F6} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6F6BC606-AED3-41BC-AA6C-E59304B9D495}
