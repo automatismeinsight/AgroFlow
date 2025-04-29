@@ -1,53 +1,50 @@
-# Interface Principale – AgroFlow
+# Interface Principale â€“ AgroFlow
 
-## Présentation
+## PrÃ©sentation
 
-L’**interface principale** d’AgroFlow est le point d’entrée graphique de l’application, pensée pour offrir une expérience fluide et efficace aux automaticiens et chefs de projet du groupe Agro Mousquetaires.  
-Elle centralise l’accès aux fonctions critiques, facilite la gestion multi-utilisateur (avec distinction admin/utilisateur standard) et permet une navigation rapide entre les différents modules métiers de l’outil.
+Lâ€™**interface principale** dâ€™AgroFlow est le point dâ€™entrÃ©e graphique de lâ€™application, pensÃ©e pour offrir une expÃ©rience fluide et efficace aux automaticiens et chefs de projet du groupe Agro Mousquetaires.  
+Elle centralise lâ€™accÃ¨s aux fonctions critiques, facilite la gestion multi-utilisateur (avec distinction admin/utilisateur standard) et permet une navigation rapide entre les diffÃ©rents modules mÃ©tiers de lâ€™outil.
 
 ## Fonctionnement global
 
-- **Interface graphique Windows Forms** moderne et personnalisée, adaptée au standard Agro Mousquetaires.
-- **Gestion de sessions utilisateur et administrateur** avec droits distincts et adaptation dynamique des fonctionnalités disponibles.
-- **Sélection dynamique de la version TIA Portal**?: l’utilisateur choisit la version TIA installée avec mémorisation du dernier choix.
-- **Navigation modulaire** : chaque fonction (aide au diagnostic, réception de projet, etc.) s’ouvre sous forme de UserControl pour garantir rapidité et clarté.
-- **Gestion centralisée des logs**?: toutes les actions importantes sont historisées dans un module de log accessible à tout moment.
-- **Menu principal rétractable/étirable** pour optimiser l’espace de travail ou accéder à des fonctions avancées (admin, terminal, etc.).
-- **Gestion avancée de la fenêtre**?: redimensionnement, maximisation, déplacement personnalisé, etc.
+- **Interface graphique Windows Forms** moderne et personnalisÃ©e, adaptÃ©e au standard Agro Mousquetaires.
+- **SÃ©lection dynamique de la version TIA Portal**?: lâ€™utilisateur choisit la version TIA installÃ©e avec mÃ©morisation du dernier choix.
+- **Navigation modulaire** : chaque fonction (aide au diagnostic, rÃ©ception de projet, etc.) sâ€™ouvre sous forme de UserControl pour garantir rapiditÃ© et clartÃ©.
+- **Gestion centralisÃ©e des logs**?: toutes les actions importantes sont historisÃ©es dans un module de log accessible Ã  tout moment.
+- **Menu principal rÃ©tractable/Ã©tirable** pour optimiser lâ€™espace de travail ou accÃ©der Ã  des fonctions avancÃ©es (admin, terminal, etc.).
+- **Gestion avancÃ©e de la fenÃªtre**?: redimensionnement, maximisation, dÃ©placement personnalisÃ©, etc.
 
-## Principales fonctionnalités accessibles depuis l’interface
+## Principales fonctionnalitÃ©s accessibles depuis lâ€™interface
 
-- **Aide au diagnostic**?: génération automatisée des variables BLKJump dans le FC d’aide au diagnostic (voir documentation fonction dédiée).
-- **Réception de projet**?: intégration facilitée et vérification de conformité de nouveaux projets TIA Portal.
-- **Fonctions administrateur**?: options et outils avancés pour la maintenance ou la configuration (visibles uniquement après connexion admin).
-- **Historique des actions/logs**?: affichage instantané de toutes les opérations réalisées via l’interface.
+- **Aide au diagnostic**?: gÃ©nÃ©ration automatisÃ©e des variables BLKJump dans le FC dâ€™aide au diagnostic (voir documentation fonction dÃ©diÃ©e).
+- **RÃ©ception de projet**?: intÃ©gration facilitÃ©e et vÃ©rification de conformitÃ© de nouveaux projets TIA Portal
+- **Historique des actions/logs**?: affichage instantanÃ© de toutes les opÃ©rations rÃ©alisÃ©es via lâ€™interface.
 
-## Public visé
+## Public visÃ©
 
-- **Automaticiens**, chefs de projet, intégrateurs travaillant sur des projets TIA Portal Agro Mousquetaires.
-- **Administrateurs**?: accès à des outils supplémentaires pour la maintenance et la configuration avancée.
+- **Automaticiens**, chefs de projet, intÃ©grateurs travaillant sur des projets TIA Portal Agro Mousquetaires.
+- **Administrateurs**?: accÃ¨s Ã  des outils supplÃ©mentaires pour la maintenance et la configuration avancÃ©e.
 
-## Prérequis techniques
+## PrÃ©requis techniques
 
-- Application **AgroFlow** installée sur le poste de travail.
-- Une ou plusieurs versions de **TIA Portal** (V17 minimum) installées sur le poste.
-- Références internes Agro Mousquetaires (bibliothèque LTU, standards de projet…).
+- Application **AgroFlow** installÃ©e sur le poste de travail.
+- Une ou plusieurs versions de **TIA Portal** (V17 minimum) installÃ©es sur le poste.
+- RÃ©fÃ©rences internes Agro Mousquetaires (bibliothÃ¨que LTU, standards de projetâ€¦).
 
 ## Parcours utilisateur type
 
-1. **Sélection de la version TIA Portal** installée (la sélection est mémorisée entre les sessions).
-2. **Choix d’une fonction** selon le profil utilisateur (aide au diagnostic, réception de projet…).
-3. **Connexion possible en mode admin** pour accéder à des fonctionnalités supplémentaires.
-4. **Utilisation des modules**?: chaque fonction s’ouvre dans l’interface principale, avec gestion des logs et navigation simplifiée.
-5. **Gestion ergonomique de la fenêtre** (maximisation, réduction, déplacement, etc.).
+1. **SÃ©lection de la version TIA Portal** installÃ©e (la sÃ©lection est mÃ©morisÃ©e entre les sessions).
+2. **Choix dâ€™une fonction** selon le profil utilisateur (aide au diagnostic, rÃ©ception de projetâ€¦).
+4. **Utilisation des modules**?: chaque fonction sâ€™ouvre dans lâ€™interface principale, avec gestion des logs et navigation simplifiÃ©e.
+5. **Gestion ergonomique de la fenÃªtre** (maximisation, rÃ©duction, dÃ©placement, etc.).
 
 ## Extension et personnalisation
 
-L’interface principale est conçue pour être **évolutive**?:  
-- De nouveaux modules (UserControls) peuvent être ajoutés facilement.
-- Les droits et profils utilisateurs sont centralisés pour une gestion simplifiée.
+Lâ€™interface principale est conÃ§ue pour Ãªtre **Ã©volutive**?:  
+- De nouveaux modules (UserControls) peuvent Ãªtre ajoutÃ©s facilement.
+- Les droits et profils utilisateurs sont centralisÃ©s pour une gestion simplifiÃ©e.
 - La personnalisation des couleurs, logos, et messages respecte la charte Agro Mousquetaires.
 
 ---
 
-*Ce module d’interface graphique AgroFlow incarne la volonté du groupe Agro Mousquetaires de proposer des outils performants, ergonomiques et adaptés aux besoins des équipes d’automatisme industrielle.*
+*Ce module dâ€™interface graphique AgroFlow incarne la volontÃ© du groupe Agro Mousquetaires de proposer des outils performants, ergonomiques et adaptÃ©s aux besoins des Ã©quipes dâ€™automatisme industrielle.*
