@@ -3,7 +3,7 @@
 ## Présentation
 
 Cette fonction fait partie de l’application **AgroFlow**, développée en interne chez AgroMousquetaires, et vise à faciliter le travail des automaticiens.  
-Elle est spécifiquement destinée aux projets TIA Portal AgroMousquetaires intégrant l’aide au diagnostic.
+Elle est spécifiquement destinée aux projets TIA Portal AgroMousquetaires intégrant la bibliothèque LTU.
 
 L’outil parcourt automatiquement le projet TIA Portal afin de générer les variables **BLKJump** dans le FC "Aide au Diagnostic".  
 Il s’agit d’un processus automatisé et fiable pour la préparation des automatismes, en conformité avec les standards AgroMousquetaires.
@@ -28,7 +28,7 @@ Le cœur de cette fonctionnalité repose sur trois classes principales :
 
 - **TIA Portal** version 17 minimum
 - **Application AgroFlow** installée sur le poste de développement
-- **Projet TIA Portal** conforme AgroMousquetaires, incluant la bibliothèque **LTU**
+- **Projet TIA Portal** ouvert sur le bureau, incluant la bibliothèque **LTU**
 
 ## Public visé
 
