@@ -31,7 +31,7 @@ namespace InterfaceMain
         /// <summary>
         /// List of available functions for a standard user.
         /// </summary>
-        List<string> userFunctions = new List<string> { "Aide au Diagnostic", "Reception de Projet" };
+        List<string> userFunctions = new List<string> { "Aide au Diagnostic", "Reception de Projet", "Generation MAQ" };
 
         /// <summary>
         /// List of available functions for an admin user.
@@ -180,7 +180,7 @@ namespace InterfaceMain
         private void CbFunction_SelectedIndexChanged(object sender, EventArgs e)
         {
             GbFunctions.Controls.Clear();
-            System.Windows.Forms.UserControl selectedControl = null;
+            UserControl selectedControl = null;
             string selectedFunction = LoadReferences.FormatString(CbFunction.Text);
 
             switch (selectedFunction)
@@ -190,6 +190,9 @@ namespace InterfaceMain
                     break;
                 case "ReceptionDeProjet":
                     selectedControl = new ReceptionDeProjet.ReceptionDeProjet();
+                    break;
+                case "GenerationMaq":
+                    selectedControl = new GenerationMAQ.GenerationMAQ();
                     break;
                 default:
                     GbFunctions.Text = "Fonction";

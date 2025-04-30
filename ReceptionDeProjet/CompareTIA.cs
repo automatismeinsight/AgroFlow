@@ -150,7 +150,7 @@ namespace ReceptionDeProjet
         /// <returns>
         /// The main <see cref="DeviceItem"/> if found; otherwise, <c>null</c>.
         /// </returns>
-        private DeviceItem FindMainModule(Device device)
+        public DeviceItem FindMainModule(Device device)
         {
             foreach (var item in device.DeviceItems)
             {
@@ -379,7 +379,7 @@ namespace ReceptionDeProjet
                         sType = "FC",
                     };
 
-                    var crossRefServiceFC = block.GetService<CrossReferenceService>() as CrossReferenceService;
+                    var crossRefServiceFC = block.GetService<CrossReferenceService>();
                     var crossRefResultFC = crossRefServiceFC?.GetCrossReferences(CrossReferenceFilter.AllObjects);
                     var sourceObjectFC = crossRefResultFC?.Sources?.FirstOrDefault(s => s.Name == block.Name);
 
@@ -611,7 +611,7 @@ namespace ReceptionDeProjet
         {
             var allBlocks = new List<PlcBlock>();
 
-            var softwareContainer = cpuDeviceItem.GetService<SoftwareContainer>() as SoftwareContainer;
+            var softwareContainer = cpuDeviceItem.GetService<SoftwareContainer>();
             var plcSoftware = softwareContainer?.Software as PlcSoftware ?? throw new Exception("Unable to retrieve PlcSoftware for the specified CPU.");
 
             allBlocks.AddRange(plcSoftware.BlockGroup.Blocks);
@@ -1092,6 +1092,14 @@ public class Project
         public int iBlocOb35 { get; set; }
         #endregion
 
+        #region Tags
+        
+        public List<MyTag> oTagsIn { get; set; }
+        public List<MyTag> oTagsOut { get; set; }
+        public List<MyTag> oTagsMem { get; set; }
+
+        #endregion
+
         /// <summary>
         /// Gets the list of OBs for this automate.
         /// </summary>
@@ -1113,6 +1121,9 @@ public class Project
             oOBs = new List<MyOB>();
             oFCs = new List<MyFC>();
             ProtectedBlocs = new List<string>();
+            oTagsIn = new List<MyTag>();
+            oTagsOut = new List<MyTag>();
+            oTagsMem = new List<MyTag>();
         }
 
         /// <summary>
@@ -1140,6 +1151,20 @@ public class Project
         public void AddProtectedBloc(string blocName)
         {
             ProtectedBlocs.Add(blocName);
+        }
+
+        public void AddTagIn(MyTag tag)
+        {
+            oTagsIn.Add(tag);
+        }
+
+        public void AddTagOut(MyTag tag)
+        {
+            oTagsOut.Add(tag);
+        }
+        public void AddTagMem(MyTag tag)
+        {
+            oTagsMem.Add(tag);
         }
     }
 
@@ -1263,6 +1288,13 @@ public class Project
         /// Gets or sets the first instance name.
         /// </summary>
         public string sFirstInst { get; set; }
+    }
+
+    public class MyTag
+    {
+        public string sName { get; set; }
+        public string sType { get; set; }
+        public string sAddress { get; set; }
     }
 
     /// <summary>

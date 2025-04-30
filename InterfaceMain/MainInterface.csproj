@@ -163,6 +163,10 @@
       <Project>{f841b6e5-7b6b-4ab6-9d52-17f95bbdda8b}</Project>
       <Name>Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\GenerationMAQ\GenerationMAQ.csproj">
+      <Project>{f70fed0e-dacc-473d-a989-f3fd75e8f6cc}</Project>
+      <Name>GenerationMAQ</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ReceptionDeProjet\ReceptionDeProjet.csproj">
       <Project>{f060c7b2-e0de-4bad-9a52-ac2ecc5d3a22}</Project>
       <Name>ReceptionDeProjet</Name>
