@@ -92,7 +92,7 @@
             this.BpGenration.Name = "BpGenration";
             this.BpGenration.Size = new System.Drawing.Size(69, 37);
             this.BpGenration.TabIndex = 12;
-            this.BpGenration.Text = "Comparer le projet";
+            this.BpGenration.Text = "Générer les tags";
             this.BpGenration.UseVisualStyleBackColor = true;
             this.BpGenration.Click += new System.EventHandler(this.BpGenration_Click);
             // 
