@@ -56,11 +56,11 @@
             // txBInformations
             // 
             this.txBInformations.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txBInformations.Location = new System.Drawing.Point(10, 21);
+            this.txBInformations.Location = new System.Drawing.Point(5, 19);
             this.txBInformations.Margin = new System.Windows.Forms.Padding(2);
             this.txBInformations.Name = "txBInformations";
             this.txBInformations.ReadOnly = true;
-            this.txBInformations.Size = new System.Drawing.Size(219, 166);
+            this.txBInformations.Size = new System.Drawing.Size(219, 165);
             this.txBInformations.TabIndex = 5;
             this.txBInformations.Text = "";
             // 

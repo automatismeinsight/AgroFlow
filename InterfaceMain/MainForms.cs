@@ -53,9 +53,19 @@ namespace InterfaceMain
             WebClient webClient = new WebClient();
             var client = new WebClient();
 
-            if (!webClient.DownloadString("https://raw.githubusercontent.com/SamBzd/AgroFlow/refs/heads/master/Update.txt").Contains("1.2.2"))
+            if (!webClient.DownloadString("https://raw.githubusercontent.com/SamBzd/AgroFlow/refs/heads/master/Update.txt").Contains("1.3.0"))
             {
-                if(MessageBox.Show("Une nouvelle version est disponible. Voulez-vous la télécharger ?", "Mise à jour", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if(File.Exists(@".\Help.zip"))
+                {
+                    File.Delete(@".\Help.zip");
+                }
+
+                if(Directory.Exists(@".\Help"))
+                {
+                    Directory.Delete(@".\Help", true);
+                }
+
+                if (MessageBox.Show("Une nouvelle version est disponible. Voulez-vous la télécharger ?", "Mise à jour", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     try
                     {
@@ -509,7 +519,6 @@ namespace InterfaceMain
         {
             if (!Directory.Exists(@".\Help"))
             {
-                WebClient webClient = new WebClient();
                 var client = new WebClient();
 
                 if (MessageBox.Show("Voulez-vous télécharger la documentation?", "Documentatio", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
