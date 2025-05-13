@@ -394,46 +394,6 @@ namespace ReceptionDeProjet
         }
 
         /// <summary>
-        /// Resets the column titles for the PLC worksheet in the provided Excel workbook.
-        /// </summary>
-        /// <param name="wb">The Excel workbook.</param>
-        /// <param name="sheet">The sheet index for the PLC worksheet.</param>
-        public void ResetPlcTitleExcel(XLWorkbook wb, int sheet)
-        {
-            var ws = wb.Worksheet(sheet);
-
-            ws.Cell(1, 1).Value = "sName";
-            ws.Cell(1, 1).Value = "sGamme";
-            ws.Cell(1, 2).Value = "sReference";
-            ws.Cell(1, 3).Value = "sFirmware";
-            ws.Cell(1, 4).Value = "sNtpServer1";
-            ws.Cell(1, 5).Value = "sNtpServer2";
-            ws.Cell(1, 6).Value = "sNtpServer3";
-            ws.Cell(1, 7).Value = "sLocalHour";
-            ws.Cell(1, 8).Value = "sHourChange";
-            ws.Cell(1, 10).Value = "sInterfaceX1";
-            ws.Cell(1, 11).Value = "sVlanX1";
-            ws.Cell(1, 12).Value = "sInterfaceX2";
-            ws.Cell(1, 13).Value = "sVlanX2";
-            ws.Cell(1, 14).Value = "sMMCLife";
-            ws.Cell(1, 15).Value = "sWatchDog";
-            ws.Cell(1, 17).Value = "sRestart";
-            ws.Cell(1, 18).Value = "sCadenceM0";
-            ws.Cell(1, 19).Value = "sCadenceM1";
-            ws.Cell(1, 21).Value = "sProgramProtection";
-            ws.Cell(1, 22).Value = "sWebServer";
-            ws.Cell(1, 23).Value = "sControlAccess";
-            ws.Cell(1, 24).Value = "sApiHmiCom";
-            ws.Cell(1, 25).Value = "sOnlineAccess";
-            ws.Cell(1, 26).Value = "sScreenWrite";
-            ws.Cell(1, 31).Value = "sInstantVar";
-            ws.Cell(1, 32).Value = "iStandardLTU";
-            ws.Cell(1, 20).Value = "sOB1PID";
-            ws.Cell(1, 33).Value = "iBlocOb1";
-            ws.Cell(1, 33).Value = "iBlocOb35";
-        }
-
-        /// <summary>
         /// Handles the "Download" button click event.
         /// Copy the result Excel file to a user-defined location.
         /// </summary>

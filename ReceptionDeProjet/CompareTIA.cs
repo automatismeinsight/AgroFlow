@@ -10,38 +10,51 @@ using Siemens.Engineering.Online;
 using Siemens.Engineering.SW;
 using Siemens.Engineering.SW.Blocks;
 using Siemens.Engineering;
-using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
 
 namespace ReceptionDeProjet
 {
     /// <summary>
-    /// Provides methods for analyzing and comparing PLC devices information from a TIA Portal project.
+    /// Provides utility methods for analyzing and extracting information from a TIA Portal project.
+    /// This class enables traversal and comparison of CPUs, their blocks, HMIs, SCADAs, switches, and other devices linked to the project.
+    /// It is designed to facilitate the retrieval, organization, and comparison of automation project data for documentation, diagnostics, or migration purposes.
     /// </summary>
     public class CompareTIA
     {
+        /// <summary>
+        /// Temporary list of all variators in the project
+        /// </summary>
         public List<MyVariator> oVariators = new List<MyVariator>();
+        /// <summary>
+        /// Temporary list of all InOuts in the project
+        /// </summary>
         public List<MyInOut> oInOuts = new List<MyInOut>();
+        /// <summary>
+        /// Temporary list of all blocks in current CPU
+        /// </summary>
         public List<PlcBlock> oCurrentCpuBloks = new List<PlcBlock>();
-
         /// <summary>
         /// Initializes a new instance of the <see cref="CompareTIA"/> class.
         /// </summary>
         public CompareTIA()
         { }
-
         /// <summary>
-        /// Retrieves information about PLC devices from the given TIA Portal interface and constructs a <see cref="Project"/> object.
+        /// Extracts comprehensive information from a TIA Portal project using the provided openness interface,
+        /// and constructs a <see cref="MyProject"/> object containing key metadata and embedded devices.
         /// </summary>
-        /// <param name="tiaInterface">The TIA Openness interface used to interact with the TIA Portal project.</param>
-        /// <param name="sError">A string for reporting or handling errors during the process.</param>
+        /// <param name="tiaInterface">
+        /// The <see cref="HMATIAOpenness_V16"/> interface representing the TIA Portal project to analyze.
+        /// </param>
+        /// <param name="sError">
+        /// A string used to collect error messages encountered during extraction and analysis of project components.
+        /// </param>
         /// <returns>
-        /// A <see cref="Project"/> instance containing information about the project and its PLC devices.
+        /// A <see cref="MyProject"/> instance populated with project metadata (name, path, creation date, version, size, language)
+        /// and detailed lists of PLCs, variators, InOuts, HMIs, SCADA systems, and switches found in the project.
         /// </returns>
         /// <remarks>
-        /// This method collects project metadata, language, version, and analyzes each device. 
-        /// It extracts main module properties, executes various analyses, and fills the project structure with detailed device data.
+        /// This method gathers general project attributes and iteratively analyzes each device within the TIA project,
+        /// invoking dedicated methods for variators, I/O modules, PLCs, HMIs, SCADA, and switches. Errors encountered
+        /// during any extraction phase are aggregated in <paramref name="sError"/> for reporting or debugging purposes.
         /// </remarks>
         public MyProject GetTiaProjectContains(HMATIAOpenness_V16 tiaInterface, string sError)
         {
@@ -61,7 +74,7 @@ namespace ReceptionDeProjet
             //Variator
             try
             {
-              GetVariatorList(tiaInterface);
+                GetVariatorList(tiaInterface);
             }
             catch (Exception ex)
             {
@@ -70,7 +83,7 @@ namespace ReceptionDeProjet
             //InOut
             try
             {
-               GetInOutsList(tiaInterface);
+                GetInOutsList(tiaInterface);
             }
             catch (Exception ex)
             {
@@ -127,7 +140,17 @@ namespace ReceptionDeProjet
 
             return resultProject;
         }
-
+        /// <summary>
+        /// Scans the TIA Portal project for SINAMICS variators, extracts their key attributes, and adds them to the collection of variators.
+        /// </summary>
+        /// <param name="tiaInterface">
+        /// The <see cref="HMATIAOpenness_V16"/> interface representing the TIA Portal project to analyze.
+        /// </param>
+        /// <remarks>
+        /// This method iterates through all device groups and devices in the project to identify devices of type SINAMICS. For each matching device,
+        /// it inspects device items to extract variator details such as name, reference, type, and PROFINET network settings (IP address, VLAN, and master controller).
+        /// Found variators are added to the <c>oVariators</c> collection. Only devices with a valid PROFINET interface and associated master are included.
+        /// </remarks>
         public void GetVariatorList(HMATIAOpenness_V16 tiaInterface)
         {
             foreach (DeviceGroup deviceGroup in tiaInterface.m_oTiaProject.DeviceGroups)
@@ -181,7 +204,18 @@ namespace ReceptionDeProjet
                 }
             }
         }
-
+        /// <summary>
+        /// Scans the TIA Portal project for I/O modules (excluding SINAMICS devices), extracts their key attributes, and adds them to the collection of InOut modules.
+        /// </summary>
+        /// <param name="tiaInterface">
+        /// The <see cref="HMATIAOpenness_V16"/> interface representing the TIA Portal project to analyze.
+        /// </param>
+        /// <remarks>
+        /// This method iterates through all device groups and devices in the project, filtering out SINAMICS devices. 
+        /// For each I/O module identified (matching "IM " in the type name), it extracts details such as name, reference, range, and network configuration (IP address, VLAN, and master controller). 
+        /// It also analyzes the I/O submodules to count the number of digital and analog inputs/outputs. 
+        /// Found I/O modules are added to the <c>oInOuts</c> collection if all required attributes are available.
+        /// </remarks>
         public void GetInOutsList(HMATIAOpenness_V16 tiaInterface)
         {
             foreach (DeviceGroup deviceGroup in tiaInterface.m_oTiaProject.DeviceGroups)
@@ -285,7 +319,24 @@ namespace ReceptionDeProjet
                 }
             }
         }
-
+        /// <summary>
+        /// Extracts detailed information about a PLC device from the provided <see cref="Device"/> instance and constructs a <see cref="MyAutomate"/> object.
+        /// </summary>
+        /// <param name="device">
+        /// The <see cref="Device"/> within the TIA Portal project to be analyzed as a PLC.
+        /// </param>
+        /// <param name="projet">
+        /// The parent <see cref="MyProject"/> object used for context and additional associations.
+        /// </param>
+        /// <returns>
+        /// A <see cref="MyAutomate"/> instance containing detailed information about the PLC, or <c>null</c> if the device is not valid or the main module is not found.
+        /// </returns>
+        /// <remarks>
+        /// This method first checks if the device contains multiple items and identifies the main module. If valid, it initializes a new <see cref="MyAutomate"/> object,
+        /// then proceeds to gather PLC block data, analyze OB blocks, calculate statistics, check for PID controllers, and retrieve network interface information.
+        /// It also attempts to associate slave variators and I/O modules. Errors encountered during each extraction phase are logged to the console,
+        /// but do not interrupt the overall process, ensuring partial results can still be returned.
+        /// </remarks>
         public MyAutomate GetAutomateContains(Device device, MyProject projet)
         {
             if (device.DeviceItems.Count <= 1)
@@ -341,7 +392,7 @@ namespace ReceptionDeProjet
                 try
                 {
                     InterfaceNetwork(mainModule, automate, projet);
-                    if(automate.sInterfaceX2 == null)
+                    if (automate.sInterfaceX2 == null)
                     {
                         GetCpModule(automate, device, projet);
                     }
@@ -395,16 +446,19 @@ namespace ReceptionDeProjet
             }
             return null;
         }
-
         /// <summary>
-        /// Creates and populates an <see cref="Automate"/> object from the specified main module.
+        /// Creates and populates a <see cref="MyAutomate"/> object with detailed attributes extracted from the specified PLC main module.
         /// </summary>
-        /// <param name="mainModule">The main module from which to extract properties.</param>
+        /// <param name="mainModule">
+        /// The <see cref="DeviceItem"/> representing the main module of the PLC from which information will be extracted.
+        /// </param>
         /// <returns>
-        /// An instance of <see cref="Automate"/> filled with properties and configuration details from the main module.
+        /// A <see cref="MyAutomate"/> instance filled with key hardware and configuration details (such as name, type, reference, firmware, watchdog, web server, restart behavior, memory, timezone, access control, MMC status, display access, and online connectivity).
+        /// If the PLC type is not within the authorized list, its range is marked as "Out of range".
         /// </returns>
         /// <remarks>
-        /// This method extracts and organizes hardware, firmware, configuration, and sub-item information for the automate.
+        /// This method attempts to retrieve a wide range of attributes from the main PLC module and its device items, including core metadata, memory and web server settings, security and access control, MMC diagnostics, display write access, and online access status.
+        /// Robust error handling is employed: if an attribute is unavailable, a default message is set instead. Only PLC types “S7-1200”, “S7-1500”, and “ET 200SP” are considered authorized; others are flagged accordingly.
         /// </remarks>
         private MyAutomate CreateAutomateFromModule(DeviceItem mainModule)
         {
@@ -540,7 +594,6 @@ namespace ReceptionDeProjet
 
             return automate;
         }
-
         /// <summary>
         /// Determines the product range (series) of the specified main module.
         /// </summary>
@@ -555,7 +608,6 @@ namespace ReceptionDeProjet
             sGamme = parent.GetAttribute("TypeName").ToString();
             return sGamme;
         }
-
         /// <summary>
         /// Tests the online accessibility of the given main module.
         /// </summary>
@@ -580,25 +632,33 @@ namespace ReceptionDeProjet
                 onlineProvider.GoOffline();
                 return "True";
             }
-            catch (Exception e)
+            catch
             {
                 OnlineProvider onlineProvider = mainModule.GetService<OnlineProvider>();
                 onlineProvider.GoOffline();
                 return "False";
             }
         }
-
+        /// <summary>
+        /// Retrieves all blocks from the specified PLC main module and updates the current CPU blocks collection.
+        /// </summary>
+        /// <param name="mainModule">
+        /// The <see cref="DeviceItem"/> representing the main module of the PLC from which to retrieve all blocks.
+        /// </param>
+        /// <remarks>
+        /// This method clears the current CPU blocks collection and replaces it with the blocks obtained from the provided main module,
+        /// by invoking <c>GetAllBlocksFromCPU</c>. It is primarily used to refresh the internal list of blocks associated with the active PLC.
+        /// </remarks>
         private void GetAllBlocksFromPlc(DeviceItem mainModule)
         {
             oCurrentCpuBloks.Clear();
             oCurrentCpuBloks = GetAllBlocksFromCPU(mainModule);
         }
-
         /// <summary>
         /// Analyzes OB and FC blocks from the specified main module, and populates the automate with the related information.
         /// </summary>
         /// <param name="mainModule">The <see cref="DeviceItem"/> representing the CPU/main module.</param>
-        /// <param name="automate">The <see cref="Automate"/> object to be populated with block analysis results.</param>
+        /// <param name="automate">The <see cref="MyAutomate"/> object to be populated with block analysis results.</param>
         /// <remarks>
         /// This method analyzes all Function (FC) and Organization Block (OB) objects, extracts their cross-references, 
         /// and builds up the internal structure of the automate including nested and referenced blocks.
@@ -748,14 +808,17 @@ namespace ReceptionDeProjet
                 }
             }
         }
-
-
         /// <summary>
-        /// Calculates statistics for LTU and OB blocks in the specified automate.
+        /// Calculates and updates PLC statistics for the specified <see cref="MyAutomate"/> instance based on its OB (Organization Block) data.
         /// </summary>
-        /// <param name="automate">The <see cref="Automate"/> object containing OBs and block data.</param>
+        /// <param name="automate">
+        /// The <see cref="MyAutomate"/> object whose OB statistics will be computed and updated.
+        /// </param>
         /// <remarks>
-        /// The method calculates the percentage of LTU blocks, and the percentage of blocks in OB1 and OB35 relative to the total.
+        /// This method iterates through all OBs associated with the PLC to accumulate the total number of LTUs and blocks, 
+        /// as well as to identify the number of blocks in OB1 and OB35. It then calculates the percentage of LTUs, OB1 blocks, 
+        /// and OB35 blocks relative to the total block count. The computed values are assigned to the corresponding properties 
+        /// of the <paramref name="automate"/> object. If there are no blocks, all statistics are set to zero.
         /// </remarks>
         private void CalculStatPLC(MyAutomate automate)
         {
@@ -783,13 +846,22 @@ namespace ReceptionDeProjet
                 automate.iBlocOb35 = (iTotalBlocOB35 * 100) / iNbBloc;
             }
         }
-
         /// <summary>
-        /// Recursively appends information about a block and its sub-blocks to the specified <see cref="StringBuilder"/>.
+        /// Appends formatted information about a block and its hierarchy to the specified <see cref="StringBuilder"/>.
         /// </summary>
-        /// <param name="sb">The <see cref="StringBuilder"/> receiving output.</param>
-        /// <param name="myBloc">The <see cref="MyBloc"/> to display.</param>
-        /// <param name="niveau">The current recursion depth for indentation.</param>
+        /// <param name="sb">
+        /// The <see cref="StringBuilder"/> instance to which the block information will be appended.
+        /// </param>
+        /// <param name="myBloc">
+        /// The <see cref="MyBloc"/> object representing the block whose information and hierarchy are to be rendered.
+        /// </param>
+        /// <param name="niveau">
+        /// The current indentation level, used to visually represent block hierarchy in the output.
+        /// </param>
+        /// <remarks>
+        /// This method formats and appends the type and name of the provided block, using indentation to indicate hierarchy. 
+        /// If the block is an <see cref="MyFC"/> (function block) with internal sub-blocks, the method recursively appends each sub-block's information, increasing the indentation level for each recursion.
+        /// </remarks>
         private void AppendBlocInfo(StringBuilder sb, MyBloc myBloc, int niveau)
         {
             string indentation = new string('\t', niveau);
@@ -805,14 +877,22 @@ namespace ReceptionDeProjet
                 }
             }
         }
-
         /// <summary>
-        /// Retrieves all <see cref="PlcBlock"/> objects from the specified CPU device item, including those in subfolders.
+        /// Retrieves all PLC blocks from the specified CPU device item, including blocks from user-defined groups.
         /// </summary>
-        /// <param name="cpuDeviceItem">The <see cref="DeviceItem"/> representing the CPU.</param>
+        /// <param name="cpuDeviceItem">
+        /// The <see cref="DeviceItem"/> representing the CPU from which to extract all PLC blocks.
+        /// </param>
         /// <returns>
-        /// A list of all <see cref="PlcBlock"/> objects found in the device and its group hierarchy.
+        /// A list of <see cref="PlcBlock"/> objects containing all blocks found in the CPU and its user groups.
         /// </returns>
+        /// <exception cref="Exception">
+        /// Thrown if the <see cref="PlcSoftware"/> cannot be retrieved from the specified device item.
+        /// </exception>
+        /// <remarks>
+        /// This method obtains the <see cref="PlcSoftware"/> associated with the CPU, collects all direct blocks,
+        /// and recursively gathers blocks from all user-defined block groups using <c>GatherBlocksFromGroup</c>.
+        /// </remarks>
         public List<PlcBlock> GetAllBlocksFromCPU(DeviceItem cpuDeviceItem)
         {
             var allBlocks = new List<PlcBlock>();
@@ -829,7 +909,6 @@ namespace ReceptionDeProjet
 
             return allBlocks;
         }
-
         /// <summary>
         /// Recursively gathers all <see cref="PlcBlock"/> objects from the specified group and its subgroups.
         /// </summary>
@@ -847,7 +926,6 @@ namespace ReceptionDeProjet
                 GatherBlocksFromGroup(subGroup, allBlocks);
             }
         }
-
         /// <summary>
         /// Calculates the percentage of LTU blocks in the specified <see cref="MyOB"/> block list.
         /// </summary>
@@ -879,11 +957,17 @@ namespace ReceptionDeProjet
             if (totalBlocs == 0) return 0.0;
             else return (double)ltuCount / totalBlocs * 100.0;
         }
-
         /// <summary>
-        /// Checks for the presence of PID blocks in OB1 and updates the automate accordingly.
+        /// Searches for a PID block within OB1 among the OBs of the specified <see cref="MyAutomate"/> instance and updates its PID information.
         /// </summary>
-        /// <param name="automate">The <see cref="Automate"/> object to update.</param>
+        /// <param name="automate">
+        /// The <see cref="MyAutomate"/> object whose OB1 block list will be searched for a PID block.
+        /// </param>
+        /// <remarks>
+        /// This method iterates through the OBs of the provided <paramref name="automate"/> to locate OB1 (identified by <c>iID == 1</c>).
+        /// It then examines each block in OB1 for a name containing "PID". If found, the name is assigned to <c>sOB1PID</c>; otherwise,
+        /// <c>sOB1PID</c> is set to "No PID block found".
+        /// </remarks>
         private void PIDOB1(MyAutomate automate)
         {
             automate.sOB1PID = "No PID block found";
@@ -902,24 +986,25 @@ namespace ReceptionDeProjet
                 }
             }
         }
-
         /// <summary>
-        /// Checks each block for know-how protection and updates the automate's protected block list.
+        /// Extracts and sets the network interface information (PROFINET) for the specified PLC, populating its IP, VLAN, and NTP server attributes.
+        /// Also updates the associated project's network connection list with found interfaces.
         /// </summary>
-        /// <param name="mainModule">The <see cref="DeviceItem"/> representing the main module.</param>
-        /// <param name="automate">The <see cref="Automate"/> object to update.</param>
-        private void BlockProtection(DeviceItem mainModule, MyAutomate automate)
-        {
-            
-        }
-
-        /// <summary>
-        /// Extracts network interface and VLAN/subnet information from the main module and updates the automate accordingly.
-        /// </summary>
-        /// <param name="mainModule">The <see cref="DeviceItem"/> representing the main module.</param>
-        /// <param name="automate">The <see cref="Automate"/> object to update with network interface details.</param>
+        /// <param name="mainModule">
+        /// The <see cref="DeviceItem"/> representing the main PLC module whose network interfaces are to be analyzed.
+        /// </param>
+        /// <param name="automate">
+        /// The <see cref="MyAutomate"/> instance to receive interface, VLAN, and NTP server information.
+        /// </param>
+        /// <param name="projet">
+        /// The <see cref="MyProject"/> instance whose connections list (<c>oConnexions</c>) will be updated with the discovered connections and devices.
+        /// </param>
         /// <remarks>
-        /// This method processes PROFINET interfaces, retrieves NTP server settings, VLAN, and connected device details for both X1 and X2 interfaces when available.
+        /// This method inspects all device items for PROFINET interfaces (X1 and X2), extracting their IP addresses and VLANs (subnets).
+        /// For X1, it attempts to read the NTP configuration (up to three servers) and handles various error and disabled states with clear messages.
+        /// It ensures that the <paramref name="projet"/>'s connection list is properly updated, creating new connections if needed,
+        /// or adding the device to existing ones based on VLAN or IP range heuristics (e.g., "Reseau_Usine").
+        /// All attributes are set with appropriate fallback values if not found.
         /// </remarks>
         private void InterfaceNetwork(DeviceItem mainModule, MyAutomate automate, MyProject projet)
         {
@@ -1050,7 +1135,16 @@ namespace ReceptionDeProjet
                 }
             }
         }
-
+        /// <summary>
+        /// Associates all slave variators with the specified <see cref="MyAutomate"/> instance, based on master name matching.
+        /// </summary>
+        /// <param name="automate">
+        /// The <see cref="MyAutomate"/> object to which slave variators will be added if their <c>sMasterName</c> matches the automate's name.
+        /// </param>
+        /// <remarks>
+        /// This method iterates through the global <c>oVariators</c> collection, and for each variator whose <c>sMasterName</c> matches the automate's name,
+        /// adds it to the automate using <c>AddVariator</c>. If no matching variators are found, no changes are made.
+        /// </remarks>
         private void GetSlaveVariator(MyAutomate automate)
         {
             if (oVariators.Find(oVariators => oVariators.sMasterName == automate.sName) != null)
@@ -1064,7 +1158,16 @@ namespace ReceptionDeProjet
                 }
             }
         }
-
+        /// <summary>
+        /// Associates all slave I/O modules with the specified <see cref="MyAutomate"/> instance, based on master name matching.
+        /// </summary>
+        /// <param name="automate">
+        /// The <see cref="MyAutomate"/> object to which slave I/O modules will be added if their <c>sMasterName</c> matches the automate's name.
+        /// </param>
+        /// <remarks>
+        /// This method iterates through the global <c>oInOuts</c> collection, and for each I/O module whose <c>sMasterName</c> matches the automate's name,
+        /// adds it to the automate using <c>AddInOut</c>. If no matching I/O modules are found, no changes are made.
+        /// </remarks>
         private void GetSlaveInOut(MyAutomate automate)
         {
             if (oInOuts.Find(oInOuts => oInOuts.sMasterName == automate.sName) != null)
@@ -1078,7 +1181,24 @@ namespace ReceptionDeProjet
                 }
             }
         }
-
+        /// <summary>
+        /// Extracts and sets secondary network interface (X2) information for the specified PLC, using CP (Communication Processor) modules found in the parent device.
+        /// Also updates the associated project's network connection list with the discovered connection.
+        /// </summary>
+        /// <param name="automate">
+        /// The <see cref="MyAutomate"/> instance to receive interface X2 and VLAN X2 information.
+        /// </param>
+        /// <param name="parentDevice">
+        /// The parent <see cref="Device"/> containing device items, from which CP modules will be searched.
+        /// </param>
+        /// <param name="project">
+        /// The <see cref="MyProject"/> instance whose connections list (<c>oConnexions</c>) will be updated with the discovered connection and device.
+        /// </param>
+        /// <remarks>
+        /// This method iterates through device items of the parent device to find CP modules. For each CP module, it checks child items for a label containing "X1",
+        /// retrieves network interface details, and updates the automate's X2 interface address and VLAN. It ensures the project’s connection list is updated accordingly,
+        /// matching on VLAN name or IP patterns for factory networks ("10.127." or "172.29."). In case of missing VLAN or errors, fallback values are set and iteration continues.
+        /// </remarks>
         private void GetCpModule(MyAutomate automate, Device parentDevice, MyProject project)
         {
             foreach (var item in parentDevice.DeviceItems)
@@ -1142,8 +1262,23 @@ namespace ReceptionDeProjet
                     }
                 }
             }
-            
+
         }
+        /// <summary>
+        /// Extracts all HMI devices from the TIA project and adds them to the specified <see cref="MyProject"/> instance, including network interface and VLAN details.
+        /// </summary>
+        /// <param name="tiaInterface">
+        /// The <see cref="HMATIAOpenness_V16"/> instance representing the TIA project interface containing devices.
+        /// </param>
+        /// <param name="project">
+        /// The <see cref="MyProject"/> instance to which detected HMI devices and their network information will be added.
+        /// </param>
+        /// <remarks>
+        /// This method searches all devices in the TIA project for those whose name contains "HMI". For each matching device item with a valid <c>TypeIdentifier</c>,
+        /// it creates a <see cref="MyHmi"/> object and extracts its name, reference, and firmware version. The method then searches for network interfaces labeled "X1" and "X2",
+        /// populates the HMI's interface addresses and VLANs, and updates the project's connection list accordingly. Fallback values are provided if VLANs are not found.
+        /// Robust error handling ensures the process continues even if some attributes are missing or exceptions are thrown.
+        /// </remarks>
         public void GetHmiProject(HMATIAOpenness_V16 tiaInterface, MyProject project)
         {
             foreach (var device in tiaInterface.m_oTiaProject.Devices)
@@ -1278,6 +1413,22 @@ namespace ReceptionDeProjet
                 }
             }
         }
+        /// <summary>
+        /// Extracts all SCADA devices from the TIA project and adds them to the specified <see cref="MyProject"/> instance, including network interface and VLAN details.
+        /// </summary>
+        /// <param name="tiaInterface">
+        /// The <see cref="HMATIAOpenness_V16"/> instance representing the TIA project interface containing devices.
+        /// </param>
+        /// <param name="project">
+        /// The <see cref="MyProject"/> instance to which detected SCADA devices and their network information will be added.
+        /// </param>
+        /// <remarks>
+        /// This method searches all devices in the TIA project for those whose type name contains "SIMATIC PC". For each matching device item with a
+        /// <c>TypeIdentifier</c> containing "6AV", it creates a <see cref="MyScada"/> object and extracts its name, reference, and firmware version.
+        /// The method then searches for network interfaces labeled "X1", populates the SCADA's interface address and VLAN, and updates the project's
+        /// connection list accordingly. Fallback values are provided if VLANs are not found. Robust error handling ensures the process continues
+        /// even if some attributes are missing or exceptions are thrown.
+        /// </remarks>
         public void GetScadaProject(HMATIAOpenness_V16 tiaInterface, MyProject project)
         {
             foreach (var device in tiaInterface.m_oTiaProject.Devices)
@@ -1369,6 +1520,20 @@ namespace ReceptionDeProjet
                 }
             }
         }
+        /// <summary>
+        /// Extracts all SCALANCE switch devices from the TIA project and adds them to the specified <see cref="MyProject"/> instance, including network interface and VLAN details.
+        /// </summary>
+        /// <param name="tiaInterface">
+        /// The <see cref="HMATIAOpenness_V16"/> instance representing the TIA project interface containing device groups.
+        /// </param>
+        /// <param name="project">
+        /// The <see cref="MyProject"/> instance to which detected switch devices and their network information will be added.
+        /// </param>
+        /// <remarks>
+        /// This method searches all device groups and devices in the TIA project for those whose type name contains "SCALANCE". For each matching device item with a valid
+        /// <c>OrderNumber</c>, it creates a <see cref="MySwitch"/> object and extracts its name, reference, product range, and firmware version. The method then searches for child device items whose type name contains "interface",
+        /// populates the switch's interface address and VLAN, and updates the project's connection list accordingly. Fallbacks and error handling ensure the process continues even if some attributes are missing.
+        /// </remarks>
         public void GetSwitchProject(HMATIAOpenness_V16 tiaInterface, MyProject project)
         {
             foreach (DeviceGroup deviceGroup in tiaInterface.m_oTiaProject.DeviceGroups)
@@ -1440,7 +1605,7 @@ namespace ReceptionDeProjet
         }
     }
     /// <summary>
-    /// Represents a project containing PLCs, HMIs, SCADAs, and related project information.
+    /// Represents a project containing PLCs, HMIs, SCADAs, switches, network connections, and related project information.
     /// </summary>
     public class MyProject
     {
@@ -1448,26 +1613,32 @@ namespace ReceptionDeProjet
         /// Gets or sets the project name.
         /// </summary>
         public string sName { get; set; }
+
         /// <summary>
         /// Gets or sets the project file path.
         /// </summary>
         public string sProjectPath { get; set; }
+
         /// <summary>
         /// Gets or sets the version of the project.
         /// </summary>
         public string sVersion { get; set; }
+
         /// <summary>
         /// Gets or sets the creation date of the project.
         /// </summary>
         public string sDateCreation { get; set; }
+
         /// <summary>
         /// Gets or sets the reference language of the project.
         /// </summary>
         public string sLanguage { get; set; }
+
         /// <summary>
         /// Gets or sets the project file size.
         /// </summary>
         public string sSize { get; set; }
+
         /// <summary>
         /// Gets or sets whether simulation is enabled during block compilation.
         /// </summary>
@@ -1477,21 +1648,29 @@ namespace ReceptionDeProjet
         /// Gets the list of PLC automates in the project.
         /// </summary>
         public List<MyAutomate> oAutomates;
+
         /// <summary>
         /// Gets the list of HMIs in the project.
         /// </summary>
         public List<MyHmi> oHMIs;
+
         /// <summary>
         /// Gets the list of SCADAs in the project.
         /// </summary>
         public List<MyScada> oSCADAs;
 
+        /// <summary>
+        /// Gets the list of switches in the project.
+        /// </summary>
         public List<MySwitch> oSwitchs;
 
+        /// <summary>
+        /// Gets the list of network connections in the project.
+        /// </summary>
         public List<MyConnexion> oConnexions;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Project"/> class.
+        /// Initializes a new instance of the <see cref="MyProject"/> class.
         /// </summary>
         public MyProject()
         {
@@ -1505,7 +1684,7 @@ namespace ReceptionDeProjet
         /// <summary>
         /// Adds a PLC automate to the project.
         /// </summary>
-        /// <param name="automate">The <see cref="Automate"/> to add.</param>
+        /// <param name="automate">The <see cref="MyAutomate"/> to add.</param>
         public void AddAutomate(MyAutomate automate)
         {
             oAutomates.Add(automate);
@@ -1514,7 +1693,7 @@ namespace ReceptionDeProjet
         /// <summary>
         /// Adds an HMI to the project.
         /// </summary>
-        /// <param name="hmi">The <see cref="HMI"/> to add.</param>
+        /// <param name="hmi">The <see cref="MyHmi"/> to add.</param>
         public void AddHMI(MyHmi hmi)
         {
             oHMIs.Add(hmi);
@@ -1523,24 +1702,32 @@ namespace ReceptionDeProjet
         /// <summary>
         /// Adds a SCADA to the project.
         /// </summary>
-        /// <param name="scada">The <see cref="SCADA"/> to add.</param>
+        /// <param name="scada">The <see cref="MyScada"/> to add.</param>
         public void AddSCADA(MyScada scada)
         {
             oSCADAs.Add(scada);
         }
 
+        /// <summary>
+        /// Adds a switch to the project.
+        /// </summary>
+        /// <param name="switchItem">The <see cref="MySwitch"/> to add.</param>
         public void AddSwitch(MySwitch switchItem)
         {
             oSwitchs.Add(switchItem);
         }
+
+        /// <summary>
+        /// Adds a network connection to the project.
+        /// </summary>
+        /// <param name="connexion">The <see cref="MyConnexion"/> to add.</param>
         public void AddConnexion(MyConnexion connexion)
         {
             oConnexions.Add(connexion);
         }
     }
-
     /// <summary>
-    /// Represents a network or endpoint connection.
+    /// Represents a network or endpoint connection, including its name and the list of connected devices.
     /// </summary>
     public class MyConnexion
     {
@@ -1548,21 +1735,31 @@ namespace ReceptionDeProjet
         /// Gets or sets the connection name.
         /// </summary>
         public string sName { get; set; }
+
+        /// <summary>
+        /// Gets the list of device names connected to this connection.
+        /// </summary>
         public List<string> oConnectedDevices;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MyConnexion"/> class.
+        /// </summary>
         public MyConnexion()
         {
             oConnectedDevices = new List<string>();
         }
 
+        /// <summary>
+        /// Adds a device name to the list of connected devices.
+        /// </summary>
+        /// <param name="deviceName">The name of the device to add.</param>
         public void AddConnectedDevice(string deviceName)
         {
             oConnectedDevices.Add(deviceName);
         }
-
     }
-
     /// <summary>
-    /// Represents a PLC automate with identification, network, and statistical properties.
+    /// Represents a PLC automate with identification, network, configuration, and statistical properties.
     /// </summary>
     public class MyAutomate
     {
@@ -1571,14 +1768,17 @@ namespace ReceptionDeProjet
         /// Gets or sets the automate name.
         /// </summary>
         public string sName { get; set; }
+
         /// <summary>
         /// Gets or sets the product range.
         /// </summary>
         public string sGamme { get; set; }
+
         /// <summary>
         /// Gets or sets the hardware reference.
         /// </summary>
         public string sReference { get; set; }
+
         /// <summary>
         /// Gets or sets the firmware version.
         /// </summary>
@@ -1590,18 +1790,22 @@ namespace ReceptionDeProjet
         /// Gets or sets the first NTP server address.
         /// </summary>
         public string sNtpServer1 { get; set; }
+
         /// <summary>
         /// Gets or sets the second NTP server address.
         /// </summary>
         public string sNtpServer2 { get; set; }
+
         /// <summary>
         /// Gets or sets the third NTP server address.
         /// </summary>
         public string sNtpServer3 { get; set; }
+
         /// <summary>
         /// Gets or sets the local time zone.
         /// </summary>
         public string sLocalHour { get; set; }
+
         /// <summary>
         /// Gets or sets the daylight saving time change indicator.
         /// </summary>
@@ -1613,22 +1817,27 @@ namespace ReceptionDeProjet
         /// Gets or sets the X1 interface address.
         /// </summary>
         public string sInterfaceX1 { get; set; }
+
         /// <summary>
         /// Gets or sets the VLAN associated with X1.
         /// </summary>
         public string sVlanX1 { get; set; }
+
         /// <summary>
         /// Gets or sets the name of the device connected to X1.
         /// </summary>
         public string sConnectedDeviceX1 { get; set; }
+
         /// <summary>
         /// Gets or sets the X2 interface address.
         /// </summary>
         public string sInterfaceX2 { get; set; }
+
         /// <summary>
         /// Gets or sets the name of the device connected to X2.
         /// </summary>
         public string sConnectedDeviceX2 { get; set; }
+
         /// <summary>
         /// Gets or sets the VLAN associated with X2.
         /// </summary>
@@ -1640,18 +1849,22 @@ namespace ReceptionDeProjet
         /// Gets or sets the MMC card lifetime threshold.
         /// </summary>
         public string sMMCLife { get; set; }
+
         /// <summary>
         /// Gets or sets the watchdog setting.
         /// </summary>
         public string sWatchDog { get; set; }
+
         /// <summary>
         /// Gets or sets the startup action after power on.
         /// </summary>
         public string sRestart { get; set; }
+
         /// <summary>
         /// Gets or sets the system memory byte (M0).
         /// </summary>
         public string sCadenceM0 { get; set; }
+
         /// <summary>
         /// Gets or sets the clock memory byte (M1).
         /// </summary>
@@ -1663,26 +1876,32 @@ namespace ReceptionDeProjet
         /// Gets or sets the program protection information.
         /// </summary>
         public string sProgramProtection { get; set; }
+
         /// <summary>
         /// Gets or sets the web server activation state.
         /// </summary>
         public string sWebServer { get; set; }
+
         /// <summary>
         /// Gets or sets the PLC access control configuration.
         /// </summary>
         public string sControlAccess { get; set; }
+
         /// <summary>
         /// Gets or sets the HMI communication API state.
         /// </summary>
         public string sApiHmiCom { get; set; }
+
         /// <summary>
         /// Gets or sets the online access state.
         /// </summary>
         public string sOnlineAccess { get; set; }
+
         /// <summary>
         /// Gets or sets the screen write access state.
         /// </summary>
         public string sScreenWrite { get; set; }
+
         /// <summary>
         /// Gets or sets the instant variable status.
         /// </summary>
@@ -1694,14 +1913,17 @@ namespace ReceptionDeProjet
         /// Gets or sets the standard LTU percentage.
         /// </summary>
         public int iStandardLTU { get; set; }
+
         /// <summary>
         /// Gets or sets the name of the PID block found in OB1, if any.
         /// </summary>
         public string sOB1PID { get; set; }
+
         /// <summary>
         /// Gets or sets the percentage of blocks in OB1.
         /// </summary>
         public int iBlocOb1 { get; set; }
+
         /// <summary>
         /// Gets or sets the percentage of blocks in OB35.
         /// </summary>
@@ -1710,8 +1932,19 @@ namespace ReceptionDeProjet
 
         #region Tags
 
+        /// <summary>
+        /// Gets the list of input tags.
+        /// </summary>
         public List<MyTag> oTagsIn { get; set; }
+
+        /// <summary>
+        /// Gets the list of output tags.
+        /// </summary>
         public List<MyTag> oTagsOut { get; set; }
+
+        /// <summary>
+        /// Gets the list of memory tags.
+        /// </summary>
         public List<MyTag> oTagsMem { get; set; }
 
         #endregion
@@ -1720,20 +1953,29 @@ namespace ReceptionDeProjet
         /// Gets the list of OBs for this automate.
         /// </summary>
         public List<MyOB> oOBs;
+
         /// <summary>
         /// Gets the list of FCs for this automate.
         /// </summary>
         public List<MyFC> oFCs;
+
         /// <summary>
         /// Gets the list of protected block names.
         /// </summary>
         public List<string> ProtectedBlocs;
 
+        /// <summary>
+        /// Gets the list of variators associated with this automate.
+        /// </summary>
         public List<MyVariator> oVariators { get; set; }
+
+        /// <summary>
+        /// Gets the list of input/output modules associated with this automate.
+        /// </summary>
         public List<MyInOut> oInOuts { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Automate"/> class.
+        /// Initializes a new instance of the <see cref="MyAutomate"/> class.
         /// </summary>
         public MyAutomate()
         {
@@ -1774,29 +2016,51 @@ namespace ReceptionDeProjet
             ProtectedBlocs.Add(blocName);
         }
 
+        /// <summary>
+        /// Adds an input tag to the automate.
+        /// </summary>
+        /// <param name="tag">The tag to add.</param>
         public void AddTagIn(MyTag tag)
         {
             oTagsIn.Add(tag);
         }
 
+        /// <summary>
+        /// Adds an output tag to the automate.
+        /// </summary>
+        /// <param name="tag">The tag to add.</param>
         public void AddTagOut(MyTag tag)
         {
             oTagsOut.Add(tag);
         }
+
+        /// <summary>
+        /// Adds a memory tag to the automate.
+        /// </summary>
+        /// <param name="tag">The tag to add.</param>
         public void AddTagMem(MyTag tag)
         {
             oTagsMem.Add(tag);
         }
+
+        /// <summary>
+        /// Adds a variator to the automate.
+        /// </summary>
+        /// <param name="variator">The variator to add.</param>
         public void AddVariator(MyVariator variator)
         {
             oVariators.Add(variator);
         }
+
+        /// <summary>
+        /// Adds an input/output module to the automate.
+        /// </summary>
+        /// <param name="inout">The input/output module to add.</param>
         public void AddInOut(MyInOut inout)
         {
             oInOuts.Add(inout);
         }
     }
-
     /// <summary>
     /// Represents a generic PLC block (base class).
     /// </summary>
@@ -1815,7 +2079,6 @@ namespace ReceptionDeProjet
         /// </summary>
         public int iNetwork { get; set; }
     }
-
     /// <summary>
     /// Represents an Organization Block (OB), inheriting from <see cref="MyBloc"/>.
     /// </summary>
@@ -1863,7 +2126,6 @@ namespace ReceptionDeProjet
             oBlocList.Add(bloc);
         }
     }
-
     /// <summary>
     /// Represents a Function block (FC) inheriting from <see cref="MyBloc"/>.
     /// </summary>
@@ -1903,32 +2165,33 @@ namespace ReceptionDeProjet
             oInternalBlocs.Add(bloc);
         }
     }
-
     /// <summary>
-    /// Represents a Data Block (DB) that inherits from <see cref="MyOB"/>.
+    /// Represents a tag (variable) used in a PLC program, including its name, type, address, and an optional comment.
     /// </summary>
-    public class MyDB : MyOB
-    {
-        /// <summary>
-        /// Gets or sets the last instance name.
-        /// </summary>
-        public string sLastInst { get; set; }
-        /// <summary>
-        /// Gets or sets the first instance name.
-        /// </summary>
-        public string sFirstInst { get; set; }
-    }
-
     public class MyTag
     {
+        /// <summary>
+        /// Gets or sets the name of the tag.
+        /// </summary>
         public string sName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the data type of the tag (e.g., BOOL, INT, REAL).
+        /// </summary>
         public string sType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the address of the tag (e.g., "DB1.DBX0.0", "I0.0").
+        /// </summary>
         public string sAddress { get; set; }
+
+        /// <summary>
+        /// Gets or sets the comment or description associated with the tag.
+        /// </summary>
         public string sComment { get; set; }
     }
-
     /// <summary>
-    /// Represents an HMI device.
+    /// Represents an HMI (Human-Machine Interface) device with identification, firmware, and network properties.
     /// </summary>
     public class MyHmi
     {
@@ -1936,82 +2199,225 @@ namespace ReceptionDeProjet
         /// Gets or sets the HMI name.
         /// </summary>
         public string sName { get; set; }
+
         /// <summary>
         /// Gets or sets the hardware reference.
         /// </summary>
         public string sReference { get; set; }
+
+        /// <summary>
+        /// Gets or sets the firmware version.
+        /// </summary>
         public string sFirmware { get; set; }
+
         /// <summary>
         /// Gets or sets the X1 interface address.
         /// </summary>
         public string sInterfaceX1 { get; set; }
+
         /// <summary>
         /// Gets or sets the VLAN associated with X1.
         /// </summary>
         public string sVlanX1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the device connected to X1.
+        /// </summary>
         public string sConnectedDeviceX1 { get; set; }
+
         /// <summary>
         /// Gets or sets the X2 interface address.
         /// </summary>
         public string sInterfaceX2 { get; set; }
+
         /// <summary>
         /// Gets or sets the VLAN associated with X2.
         /// </summary>
         public string sVlanX2 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the device connected to X2.
+        /// </summary>
         public string sConnectedDeviceX2 { get; set; }
     }
-
     /// <summary>
-    /// Represents a SCADA device.
+    /// Represents a SCADA (Supervisory Control and Data Acquisition) device, including identification, firmware, and network properties.
     /// </summary>
     public class MyScada
     {
+        /// <summary>
+        /// Gets or sets the SCADA device name.
+        /// </summary>
         public string sName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the hardware reference.
+        /// </summary>
         public string sReference { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product range or series.
+        /// </summary>
         public string sGamme { get; set; }
+
+        /// <summary>
+        /// Gets or sets the firmware version.
+        /// </summary>
         public string sFirmware { get; set; }
+
+        /// <summary>
+        /// Gets or sets the X1 interface address.
+        /// </summary>
         public string sInterfaceX1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the VLAN associated with X1.
+        /// </summary>
         public string sVlanX1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the device connected to X1.
+        /// </summary>
         public string sConnectedDeviceX1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the X2 interface address.
+        /// </summary>
         public string sInterfaceX2 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the VLAN associated with X2.
+        /// </summary>
         public string sVlanX2 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the device connected to X2.
+        /// </summary>
         public string sConnectedDeviceX2 { get; set; }
-
     }
-
+    /// <summary>
+    /// Represents a variator (variable speed drive) device with identification and network properties.
+    /// </summary>
     public class MyVariator
     {
+        /// <summary>
+        /// Gets or sets the name of the variator.
+        /// </summary>
         public string sName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the hardware reference of the variator.
+        /// </summary>
         public string sReference { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product range or series of the variator.
+        /// </summary>
         public string sGamme { get; set; }
+
+        /// <summary>
+        /// Gets or sets the X1 interface address.
+        /// </summary>
         public string sInterfaceX1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the VLAN associated with X1.
+        /// </summary>
         public string sVlanX1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the master device associated with this variator.
+        /// </summary>
         public string sMasterName { get; set; }
     }
-
+    /// <summary>
+    /// Represents a network switch device with identification, firmware, and network interface properties.
+    /// </summary>
     public class MySwitch
     {
+        /// <summary>
+        /// Gets or sets the switch name.
+        /// </summary>
         public string sName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the hardware reference of the switch.
+        /// </summary>
         public string sReference { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product range or series of the switch.
+        /// </summary>
         public string sGamme { get; set; }
+
+        /// <summary>
+        /// Gets or sets the firmware version of the switch.
+        /// </summary>
         public string sFirmware { get; set; }
+
+        /// <summary>
+        /// Gets or sets the X1 interface address.
+        /// </summary>
         public string sInterfaceX1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the VLAN associated with X1.
+        /// </summary>
         public string sVlanX1 { get; set; }
     }
-
+    /// <summary>
+    /// Represents an input/output (I/O) module, including identification, network, master device, and channel count properties.
+    /// </summary>
     public class MyInOut
     {
+        /// <summary>
+        /// Gets or sets the name of the I/O module.
+        /// </summary>
         public string sName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the hardware reference of the I/O module.
+        /// </summary>
         public string sReference { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product range or series of the I/O module.
+        /// </summary>
         public string sGamme { get; set; }
+
+        /// <summary>
+        /// Gets or sets the X1 interface address.
+        /// </summary>
         public string sInterfaceX1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the VLAN associated with X1.
+        /// </summary>
         public string sVlanX1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the master device associated with this I/O module.
+        /// </summary>
         public string sMasterName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of analog inputs (AI).
+        /// </summary>
         public int iAI { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of analog outputs (AQ).
+        /// </summary>
         public int iAQ { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of digital inputs (DI).
+        /// </summary>
         public int iDI { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of digital outputs (DQ).
+        /// </summary>
         public int iDQ { get; set; }
     }
 }
-
-
