@@ -231,8 +231,9 @@ namespace ReceptionDeProjet
                                 MyInOut inOut = new MyInOut
                                 {
                                     sName = deviceItem.GetAttribute("Name").ToString(),
-                                    sReference = deviceItem.GetAttribute("TypeIdentifier").ToString().Split(':')[1],
-                                    sGamme = deviceItem.GetAttribute("ShortDesignation").ToString()
+                                    sReference = deviceItem.GetAttribute("OrderNumber").ToString(),
+                                    sGamme = deviceItem.GetAttribute("ShortDesignation").ToString(),
+                                    sFirmware = deviceItem.GetAttribute("FirmwareVersion").ToString()
                                 };
 
                                 foreach (var item in deviceItem.DeviceItems)
@@ -427,7 +428,6 @@ namespace ReceptionDeProjet
                 return null;
             }
         }
-
         /// <summary>
         /// Finds and returns the main module (CPU) from a given device.
         /// </summary>
@@ -2384,6 +2384,11 @@ namespace ReceptionDeProjet
         /// Gets or sets the product range or series of the I/O module.
         /// </summary>
         public string sGamme { get; set; }
+
+        /// <summary>
+        /// Gets or sets the firmware version of the I/O module.
+        /// </summary>
+        public string sFirmware { get; set; }
 
         /// <summary>
         /// Gets or sets the X1 interface address.
