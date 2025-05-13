@@ -1,0 +1,261 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>InterfaceMain</name>
+    </assembly>
+    <members>
+        <member name="T:InterfaceMain.LoadReferences">
+            <summary>
+            Provides utility methods for loading and formatting references, such as TIA versions.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.LoadReferences.InitializeApp(System.Collections.Generic.List{System.String})">
+            <summary>
+            Initializes the application by loading available TIA versions into the provided list.
+            </summary>
+            <param name="versions">The list to populate with detected TIA version numbers.</param>
+        </member>
+        <member name="M:InterfaceMain.LoadReferences.LoadVersions(System.Collections.Generic.List{System.String})">
+            <summary>
+            Scans the Siemens Automation root directory for installed TIA Portal versions and adds them to the specified list.
+            </summary>
+            <param name="versions">The list to populate with detected version numbers.</param>
+        </member>
+        <member name="M:InterfaceMain.LoadReferences.ExtractNumber(System.String)">
+            <summary>
+            Extracts the first numeric sequence found in the input string.
+            </summary>
+            <param name="input">The string to search for a number.</param>
+            <returns>The first number found as a string, or an empty string if no number is found.</returns>
+        </member>
+        <member name="M:InterfaceMain.LoadReferences.FormatString(System.String)">
+            <summary>
+            Formats the input string by capitalizing the first letter of each word and concatenating them together.
+            </summary>
+            <param name="input">The input string to format.</param>
+            <returns>The formatted string, or the original string if it is null or whitespace.</returns>
+        </member>
+        <member name="T:InterfaceMain.MainForms">
+            <summary>
+            Represents the main Windows Form of the application.
+            Manages UI components, events, and user/admin session states.
+            </summary>
+        </member>
+        <member name="F:InterfaceMain.MainForms.adminConnected">
+            <summary>
+            Indicates whether an admin user is currently connected.
+            </summary>
+        </member>
+        <member name="F:InterfaceMain.MainForms.returnLogForms">
+            <summary>
+            Provides access to the logging form for recording actions and events.
+            </summary>
+        </member>
+        <member name="F:InterfaceMain.MainForms.userFunctions">
+            <summary>
+            List of available functions for a standard user.
+            </summary>
+        </member>
+        <member name="F:InterfaceMain.MainForms.adminFunctions">
+            <summary>
+            List of available functions for an admin user.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.#ctor">
+            <summary>
+            Initializes a new instance of the MainForms class.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.LoadColor">
+            <summary>
+            Loads and applies the color scheme to UI elements.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.MainForms_Load(System.Object,System.EventArgs)">
+            <summary>
+            Handles the form load event.
+            Initializes references, loads TIA versions, and restores the previous session state.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.MainForms_FormClosed(System.Object,System.Windows.Forms.FormClosedEventArgs)">
+            <summary>
+            Handles the form closed event.
+            Exits the application.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.CbFunction_SelectedIndexChanged(System.Object,System.EventArgs)">
+            <summary>
+            Handles the function selection change event.
+            Loads and displays the selected function's user control.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.CbTIAVersion_SelectedIndexChanged(System.Object,System.EventArgs)">
+            <summary>
+            Handles the TIA version selection change event.
+            Updates the application state and restarts if a different version is selected.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.CbTIAVersion_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the TIA version combo box click event.
+            Resets the function group box and disables the function selection.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.UndeveloppIconButton_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the undevelop menu button click event.
+            Shrinks the menu and adjusts the layout.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.DeveloppIconButton_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the develop menu button click event.
+            Expands the menu and adjusts the layout.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.ShowMenu">
+            <summary>
+            Toggles the visibility of menu components and admin controls.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.IconTerminalButton_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the terminal icon button click event.
+            Displays the logging form.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.LbTitle_MouseDown(System.Object,System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            Handles the mouse down event on the title label for window dragging.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.AgromIcon_MouseDown(System.Object,System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            Handles the mouse down event on the icon for window dragging.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.CloseIconButton_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the close button click event.
+            Closes the application immediately.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.MaximizeIconButton_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the maximize button click event.
+            Maximizes the window and updates UI elements.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.CloseFullIconButton_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the restore button click event.
+            Restores the window to its normal state and updates UI elements.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.MinimizeIconButton_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the minimize button click event.
+            Minimizes the window.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.RescaleForms">
+            <summary>
+            Rescales and repositions the form's controls according to the current window size.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.LoginIconButton_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the login icon button click event.
+            Opens the login form and updates the UI based on authentication result.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.AdminConnected">
+            <summary>
+            Updates the UI and available functions for an admin connection.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.LogoutIconButton_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the logout icon button click event.
+            Logs out the user and resets UI states.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.UpdateCbFunctions">
+            <summary>
+            Updates the items in the function combo box based on the user/admin status.
+            </summary>
+        </member>
+        <member name="F:InterfaceMain.MainForms.components">
+            <summary>
+            Variable nécessaire au concepteur.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.MainForms.Dispose(System.Boolean)">
+            <summary>
+            Nettoyage des ressources utilisées.
+            </summary>
+            <param name="disposing">true si les ressources managées doivent être supprimées ; sinon, false.</param>
+        </member>
+        <member name="M:InterfaceMain.MainForms.InitializeComponent">
+            <summary>
+            Méthode requise pour la prise en charge du concepteur - ne modifiez pas
+            le contenu de cette méthode avec l'éditeur de code.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.Program.Main">
+            <summary>
+            Point d'entrée principal de l'application.
+            </summary>
+        </member>
+        <member name="F:InterfaceMain.ReturnLogForms.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:InterfaceMain.ReturnLogForms.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:InterfaceMain.ReturnLogForms.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:InterfaceMain.Properties.Resources">
+            <summary>
+              Une classe de ressource fortement typée destinée, entre autres, à la consultation des chaînes localisées.
+            </summary>
+        </member>
+        <member name="P:InterfaceMain.Properties.Resources.ResourceManager">
+            <summary>
+              Retourne l'instance ResourceManager mise en cache utilisée par cette classe.
+            </summary>
+        </member>
+        <member name="P:InterfaceMain.Properties.Resources.Culture">
+            <summary>
+              Remplace la propriété CurrentUICulture du thread actuel pour toutes
+              les recherches de ressources à l'aide de cette classe de ressource fortement typée.
+            </summary>
+        </member>
+        <member name="F:InterfaceLoginTest.LoginForms.components">
+            <summary>
+            Variable nécessaire au concepteur.
+            </summary>
+        </member>
+        <member name="M:InterfaceLoginTest.LoginForms.Dispose(System.Boolean)">
+            <summary>
+            Nettoyage des ressources utilisées.
+            </summary>
+            <param name="disposing">true si les ressources managées doivent être supprimées ; sinon, false.</param>
+        </member>
+        <member name="M:InterfaceLoginTest.LoginForms.InitializeComponent">
+            <summary>
+            Méthode requise pour la prise en charge du concepteur - ne modifiez pas
+            le contenu de cette méthode avec l'éditeur de code.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Common</name>
+    </assembly>
+    <members>
+        <member name="T:Common.TIAVersionManager">
+            <summary>
+            Provides utilities for managing the current TIA Portal version and validating Openness DLLs.
+            </summary>
+        </member>
+        <member name="F:Common.TIAVersionManager._currentVersion">
+            <summary>
+            Holds the current selected TIA Portal version.
+            </summary>
+        </member>
+        <member name="E:Common.TIAVersionManager.VersionChanged">
+            <summary>
+            Event triggered when the TIA version changes.
+            The new version string is provided as event data.
+            </summary>
+        </member>
+        <member name="F:Common.TIAVersionManager.OpennessDlls">
+            <summary>
+            List of required Openness DLLs for TIA.
+            </summary>
+        </member>
+        <member name="P:Common.TIAVersionManager.IsFirstSelection">
+            <summary>
+            Indicates if it is the first version selection in the current session.
+            </summary>
+        </member>
+        <member name="P:Common.TIAVersionManager.CurrentVersion">
+            <summary>
+            Gets or sets the current TIA Portal version.
+            Triggers the VersionChanged event if the value changes.
+            </summary>
+        </member>
+        <member name="M:Common.TIAVersionManager.SetVersion(System.String)">
+            <summary>
+            Sets the current TIA Portal version.
+            </summary>
+            <param name="version">The version string to set as current.</param>
+        </member>
+        <member name="M:Common.TIAVersionManager.GetOpennessDllPath(System.String)">
+            <summary>
+            Gets the full path for a requested Openness DLL for the current TIA version.
+            </summary>
+            <param name="assemblyName">The DLL file name to look for.</param>
+            <returns>The full DLL path if available, otherwise null.</returns>
+        </member>
+        <member name="M:Common.TIAVersionManager.AreAllDllsAvailable">
+            <summary>
+            Checks if all required Openness DLLs are available for the current TIA version.
+            </summary>
+            <returns>True if all DLLs are available, otherwise false.</returns>
+        </member>
+        <member name="T:Common.TIAAssemblyLoader">
+            <summary>
+            Provides methods for dynamic assembly loading and control management related to TIA Openness.
+            </summary>
+        </member>
+        <member name="M:Common.TIAAssemblyLoader.ResolveAssembly(System.Object,System.ResolveEventArgs)">
+            <summary>
+            Event handler for resolving TIA Openness assemblies dynamically.
+            </summary>
+            <param name="sender">The event sender (not used).</param>
+            <param name="args">Assembly resolve event arguments.</param>
+            <returns>The loaded assembly if found, otherwise null.</returns>
+        </member>
+        <member name="M:Common.TIAAssemblyLoader.ForceLoadAssemblies">
+            <summary>
+            Forces the loading of all main Openness assemblies for the current TIA version.
+            Logs success or error information to the console.
+            </summary>
+        </member>
+        <member name="M:Common.TIAAssemblyLoader.SetupControl(System.Windows.Forms.Control)">
+            <summary>
+            Configures a control to use dynamic assembly resolving and handles unloading on version change.
+            </summary>
+            <param name="control">The control to configure.</param>
+        </member>
+        <member name="M:Common.TIAAssemblyLoader.UnloadControl(System.Windows.Forms.Control,System.String)">
+            <summary>
+            Unloads and disposes a control when the TIA version changes.
+            </summary>
+            <param name="control">The control to unload.</param>
+            <param name="newVersion">The new TIA version string.</param>
+        </member>
+        <member name="M:Common.TIAAssemblyLoader.UnloadControlImpl(System.Windows.Forms.Control)">
+            <summary>
+            Helper method for removing and disposing a control.
+            </summary>
+            <param name="control">The control to remove and dispose.</param>
+        </member>
+    </members>
+</doc>

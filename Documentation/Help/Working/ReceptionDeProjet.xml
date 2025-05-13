@@ -1,0 +1,765 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ReceptionDeProjet</name>
+    </assembly>
+    <members>
+        <member name="T:ReceptionDeProjet.CompareTIA">
+            <summary>
+            Provides methods for analyzing and comparing PLC devices information from a TIA Portal project.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:ReceptionDeProjet.CompareTIA"/> class.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.GetTiaProjectContains(OpennessV16.HMATIAOpenness_V16,System.String)">
+            <summary>
+            Retrieves information about PLC devices from the given TIA Portal interface and constructs a <see cref="T:Siemens.Engineering.Project"/> object.
+            </summary>
+            <param name="tiaInterface">The TIA Openness interface used to interact with the TIA Portal project.</param>
+            <param name="sError">A string for reporting or handling errors during the process.</param>
+            <returns>
+            A <see cref="T:Siemens.Engineering.Project"/> instance containing information about the project and its PLC devices.
+            </returns>
+            <remarks>
+            This method collects project metadata, language, version, and analyzes each device. 
+            It extracts main module properties, executes various analyses, and fills the project structure with detailed device data.
+            </remarks>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.FindMainModule(Siemens.Engineering.HW.Device)">
+            <summary>
+            Finds and returns the main module (CPU) from a given device.
+            </summary>
+            <param name="device">The device to search for the main module.</param>
+            <returns>
+            The main <see cref="T:Siemens.Engineering.HW.DeviceItem"/> if found; otherwise, <c>null</c>.
+            </returns>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.CreateAutomateFromModule(Siemens.Engineering.HW.DeviceItem)">
+            <summary>
+            Creates and populates an <see cref="!:Automate"/> object from the specified main module.
+            </summary>
+            <param name="mainModule">The main module from which to extract properties.</param>
+            <returns>
+            An instance of <see cref="!:Automate"/> filled with properties and configuration details from the main module.
+            </returns>
+            <remarks>
+            This method extracts and organizes hardware, firmware, configuration, and sub-item information for the automate.
+            </remarks>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.FindGamme(Siemens.Engineering.HW.DeviceItem)">
+            <summary>
+            Determines the product range (series) of the specified main module.
+            </summary>
+            <param name="mainModule">The main <see cref="T:Siemens.Engineering.HW.DeviceItem"/> for which to find the range.</param>
+            <returns>
+            A <see cref="T:System.String"/> representing the range of the device (e.g., "S7-1200", "S7-1500"), or "Non trouvé" if not found.
+            </returns>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.TestOnlineAccess(Siemens.Engineering.HW.DeviceItem)">
+            <summary>
+            Tests the online accessibility of the given main module.
+            </summary>
+            <param name="mainModule">The <see cref="T:Siemens.Engineering.HW.DeviceItem"/> to test online access for.</param>
+            <returns>
+            "True" if the online connection can be established; otherwise, "False".
+            </returns>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.AnalyzeObBlocks(Siemens.Engineering.HW.DeviceItem,ReceptionDeProjet.MyAutomate)">
+            <summary>
+            Analyzes OB and FC blocks from the specified main module, and populates the automate with the related information.
+            </summary>
+            <param name="mainModule">The <see cref="T:Siemens.Engineering.HW.DeviceItem"/> representing the CPU/main module.</param>
+            <param name="automate">The <see cref="!:Automate"/> object to be populated with block analysis results.</param>
+            <remarks>
+            This method analyzes all Function (FC) and Organization Block (OB) objects, extracts their cross-references, 
+            and builds up the internal structure of the automate including nested and referenced blocks.
+            </remarks>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.CalculStatPLC(ReceptionDeProjet.MyAutomate)">
+            <summary>
+            Calculates statistics for LTU and OB blocks in the specified automate.
+            </summary>
+            <param name="automate">The <see cref="!:Automate"/> object containing OBs and block data.</param>
+            <remarks>
+            The method calculates the percentage of LTU blocks, and the percentage of blocks in OB1 and OB35 relative to the total.
+            </remarks>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.AppendBlocInfo(System.Text.StringBuilder,ReceptionDeProjet.MyBloc,System.Int32)">
+            <summary>
+            Recursively appends information about a block and its sub-blocks to the specified <see cref="T:System.Text.StringBuilder"/>.
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> receiving output.</param>
+            <param name="myBloc">The <see cref="T:ReceptionDeProjet.MyBloc"/> to display.</param>
+            <param name="niveau">The current recursion depth for indentation.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.GetAllBlocksFromCPU(Siemens.Engineering.HW.DeviceItem)">
+            <summary>
+            Retrieves all <see cref="T:Siemens.Engineering.SW.Blocks.PlcBlock"/> objects from the specified CPU device item, including those in subfolders.
+            </summary>
+            <param name="cpuDeviceItem">The <see cref="T:Siemens.Engineering.HW.DeviceItem"/> representing the CPU.</param>
+            <returns>
+            A list of all <see cref="T:Siemens.Engineering.SW.Blocks.PlcBlock"/> objects found in the device and its group hierarchy.
+            </returns>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.GatherBlocksFromGroup(Siemens.Engineering.SW.Blocks.PlcBlockUserGroup,System.Collections.Generic.List{Siemens.Engineering.SW.Blocks.PlcBlock})">
+            <summary>
+            Recursively gathers all <see cref="T:Siemens.Engineering.SW.Blocks.PlcBlock"/> objects from the specified group and its subgroups.
+            </summary>
+            <param name="group">The <see cref="T:Siemens.Engineering.SW.Blocks.PlcBlockUserGroup"/> to search.</param>
+            <param name="allBlocks">The list to which found blocks are added.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.CalculerPourcentageDeBlocsLTU(ReceptionDeProjet.MyOB)">
+            <summary>
+            Calculates the percentage of LTU blocks in the specified <see cref="T:ReceptionDeProjet.MyOB"/> block list.
+            </summary>
+            <param name="myOb">The <see cref="T:ReceptionDeProjet.MyOB"/> object for which to calculate the percentage.</param>
+            <returns>
+            A <see cref="T:System.Double"/> representing the LTU block percentage. Returns 0.0 if no blocks are present.
+            </returns>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.PIDOB1(ReceptionDeProjet.MyAutomate)">
+            <summary>
+            Checks for the presence of PID blocks in OB1 and updates the automate accordingly.
+            </summary>
+            <param name="automate">The <see cref="!:Automate"/> object to update.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.BlockProtection(Siemens.Engineering.HW.DeviceItem,ReceptionDeProjet.MyAutomate)">
+            <summary>
+            Checks each block for know-how protection and updates the automate's protected block list.
+            </summary>
+            <param name="mainModule">The <see cref="T:Siemens.Engineering.HW.DeviceItem"/> representing the main module.</param>
+            <param name="automate">The <see cref="!:Automate"/> object to update.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.CompareTIA.InterfaceNetwork(Siemens.Engineering.HW.DeviceItem,ReceptionDeProjet.MyAutomate,ReceptionDeProjet.MyProject)">
+            <summary>
+            Extracts network interface and VLAN/subnet information from the main module and updates the automate accordingly.
+            </summary>
+            <param name="mainModule">The <see cref="T:Siemens.Engineering.HW.DeviceItem"/> representing the main module.</param>
+            <param name="automate">The <see cref="!:Automate"/> object to update with network interface details.</param>
+            <remarks>
+            This method processes PROFINET interfaces, retrieves NTP server settings, VLAN, and connected device details for both X1 and X2 interfaces when available.
+            </remarks>
+        </member>
+        <member name="T:ReceptionDeProjet.MyProject">
+            <summary>
+            Represents a project containing PLCs, HMIs, SCADAs, and related project information.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyProject.sName">
+            <summary>
+            Gets or sets the project name.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyProject.sProjectPath">
+            <summary>
+            Gets or sets the project file path.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyProject.sVersion">
+            <summary>
+            Gets or sets the version of the project.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyProject.sDateCreation">
+            <summary>
+            Gets or sets the creation date of the project.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyProject.sLanguage">
+            <summary>
+            Gets or sets the reference language of the project.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyProject.sSize">
+            <summary>
+            Gets or sets the project file size.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyProject.sSimulation">
+            <summary>
+            Gets or sets whether simulation is enabled during block compilation.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.MyProject.oAutomates">
+            <summary>
+            Gets the list of PLC automates in the project.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.MyProject.oHMIs">
+            <summary>
+            Gets the list of HMIs in the project.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.MyProject.oSCADAs">
+            <summary>
+            Gets the list of SCADAs in the project.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.MyProject.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Siemens.Engineering.Project"/> class.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.MyProject.AddAutomate(ReceptionDeProjet.MyAutomate)">
+            <summary>
+            Adds a PLC automate to the project.
+            </summary>
+            <param name="automate">The <see cref="!:Automate"/> to add.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.MyProject.AddHMI(ReceptionDeProjet.MyHmi)">
+            <summary>
+            Adds an HMI to the project.
+            </summary>
+            <param name="hmi">The <see cref="!:HMI"/> to add.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.MyProject.AddSCADA(ReceptionDeProjet.MyScada)">
+            <summary>
+            Adds a SCADA to the project.
+            </summary>
+            <param name="scada">The <see cref="!:SCADA"/> to add.</param>
+        </member>
+        <member name="T:ReceptionDeProjet.MyConnexion">
+            <summary>
+            Represents a network or endpoint connection.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyConnexion.sName">
+            <summary>
+            Gets or sets the connection name.
+            </summary>
+        </member>
+        <member name="T:ReceptionDeProjet.MyAutomate">
+            <summary>
+            Represents a PLC automate with identification, network, and statistical properties.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sName">
+            <summary>
+            Gets or sets the automate name.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sGamme">
+            <summary>
+            Gets or sets the product range.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sReference">
+            <summary>
+            Gets or sets the hardware reference.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sFirmware">
+            <summary>
+            Gets or sets the firmware version.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sNtpServer1">
+            <summary>
+            Gets or sets the first NTP server address.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sNtpServer2">
+            <summary>
+            Gets or sets the second NTP server address.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sNtpServer3">
+            <summary>
+            Gets or sets the third NTP server address.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sLocalHour">
+            <summary>
+            Gets or sets the local time zone.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sHourChange">
+            <summary>
+            Gets or sets the daylight saving time change indicator.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sInterfaceX1">
+            <summary>
+            Gets or sets the X1 interface address.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sVlanX1">
+            <summary>
+            Gets or sets the VLAN associated with X1.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sConnectedDeviceX1">
+            <summary>
+            Gets or sets the name of the device connected to X1.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sInterfaceX2">
+            <summary>
+            Gets or sets the X2 interface address.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sConnectedDeviceX2">
+            <summary>
+            Gets or sets the name of the device connected to X2.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sVlanX2">
+            <summary>
+            Gets or sets the VLAN associated with X2.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sMMCLife">
+            <summary>
+            Gets or sets the MMC card lifetime threshold.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sWatchDog">
+            <summary>
+            Gets or sets the watchdog setting.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sRestart">
+            <summary>
+            Gets or sets the startup action after power on.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sCadenceM0">
+            <summary>
+            Gets or sets the system memory byte (M0).
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sCadenceM1">
+            <summary>
+            Gets or sets the clock memory byte (M1).
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sProgramProtection">
+            <summary>
+            Gets or sets the program protection information.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sWebServer">
+            <summary>
+            Gets or sets the web server activation state.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sControlAccess">
+            <summary>
+            Gets or sets the PLC access control configuration.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sApiHmiCom">
+            <summary>
+            Gets or sets the HMI communication API state.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sOnlineAccess">
+            <summary>
+            Gets or sets the online access state.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sScreenWrite">
+            <summary>
+            Gets or sets the screen write access state.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sInstantVar">
+            <summary>
+            Gets or sets the instant variable status.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.iStandardLTU">
+            <summary>
+            Gets or sets the standard LTU percentage.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.sOB1PID">
+            <summary>
+            Gets or sets the name of the PID block found in OB1, if any.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.iBlocOb1">
+            <summary>
+            Gets or sets the percentage of blocks in OB1.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyAutomate.iBlocOb35">
+            <summary>
+            Gets or sets the percentage of blocks in OB35.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.MyAutomate.oOBs">
+            <summary>
+            Gets the list of OBs for this automate.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.MyAutomate.oFCs">
+            <summary>
+            Gets the list of FCs for this automate.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.MyAutomate.ProtectedBlocs">
+            <summary>
+            Gets the list of protected block names.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.MyAutomate.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="!:Automate"/> class.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.MyAutomate.AddOb(ReceptionDeProjet.MyOB)">
+            <summary>
+            Adds an <see cref="T:ReceptionDeProjet.MyOB"/> to the automate.
+            </summary>
+            <param name="oOb">The OB to add.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.MyAutomate.AddFc(ReceptionDeProjet.MyFC)">
+            <summary>
+            Adds an <see cref="T:ReceptionDeProjet.MyFC"/> to the automate.
+            </summary>
+            <param name="oFc">The FC to add.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.MyAutomate.AddProtectedBloc(System.String)">
+            <summary>
+            Adds a block name to the protected blocks list.
+            </summary>
+            <param name="blocName">The block name to add.</param>
+        </member>
+        <member name="T:ReceptionDeProjet.MyBloc">
+            <summary>
+            Represents a generic PLC block (base class).
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyBloc.sName">
+            <summary>
+            Gets or sets the block name.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyBloc.sType">
+            <summary>
+            Gets or sets the block type (e.g., OB, FC, FB).
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyBloc.iNetwork">
+            <summary>
+            Gets or sets the network number.
+            </summary>
+        </member>
+        <member name="T:ReceptionDeProjet.MyOB">
+            <summary>
+            Represents an Organization Block (OB), inheriting from <see cref="T:ReceptionDeProjet.MyBloc"/>.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyOB.iID">
+            <summary>
+            Gets or sets the OB ID (number).
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyOB.iNbNetwork">
+            <summary>
+            Gets or sets the number of networks in this OB.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyOB.Ltu100">
+            <summary>
+            Gets or sets the LTU block percentage in this OB.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyOB.iNbLTU">
+            <summary>
+            Gets or sets the number of LTU blocks in this OB.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyOB.iNbBloc">
+            <summary>
+            Gets or sets the number of blocks in this OB.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyOB.oBlocList">
+            <summary>
+            Gets the list of contained blocs (FC/FB/Instruction).
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.MyOB.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:ReceptionDeProjet.MyOB"/> class.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.MyOB.AddBloc(ReceptionDeProjet.MyBloc)">
+            <summary>
+            Adds a block to the OB's block list.
+            </summary>
+            <param name="bloc">The block to add.</param>
+        </member>
+        <member name="T:ReceptionDeProjet.MyFC">
+            <summary>
+            Represents a Function block (FC) inheriting from <see cref="T:ReceptionDeProjet.MyBloc"/>.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyFC.iID">
+            <summary>
+            Gets or sets the FC ID (number).
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyFC.iNbLTU">
+            <summary>
+            Gets or sets the number of LTU blocks in this FC.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyFC.iNbBloc">
+            <summary>
+            Gets or sets the number of blocks in this FC.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyFC.oInternalBlocs">
+            <summary>
+            Gets the list of internal blocs (FCs, FBs, etc.) used inside this FC.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.MyFC.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:ReceptionDeProjet.MyFC"/> class.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.MyFC.AddBloc(ReceptionDeProjet.MyBloc)">
+            <summary>
+            Adds a block to the FC's internal block list.
+            </summary>
+            <param name="bloc">The block to add.</param>
+        </member>
+        <member name="T:ReceptionDeProjet.MyDB">
+            <summary>
+            Represents a Data Block (DB) that inherits from <see cref="T:ReceptionDeProjet.MyOB"/>.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyDB.sLastInst">
+            <summary>
+            Gets or sets the last instance name.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyDB.sFirstInst">
+            <summary>
+            Gets or sets the first instance name.
+            </summary>
+        </member>
+        <member name="T:ReceptionDeProjet.MyHmi">
+            <summary>
+            Represents an HMI device.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyHmi.sName">
+            <summary>
+            Gets or sets the HMI name.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyHmi.sReference">
+            <summary>
+            Gets or sets the hardware reference.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyHmi.sInterfaceX1">
+            <summary>
+            Gets or sets the X1 interface address.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyHmi.sVlanX1">
+            <summary>
+            Gets or sets the VLAN associated with X1.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyHmi.sInterfaceX2">
+            <summary>
+            Gets or sets the X2 interface address.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.MyHmi.sVlanX2">
+            <summary>
+            Gets or sets the VLAN associated with X2.
+            </summary>
+        </member>
+        <member name="T:ReceptionDeProjet.MyScada">
+            <summary>
+            Represents a SCADA device.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.Form1.components">
+            <summary>
+            Variable nécessaire au concepteur.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.Form1.Dispose(System.Boolean)">
+            <summary>
+            Nettoyage des ressources utilisées.
+            </summary>
+            <param name="disposing">true si les ressources managées doivent être supprimées ; sinon, false.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.Form1.InitializeComponent">
+            <summary>
+            Méthode requise pour la prise en charge du concepteur - ne modifiez pas
+            le contenu de cette méthode avec l'éditeur de code.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.Program.Main">
+            <summary>
+            Point d'entrée principal de l'application.
+            </summary>
+        </member>
+        <member name="T:ReceptionDeProjet.ReceptionDeProjet">
+            <summary>
+            UserControl for the "Project Reception" function in AgroFlow.
+            <para>
+            This module allows users to:
+            <list type="bullet">
+              <item>Load and analyze a TIA Portal project.</item>
+              <item>Verify compliance and retrieve detailed information (project info, PLCs, settings, etc.).</item>
+              <item>Export all relevant configuration and hardware data into a standardized Excel file for traceability and documentation.</item>
+            </list>
+            Typical workflow:
+            <list type="number">
+              <item>Select a CDC Excel file (project requirements/specs).</item>
+              <item>Select the TIA Portal project to analyze.</item>
+              <item>Run the verification step, which collects and displays project information and device details.</item>
+              <item>Export the gathered data back into the provided Excel file for archiving or transfer.</item>
+            </list>
+            This feature ensures project conformity to standards (Agro Mousquetaires, LTU library, etc.) and provides automatic documentation of PLC hardware and configuration.
+            </para>
+            <remarks>
+            Key components:
+            <list type="bullet">
+              <item><see cref="T:AideAuDiagnostic.TiaExplorer.ExploreTiaPLC"/>: Handles TIA Portal project exploration and selection.</item>
+              <item><see cref="T:ReceptionDeProjet.CompareTIA"/>: Compares and extracts device information from the selected project.</item>
+              <item><see cref="T:GlobalsOPCUA.PLC_ProjectDefinitions"/>: Holds configuration and mapping definitions for the PLC project.</item>
+            </list>
+            </remarks>
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.ReceptionDeProjet.sCdcFilePath">
+            <summary>
+            Path to the loaded CDC Excel file.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.ReceptionDeProjet.oExploreTiaPLC">
+            <summary>
+            Interface for exploring the TIA Portal project.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.ReceptionDeProjet.oCompareTiaPLC">
+            <summary>
+            Interface for comparing the TIA project and retrieving device information.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.ReceptionDeProjet.oPLC_ProjectDefinitions">
+            <summary>
+            Global configuration and mapping settings for the PLC project.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.ReceptionDeProjet.dData">
+            <summary>
+            Data storage dictionary for internal processing.
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.ReceptionDeProjet.lsDataCollection">
+            <summary>
+            List of instructions to be generated for the FC (function code).
+            </summary>
+        </member>
+        <member name="F:ReceptionDeProjet.ReceptionDeProjet.oTiaProject">
+            <summary>
+            Stores the loaded TIA Project information.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:ReceptionDeProjet.ReceptionDeProjet"/> UserControl.
+            Sets up assembly loading and initializes project exploration and comparison interfaces.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.InitExcel">
+            <summary>
+            Handles the "Load CDC" button click event.
+            Allows the user to select a CDC Excel file and stores its path.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.BpSelectProject_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the "Select Project" button click event.
+            Prompts the user to select a TIA Portal project and updates the info panel.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.GetTiaProject(System.String@)">
+            <summary>
+            Selects a TIA Portal project via the <see cref="T:AideAuDiagnostic.TiaExplorer.ExploreTiaPLC"/> interface.
+            </summary>
+            <param name="sProjectName">Returns the selected project name if successful.</param>
+            <returns>True if a project is selected, otherwise false.</returns>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.BpVerification_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the "Verification" button click event.
+            Retrieves project and PLC device information, updates the info panel, and exports data to Excel.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.ExportDataToExcel">
+            <summary>
+            Exports project and PLC device data to the loaded CDC Excel file.
+            Writes project info and device details into the appropriate worksheets.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.ResetPlcTitleExcel(ClosedXML.Excel.XLWorkbook,System.Int32)">
+            <summary>
+            Resets the column titles for the PLC worksheet in the provided Excel workbook.
+            </summary>
+            <param name="wb">The Excel workbook.</param>
+            <param name="sheet">The sheet index for the PLC worksheet.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.BpDownloadFile_Click(System.Object,System.EventArgs)">
+            <summary>
+            Handles the "Download" button click event.
+            Copy the result Excel file to a user-defined location.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.UpdateInfo(System.String)">
+            <summary>
+            Adds an informational message to the information RichTextBox and scrolls to the latest message.
+            </summary>
+            <param name="sMessage">The message to display. Use "-" for a section separator.</param>
+        </member>
+        <member name="F:ReceptionDeProjet.ReceptionDeProjet.components">
+            <summary> 
+            Variable nécessaire au concepteur.
+            </summary>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.Dispose(System.Boolean)">
+            <summary> 
+            Nettoyage des ressources utilisées.
+            </summary>
+            <param name="disposing">true si les ressources managées doivent être supprimées ; sinon, false.</param>
+        </member>
+        <member name="M:ReceptionDeProjet.ReceptionDeProjet.InitializeComponent">
+            <summary> 
+            Méthode requise pour la prise en charge du concepteur - ne modifiez pas 
+            le contenu de cette méthode avec l'éditeur de code.
+            </summary>
+        </member>
+        <member name="T:ReceptionDeProjet.Properties.Resources">
+            <summary>
+              Une classe de ressource fortement typée destinée, entre autres, à la consultation des chaînes localisées.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.Properties.Resources.ResourceManager">
+            <summary>
+              Retourne l'instance ResourceManager mise en cache utilisée par cette classe.
+            </summary>
+        </member>
+        <member name="P:ReceptionDeProjet.Properties.Resources.Culture">
+            <summary>
+              Remplace la propriété CurrentUICulture du thread actuel pour toutes
+              les recherches de ressources à l'aide de cette classe de ressource fortement typée.
+            </summary>
+        </member>
+    </members>
+</doc>

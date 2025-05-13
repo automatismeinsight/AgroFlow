@@ -240,7 +240,9 @@ namespace ReceptionDeProjet
                     range = ws.RangeUsed();
 
                     var wsv = wb.Worksheet("VARIATEUR");
+                    var wsi = wb.Worksheet("IN_OUT");
                     int currentRowV = 2;
+                    int currentRowI = 2;
 
                     for (int i = 2; i <= range.LastRowUsed().RowNumber(); i++)
                     {
@@ -281,7 +283,7 @@ namespace ReceptionDeProjet
                         ws.Cell(currentRow, 30).Value = plc.iBlocOb1;
                         ws.Cell(currentRow, 31).Value = plc.iBlocOb35;
                         
-                        if (plc.oVariators != null) 
+                        if (plc.oVariators.Count > 0) 
                         {
                             foreach (MyVariator variator in plc.oVariators)
                             {
@@ -295,7 +297,24 @@ namespace ReceptionDeProjet
                                 currentRowV++;
                             }
                         }
-                        
+                        if (plc.oInOuts.Count > 0)
+                        {
+                            foreach (MyInOut inout in plc.oInOuts)
+                            {
+                                wsi.Cell(currentRowI, 1).Value = inout.sName;
+                                wsi.Cell(currentRowI, 2).Value = inout.sReference;
+                                wsi.Cell(currentRowI, 3).Value = inout.sGamme;
+                                wsi.Cell(currentRowI, 4).Value = inout.sInterfaceX1;
+                                wsi.Cell(currentRowI, 5).Value = inout.sVlanX1;
+                                wsi.Cell(currentRowI, 6).Value = inout.sMasterName;
+                                wsi.Cell(currentRowI, 7).Value = inout.iDI;
+                                wsi.Cell(currentRowI, 8).Value = inout.iDQ;
+                                wsi.Cell(currentRowI, 9).Value = inout.iAI;
+                                wsi.Cell(currentRowI, 10).Value = inout.iAQ;
+                                currentRowI++;
+                            }
+                        }
+
                         currentRow++;
                     }
 
