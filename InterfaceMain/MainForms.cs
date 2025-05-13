@@ -53,7 +53,7 @@ namespace InterfaceMain
             WebClient webClient = new WebClient();
             var client = new WebClient();
 
-            if (!webClient.DownloadString("https://raw.githubusercontent.com/SamBzd/AgroFlow/refs/heads/master/Update.txt").Contains("1.3.0"))
+            if (!webClient.DownloadString("https://raw.githubusercontent.com/SamBzd/AgroFlow/refs/heads/master/Update.txt").Contains("1.3.1"))
             {
                 if(File.Exists(@".\Help.zip"))
                 {

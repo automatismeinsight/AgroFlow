@@ -74,7 +74,7 @@ namespace ReceptionDeProjet
         /// <summary>
         /// Stores the loaded TIA Project information.
         /// </summary>
-        Project oTiaProject = new Project();
+        MyProject oTiaProject = new MyProject();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ReceptionDeProjet"/> UserControl.
@@ -170,7 +170,12 @@ namespace ReceptionDeProjet
             UpdateInfo("Début de la vérification...");
             txBInformations.Refresh();
 
-            oTiaProject = oCompareTiaPLC.GetPlcDevicesInfo(oExploreTiaPLC.oTiainterface, sError);
+            oTiaProject = oCompareTiaPLC.GetTiaProjectContains(oExploreTiaPLC.oTiainterface, sError);
+
+            if(sError != null)
+            {
+                UpdateInfo($"Erreur lors de la récupération du projet : {sError}");
+            }
 
             UpdateInfo("-");
             // Display project information
@@ -189,39 +194,14 @@ namespace ReceptionDeProjet
             UpdateInfo($"Simulation : {oTiaProject.sSimulation}");
             UpdateInfo($"Nombre d'automates : {oTiaProject.oAutomates.Count}");
             UpdateInfo("-");
-            UpdateInfo("Device trouvé : ");
-            foreach (Automate plc in oTiaProject.oAutomates)
+            UpdateInfo("Devices trouvé : ");
+            foreach (MyAutomate plc in oTiaProject.oAutomates)
             {
                 UpdateInfo("");
-                UpdateInfo($"Name: {plc.sName}");
+                UpdateInfo($"Nom: {plc.sName}");
                 UpdateInfo($"Gamme: {plc.sGamme}");
-                UpdateInfo($"Reference: {plc.sReference}");
-                UpdateInfo($"Firmware: {plc.sFirmware}");
-                UpdateInfo($"NtpServer1: {plc.sNtpServer1}");
-                UpdateInfo($"NtpServer2: {plc.sNtpServer2}");
-                UpdateInfo($"NtpServer3: {plc.sNtpServer3}");
-                UpdateInfo($"LocalHour: {plc.sLocalHour}");
-                UpdateInfo($"HourChange: {plc.sHourChange}");
-                UpdateInfo($"InterfaceX1: {plc.sInterfaceX1}");
-                UpdateInfo($"VlanX1: {plc.sVlanX1}");
-                UpdateInfo($"InterfaceX2: {plc.sInterfaceX2}");
-                UpdateInfo($"VlanX2: {plc.sVlanX2}");
-                UpdateInfo($"MMCLife: {plc.sMMCLife}");
-                UpdateInfo($"WatchDog: {plc.sWatchDog}");
-                UpdateInfo($"Restart: {plc.sRestart}");
-                UpdateInfo($"CadenceM0: {plc.sCadenceM0}");
-                UpdateInfo($"CadenceM1: {plc.sCadenceM1}");
-                UpdateInfo($"ProgramProtection: {plc.sProgramProtection}");
-                UpdateInfo($"WebServer: {plc.sWebServer}");
-                UpdateInfo($"ControlAccess: {plc.sControlAccess}");
-                UpdateInfo($"ApiHmiCom: {plc.sApiHmiCom}");
-                UpdateInfo($"OnlineAccess: {plc.sOnlineAccess}");
-                UpdateInfo($"ScreenWrite: {plc.sScreenWrite}");
-                UpdateInfo($"InstantVar: {plc.sInstantVar}");
-                UpdateInfo($"StandardLTU: {plc.iStandardLTU}");
-                UpdateInfo($"OB1PID: {plc.sOB1PID}");
-                UpdateInfo($"BlocOb1: {plc.iBlocOb1}");
-                UpdateInfo($"BlocOb35: {plc.iBlocOb35}");
+                UpdateInfo($"IP 1: {plc.sInterfaceX1}");
+                UpdateInfo($"IP 2: {plc.sInterfaceX2}");
             }
             UpdateInfo("-");
             // Export DATA To Excel
@@ -251,18 +231,23 @@ namespace ReceptionDeProjet
                     ws.Cell(2, 6).Value = oTiaProject.sSize;
                     ws.Cell(2, 7).Value = oTiaProject.sSimulation;
                     ws.Cell(2, 8).Value = oTiaProject.oAutomates.Count;
+                    ws.Cell(2, 9).Value = oTiaProject.oHMIs.Count;
+                    ws.Cell(2, 10).Value = oTiaProject.oSCADAs.Count;
 
                     // PLC Info
                     int currentRow = 2;
                     ws = wb.Worksheet("PLC");
                     range = ws.RangeUsed();
 
+                    var wsv = wb.Worksheet("VARIATEUR");
+                    int currentRowV = 2;
+
                     for (int i = 2; i <= range.LastRowUsed().RowNumber(); i++)
                     {
                         ws.Row(i).Clear();
                     }
 
-                    foreach (Automate plc in oTiaProject.oAutomates)
+                    foreach (MyAutomate plc in oTiaProject.oAutomates)
                     {
                         ws.Cell(currentRow, 1).Value = plc.sName;
                         ws.Cell(currentRow, 2).Value = plc.sGamme;
@@ -295,8 +280,89 @@ namespace ReceptionDeProjet
                         ws.Cell(currentRow, 29).Value = plc.sOB1PID;
                         ws.Cell(currentRow, 30).Value = plc.iBlocOb1;
                         ws.Cell(currentRow, 31).Value = plc.iBlocOb35;
+                        
+                        if (plc.oVariators != null) 
+                        {
+                            foreach (MyVariator variator in plc.oVariators)
+                            {
+                                wsv.Cell(currentRowV, 1).Value = variator.sName;
+                                wsv.Cell(currentRowV, 2).Value = variator.sReference;
+                                wsv.Cell(currentRowV, 3).Value = variator.sGamme;
+                                wsv.Cell(currentRowV, 4).Value = variator.sInterfaceX1;
+                                wsv.Cell(currentRowV, 5).Value = variator.sVlanX1;
+                                wsv.Cell(currentRowV, 6).Value = variator.sMasterName;
+
+                                currentRowV++;
+                            }
+                        }
+                        
                         currentRow++;
                     }
+
+                    ws = wb.Worksheet("SWITCH");
+                    currentRow = 2;
+
+                    foreach (MySwitch swi in oTiaProject.oSwitchs)
+                    {
+                        ws.Cell(currentRow, 1).Value = swi.sName;
+                        ws.Cell(currentRow, 2).Value = swi.sGamme;
+                        ws.Cell(currentRow, 3).Value = swi.sReference;
+                        ws.Cell(currentRow, 4).Value = swi.sFirmware;
+                        ws.Cell(currentRow, 5).Value = swi.sInterfaceX1;
+                        ws.Cell(currentRow, 6).Value = swi.sVlanX1;
+                        currentRow++;
+                    }
+
+                    ws = wb.Worksheet("IHM_SCADA");
+                    currentRow = 2;
+
+                    foreach(MyHmi hmi in oTiaProject.oHMIs)
+                    {
+                        ws.Cell(currentRow, 1).Value = "Hmi";
+                        ws.Cell(currentRow, 2).Value = hmi.sName;
+                        ws.Cell(currentRow, 3).Value = hmi.sReference;
+                        ws.Cell(currentRow, 4).Value = hmi.sFirmware;
+                        ws.Cell(currentRow, 5).Value = hmi.sInterfaceX1;
+                        ws.Cell(currentRow, 6).Value = hmi.sVlanX1;
+                        ws.Cell(currentRow, 7).Value = hmi.sConnectedDeviceX1;
+                        ws.Cell(currentRow, 8).Value = hmi.sInterfaceX2;
+                        ws.Cell(currentRow, 9).Value = hmi.sVlanX2;
+                        ws.Cell(currentRow, 10).Value = hmi.sConnectedDeviceX2;
+                        currentRow++;
+                    }
+
+                    foreach(MyScada scada in oTiaProject.oSCADAs)
+                    {
+                        ws.Cell(currentRow, 1).Value = "Scada";
+                        ws.Cell(currentRow, 2).Value = scada.sName;
+                        ws.Cell(currentRow, 3).Value = scada.sReference;
+                        ws.Cell(currentRow, 4).Value = scada.sFirmware;
+                        ws.Cell(currentRow, 5).Value = scada.sInterfaceX1;
+                        ws.Cell(currentRow, 6).Value = scada.sVlanX1;
+                        ws.Cell(currentRow, 7).Value = scada.sConnectedDeviceX1;
+                        ws.Cell(currentRow, 8).Value = scada.sInterfaceX2;
+                        ws.Cell(currentRow, 9).Value = scada.sVlanX2;
+                        ws.Cell(currentRow, 10).Value = scada.sConnectedDeviceX2;
+                        currentRow++;
+                    }
+
+                    ws = wb.Worksheet("VLAN");
+                    currentRow = 2;
+                    int j = 0;
+
+                    foreach (MyConnexion connexion in oTiaProject.oConnexions)
+                    {
+                        j = 2;
+                        ws.Cell(currentRow, 1).Value = connexion.sName;
+                        foreach(string sDevice in connexion.oConnectedDevices)
+                        {
+                            ws.Cell(currentRow, j).Value = sDevice;
+                            j++;
+                        }
+
+                        currentRow++;
+                    }
+
                     wb.Save();
                 }
                 UpdateInfo("Exportation des données vers Excel terminée");

@@ -18,6 +18,8 @@ namespace ReceptionDeProjet
     /// </summary>
     public class CompareTIA
     {
+        public List<MyVariator> oVariators = new List<MyVariator>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CompareTIA"/> class.
         /// </summary>
@@ -36,9 +38,9 @@ namespace ReceptionDeProjet
         /// This method collects project metadata, language, version, and analyzes each device. 
         /// It extracts main module properties, executes various analyses, and fills the project structure with detailed device data.
         /// </remarks>
-        public Project GetPlcDevicesInfo(HMATIAOpenness_V16 tiaInterface, string sError)
+        public MyProject GetTiaProjectContains(HMATIAOpenness_V16 tiaInterface, string sError)
         {
-            var resultProject = new Project
+            var resultProject = new MyProject
             {
                 sName = tiaInterface.m_oTiaProject.Name,
                 sProjectPath = tiaInterface.m_oTiaProject.Path.ToString(),
@@ -48,99 +50,420 @@ namespace ReceptionDeProjet
             };
 
             resultProject.sVersion = resultProject.sProjectPath.Split('p').Last();
-
             Language oLangueProjet = tiaInterface.m_oTiaProject.LanguageSettings.GetAttribute("ReferenceLanguage") as Language;
             resultProject.sLanguage = oLangueProjet.GetAttribute("Culture").ToString().Split('-')[0];
 
+            //Variator
+            try
+            {
+                GetVariatorList(tiaInterface);
+            }
+            catch (Exception ex)
+            {
+                sError += ($"Erreur récupération d'information Variateur : {ex.Message}\n");
+            }
+            //PLC
             try
             {
                 foreach (var device in tiaInterface.m_oTiaProject.Devices)
                 {
-                    if (device.DeviceItems.Count <= 1)
+                    var resultAutomate = GetAutomateContains(device, resultProject);
+                    if (resultAutomate != null)
                     {
-                        Console.WriteLine("Empty device detected");
+                        resultProject.AddAutomate(resultAutomate);
+                    }
+                    else
+                    {
                         continue;
-                    }
-
-                    var mainModule = FindMainModule(device);
-                    if (mainModule == null)
-                    {
-                        Console.WriteLine("Main module not found");
-                        continue;
-                    }
-                    try
-                    {
-                        var automate = CreateAutomateFromModule(mainModule);
-
-                        try
-                        {
-                            AnalyzeObBlocks(mainModule, automate);
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Error analyzing OB blocks; Automate: " + automate.sName);
-                        }
-
-                        try
-                        {
-                            CalculStatPLC(automate);
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Error calculating PLC statistics; Automate: " + automate.sName);
-                        }
-
-                        try
-                        {
-                            PIDOB1(automate);
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Error checking PID in OB1; Automate: " + automate.sName);
-                        }
-
-                        try
-                        {
-                            BlockProtection(mainModule, automate);
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Error during block protection; Automate: " + automate.sName);
-                        }
-
-                        try
-                        {
-                            InterfaceNetwork(mainModule, automate);
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Error retrieving network interface; Automate: " + automate.sName);
-                        }
-
-                        try
-                        {
-                            DebugObBlocks(automate);
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Error during debug display; Automate: " + automate.sName);
-                        }
-
-                        resultProject.AddAutomate(automate);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error accessing security properties: {ex.Message} {device.Name}");
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error retrieving PLC information: {ex.Message}");
+                sError = ($"Erreur récupération d'information PLC : {ex.Message}\n");
+            }
+            //IHM
+            try
+            {
+                foreach (var device in tiaInterface.m_oTiaProject.Devices)
+                {
+                    if (device.GetAttribute("Name").ToString().Contains("HMI"))
+                    {
+                        foreach(var deviceItem in device.DeviceItems)
+                        {
+                            try
+                            {
+                                if (deviceItem.GetAttribute("TypeIdentifier").ToString().Count() > 1)
+                                {
+                                    MyHmi ihm = new MyHmi
+                                    {
+                                        sName = deviceItem.GetAttribute("Name").ToString(),
+                                    };
+                                    string sTemp = deviceItem.GetAttribute("TypeIdentifier").ToString().Split(':') [1];
+                                    ihm.sReference = sTemp.Split('/')[0].Trim();
+                                    ihm.sFirmware = sTemp.Split('/')[1].Trim();
+                                    resultProject.AddHMI(ihm);
+
+                                    //Interface Réseau
+                                    foreach (var deviceItem2 in device.DeviceItems)
+                                    {
+                                        foreach(var deviceItem3 in deviceItem2.DeviceItems)
+                                        {
+                                            try
+                                            {
+                                                if (deviceItem3.GetAttribute("Label").ToString().Equals("X1"))
+                                                {
+                                                    var networkInterface = deviceItem3.GetService<NetworkInterface>();
+
+                                                    foreach(var node in networkInterface.Nodes)
+                                                    {
+                                                        ihm.sInterfaceX1 = node.GetAttribute("Address").ToString();
+                                                        Subnet subnet = node.GetAttribute("ConnectedSubnet") as Subnet;
+                                                        if (subnet != null)
+                                                        {
+                                                            ihm.sVlanX1 = subnet.GetAttribute("Name").ToString();
+
+                                                            string sNameConnectedDevice = ihm.sName + "/X1";
+
+                                                            MyConnexion connexion = resultProject.oConnexions.Find(oConnexion => oConnexion.sName == ihm.sVlanX1);
+                                                            MyConnexion connexion2 = resultProject.oConnexions.Find(oConnexion => oConnexion.sName == "Reseau_Usine");
+                                                            if (connexion != null)
+                                                            {
+                                                                connexion.AddConnectedDevice(sNameConnectedDevice);
+                                                            }
+                                                            else if((ihm.sInterfaceX1.Contains("10.127.") || ihm.sInterfaceX1.Contains("172.29."))  && connexion2 != null)
+                                                            {
+                                                                connexion2.AddConnectedDevice(sNameConnectedDevice);
+                                                            }
+                                                            else
+                                                            {
+                                                                string connexionName = ihm.sVlanX1;
+                                                                if (ihm.sInterfaceX1.Contains("10.127.") || ihm.sInterfaceX1.Contains("172.29."))
+                                                                {
+                                                                    connexionName = "Reseau_Usine";
+                                                                }
+                                                                resultProject.AddConnexion(new MyConnexion
+                                                                {
+                                                                    sName = connexionName,
+                                                                    oConnectedDevices = new List<string> { sNameConnectedDevice }
+                                                                });
+
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            ihm.sVlanX1 = "Pas de VLAN";
+                                                        }
+                                                    }
+                                                }
+                                                else if (deviceItem3.GetAttribute("Label").ToString().Equals("X2"))
+                                                {
+                                                    var networkInterface = deviceItem3.GetService<NetworkInterface>();
+
+                                                    foreach (var node in networkInterface.Nodes)
+                                                    {
+                                                        ihm.sInterfaceX2 = node.GetAttribute("Address").ToString();
+                                                        Subnet subnet = node.GetAttribute("ConnectedSubnet") as Subnet;
+                                                        if (subnet != null)
+                                                        {
+                                                            ihm.sVlanX2 = subnet.GetAttribute("Name").ToString();
+
+                                                            string sNameConnectedDevice = ihm.sName + "/X2";
+
+                                                            MyConnexion connexion = resultProject.oConnexions.Find(oConnexion => oConnexion.sName == ihm.sVlanX2);
+                                                            MyConnexion connexion2 = resultProject.oConnexions.Find(oConnexion => oConnexion.sName == "Reseau_Usine");
+                                                            if (connexion != null)
+                                                            {
+                                                                connexion.AddConnectedDevice(sNameConnectedDevice);
+                                                            }
+                                                            else if ((ihm.sInterfaceX2.Contains("10.127.") || ihm.sInterfaceX2.Contains("172.29.")) && connexion2 != null)
+                                                            {
+                                                                connexion2.AddConnectedDevice(sNameConnectedDevice);
+                                                            }
+                                                            else
+                                                            {
+                                                                string connexionName = ihm.sVlanX2;
+                                                                if (ihm.sInterfaceX2.Contains("10.127.") || ihm.sInterfaceX2.Contains("172.29."))
+                                                                {
+                                                                    connexionName = "Reseau_Usine";
+                                                                }
+                                                                resultProject.AddConnexion(new MyConnexion
+                                                                {
+                                                                    sName = connexionName,
+                                                                    oConnectedDevices = new List<string> { sNameConnectedDevice }
+                                                                });
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            ihm.sVlanX2 = "Pas de VLAN";
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            catch
+                                            {
+                                                continue;
+                                            }
+                                        }
+                                    } 
+                                }
+                            }
+                            catch
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                sError += ($"Erreur récupération d'information IHM : {ex.Message}\n");
+            }
+            //SCADA
+            try
+            {
+                foreach (var device in tiaInterface.m_oTiaProject.Devices)
+                {
+                    if (device.GetAttribute("TypeName").ToString().Contains("SIMATIC PC"))
+                    {
+                        foreach (var deviceItem in device.DeviceItems)
+                        {
+                            try
+                            {
+                                if (deviceItem.GetAttribute("TypeIdentifier").ToString().Contains("6AV"))
+                                {
+                                    MyScada scada = new MyScada
+                                    {
+                                        sName = deviceItem.GetAttribute("Name").ToString(),
+                                    };
+                                    string sTemp = deviceItem.GetAttribute("TypeIdentifier").ToString().Split(':')[1];
+                                    scada.sReference = sTemp.Split('/')[0].Trim();
+                                    scada.sFirmware = sTemp.Split('/')[1].Trim();
+                                    resultProject.AddSCADA(scada);
+
+                                    foreach (var deviceItem2 in device.DeviceItems)
+                                    {
+                                        foreach (var deviceItem3 in deviceItem2.DeviceItems)
+                                        {
+                                            try
+                                            {
+                                                if (deviceItem3.GetAttribute("Label").ToString().Equals("X1"))
+                                                {
+                                                    var networkInterface = deviceItem3.GetService<NetworkInterface>();
+
+                                                    foreach (var node in networkInterface.Nodes)
+                                                    {
+                                                        scada.sInterfaceX1 = node.GetAttribute("Address").ToString();
+                                                        Subnet subnet = node.GetAttribute("ConnectedSubnet") as Subnet;
+                                                        if (subnet != null)
+                                                        {
+                                                            scada.sVlanX1 = subnet.GetAttribute("Name").ToString();
+
+                                                            string sNameConnectedDevice = scada.sName + "/X1";
+
+                                                            MyConnexion connexion = resultProject.oConnexions.Find(oConnexion => oConnexion.sName == scada.sVlanX1);
+                                                            MyConnexion connexion2 = resultProject.oConnexions.Find(oConnexion => oConnexion.sName == "Reseau_Usine");
+                                                            if (connexion != null)
+                                                            {
+
+                                                                connexion.AddConnectedDevice(sNameConnectedDevice);
+                                                            }
+                                                            else if ((scada.sInterfaceX1.Contains("10.127.") || scada.sInterfaceX1.Contains("172.29.")) && connexion2 != null)
+                                                            {
+                                                                connexion2.AddConnectedDevice(sNameConnectedDevice);
+                                                            }
+                                                            else
+                                                            {
+                                                                string connexionName = scada.sVlanX1;
+                                                                if (scada.sInterfaceX1.Contains("10.127.") || scada.sInterfaceX1.Contains("172.29."))
+                                                                {
+                                                                    connexionName = "Reseau_Usine";
+                                                                }
+                                                                resultProject.AddConnexion(new MyConnexion
+                                                                {
+                                                                    sName = connexionName,
+                                                                    oConnectedDevices = new List<string> { sNameConnectedDevice }
+                                                                });
+                                                            }
+
+                                                        }
+                                                        else
+                                                        {
+                                                            scada.sVlanX1 = "Pas de VLAN";
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            catch
+                                            {
+                                                continue;
+                                            }
+
+                                        }
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                sError += ($"Erreur récupération d'information SCADA : {ex.Message}\n");
+            }
+            //Switch
+            try
+            {
+                GetSwitchProject(tiaInterface, resultProject);
+            }
+            catch (Exception ex)
+            {
+                sError += ($"Erreur récupération d'information Switch : {ex.Message}\n");
             }
 
             return resultProject;
+        }
+
+        public void GetVariatorList(HMATIAOpenness_V16 tiaInterface)
+        {
+            foreach (DeviceGroup deviceGroup in tiaInterface.m_oTiaProject.DeviceGroups)
+            {
+                foreach (Device device in deviceGroup.Devices)
+                {
+                    if (device.GetAttribute("TypeName").ToString().Contains("SINAMIC"))
+                    {
+                        foreach (DeviceItem deviceItem in device.DeviceItems)
+                        {
+                            if (deviceItem.GetAttribute("TypeName").ToString().Count() > 1)
+                            {
+                                MyVariator variator = new MyVariator
+                                {
+                                    sName = deviceItem.GetAttribute("Name").ToString(),
+                                    sReference = deviceItem.GetAttribute("OrderNumber").ToString(),
+                                    sGamme = deviceItem.GetAttribute("TypeName").ToString()
+                                };
+
+                                foreach (var item in deviceItem.DeviceItems)
+                                {
+                                    if (item.GetAttribute("Name").ToString().Contains("PROFINET"))
+                                    {
+                                        var networkInterface = item.GetService<NetworkInterface>();
+                                        var node = networkInterface.Nodes.FirstOrDefault();
+                                        variator.sInterfaceX1 = node?.GetAttribute("Address").ToString();
+                                        Subnet subnet = node?.GetAttribute("ConnectedSubnet") as Subnet;
+                                        if (subnet != null)
+                                        {
+                                            variator.sVlanX1 = subnet.GetAttribute("Name").ToString();
+                                        }
+
+                                        IoConnector ioConnector = networkInterface.IoConnectors.FirstOrDefault();
+                                        IoSystem ioSystem = ioConnector?.GetAttribute("ConnectedToIoSystem") as IoSystem;
+                                        HwIdentifier hwIdentifier = ioSystem?.HwIdentifiers.FirstOrDefault();
+
+                                        HwIdentifierControllerAssociation hwIdentifierControllers = hwIdentifier?.GetAttribute("HwIdentifierControllers") as HwIdentifierControllerAssociation;
+                                        HwIdentifierController hwIdentifierController = hwIdentifierControllers?.FirstOrDefault();
+
+                                        if (hwIdentifierController != null)
+                                        {
+                                            variator.sMasterName = hwIdentifierController.GetAttribute("Name").ToString();
+                                            oVariators.Add(variator);
+                                        }
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public MyAutomate GetAutomateContains(Device device, MyProject projet)
+        {
+            if (device.DeviceItems.Count <= 1)
+            {
+                return null;
+            }
+
+            var mainModule = FindMainModule(device);
+            if (mainModule == null)
+            {
+                return null;
+            }
+            try
+            {
+                MyAutomate automate = CreateAutomateFromModule(mainModule);
+
+                try
+                {
+                    //AnalyzeObBlocks(mainModule, automate);
+                }
+                catch
+                {
+                    Console.WriteLine("Error analyzing OB blocks; Automate: " + automate.sName);
+                }
+
+                try
+                {
+                    //CalculStatPLC(automate);
+                }
+                catch
+                {
+                    Console.WriteLine("Error calculating PLC statistics; Automate: " + automate.sName);
+                }
+
+                try
+                {
+                    //PIDOB1(automate);
+                }
+                catch
+                {
+                    Console.WriteLine("Error checking PID in OB1; Automate: " + automate.sName);
+                }
+
+                try
+                {
+                    //BlockProtection(mainModule, automate);
+                }
+                catch
+                {
+                    Console.WriteLine("Error during block protection; Automate: " + automate.sName);
+                }
+
+                try
+                {
+                    InterfaceNetwork(mainModule, automate, projet);
+                }
+                catch
+                {
+                    Console.WriteLine("Error retrieving network interface; Automate: " + automate.sName);
+                }
+
+                try
+                {
+                    GetSlaveVariator(automate);
+                }
+                catch
+                {
+                    Console.WriteLine("Error retrieving slave variator; Automate: " + automate.sName);
+                }
+
+                return automate;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error accessing security properties: {ex.Message} {device.Name}");
+                return null;
+            }
+
+
         }
 
         /// <summary>
@@ -172,12 +495,12 @@ namespace ReceptionDeProjet
         /// <remarks>
         /// This method extracts and organizes hardware, firmware, configuration, and sub-item information for the automate.
         /// </remarks>
-        private Automate CreateAutomateFromModule(DeviceItem mainModule)
+        private MyAutomate CreateAutomateFromModule(DeviceItem mainModule)
         {
             string gamme = FindGamme(mainModule);
             string[] gammesAutorisees = { "S7-1200", "S7-1500", "ET 200SP" };
 
-            var automate = new Automate
+            var automate = new MyAutomate
             {
                 sName = mainModule.GetAttribute("Name").ToString(),
                 sGamme = gamme,
@@ -319,7 +642,6 @@ namespace ReceptionDeProjet
             string sGamme = "Non trouvé";
             Device parent = (Device)mainModule.Parent;
             sGamme = parent.GetAttribute("TypeName").ToString();
-            Console.WriteLine($"Gamme : {sGamme}");
             return sGamme;
         }
 
@@ -364,7 +686,7 @@ namespace ReceptionDeProjet
         /// This method analyzes all Function (FC) and Organization Block (OB) objects, extracts their cross-references, 
         /// and builds up the internal structure of the automate including nested and referenced blocks.
         /// </remarks>
-        private void AnalyzeObBlocks(DeviceItem mainModule, Automate automate)
+        private void AnalyzeObBlocks(DeviceItem mainModule, MyAutomate automate)
         {
             foreach (var block in GetAllBlocksFromCPU(mainModule))
             {
@@ -522,7 +844,7 @@ namespace ReceptionDeProjet
         /// <remarks>
         /// The method calculates the percentage of LTU blocks, and the percentage of blocks in OB1 and OB35 relative to the total.
         /// </remarks>
-        private void CalculStatPLC(Automate automate)
+        private void CalculStatPLC(MyAutomate automate)
         {
             int iNbLTU = 0;
             int iNbBloc = 0;
@@ -556,7 +878,7 @@ namespace ReceptionDeProjet
         /// <remarks>
         /// Shows detailed block structure and LTU percentage for each OB, as well as summary statistics for the automate.
         /// </remarks>
-        private void DebugObBlocks(Automate automate)
+        private void DebugObBlocks(MyAutomate automate)
         {
             var sb = new StringBuilder();
 
@@ -678,7 +1000,7 @@ namespace ReceptionDeProjet
         /// Checks for the presence of PID blocks in OB1 and updates the automate accordingly.
         /// </summary>
         /// <param name="automate">The <see cref="Automate"/> object to update.</param>
-        private void PIDOB1(Automate automate)
+        private void PIDOB1(MyAutomate automate)
         {
             automate.sOB1PID = "No PID block found";
             foreach (MyOB myOb in automate.oOBs)
@@ -702,7 +1024,7 @@ namespace ReceptionDeProjet
         /// </summary>
         /// <param name="mainModule">The <see cref="DeviceItem"/> representing the main module.</param>
         /// <param name="automate">The <see cref="Automate"/> object to update.</param>
-        private void BlockProtection(DeviceItem mainModule, Automate automate)
+        private void BlockProtection(DeviceItem mainModule, MyAutomate automate)
         {
             automate.sProgramProtection = "No protection found";
             foreach (var block in GetAllBlocksFromCPU(mainModule))
@@ -720,7 +1042,7 @@ namespace ReceptionDeProjet
         /// <remarks>
         /// This method processes PROFINET interfaces, retrieves NTP server settings, VLAN, and connected device details for both X1 and X2 interfaces when available.
         /// </remarks>
-        private void InterfaceNetwork(DeviceItem mainModule, Automate automate)
+        private void InterfaceNetwork(DeviceItem mainModule, MyAutomate automate, MyProject projet)
         {
             foreach (var item in mainModule.DeviceItems)
             {
@@ -772,22 +1094,30 @@ namespace ReceptionDeProjet
                         if (subnet != null)
                         {
                             automate.sVlanX1 = subnet.GetAttribute("Name").ToString();
-                            NodeAssociation nodeSubnet = subnet.GetAttribute("Nodes") as NodeAssociation;
-                            if (nodeSubnet != null)
+                            string sNameConnectedDevice = automate.sName + "/X1";
+
+                            MyConnexion connexion = projet.oConnexions.Find(oConnexion => oConnexion.sName == automate.sVlanX1);
+                            MyConnexion connexion2 = projet.oConnexions.Find(oConnexion => oConnexion.sName == "Reseau_Usine");
+                            if (connexion != null)
                             {
-                                string sNameConnectedDevice;
-                                foreach (Node nodeX in nodeSubnet)
-                                {
-                                    sNameConnectedDevice = nodeX.GetAttribute("PnDeviceName").ToString().Split('.')[0];
-                                    if (string.Compare(sNameConnectedDevice, automate.sName, StringComparison.OrdinalIgnoreCase) != 0)
-                                    {
-                                        automate.sConnectedDeviceX1 = sNameConnectedDevice;
-                                    }
-                                }
+                                connexion.AddConnectedDevice(sNameConnectedDevice);
+                            }
+                            else if ((automate.sInterfaceX1.Contains("10.127.") || automate.sInterfaceX1.Contains("172.29.")) && connexion2 != null)
+                            {
+                                connexion2.AddConnectedDevice(sNameConnectedDevice);
                             }
                             else
                             {
-                                automate.sConnectedDeviceX1 = "Appareil introuvable";
+                                string connexionName = automate.sVlanX1;
+                                if (automate.sInterfaceX1.Contains("10.127.") || automate.sInterfaceX1.Contains("172.29."))
+                                {
+                                    connexionName = "Reseau_Usine";
+                                }
+                                projet.AddConnexion(new MyConnexion
+                                {
+                                    sName = connexionName,
+                                    oConnectedDevices = new List<string> { sNameConnectedDevice }
+                                });
                             }
                         }
                         else
@@ -796,35 +1126,41 @@ namespace ReceptionDeProjet
 
                         }
                     }
-
                     else if (item.GetAttribute("Name").ToString().Contains("2"))
                     {
                         var networkInterface = item.GetService<NetworkInterface>();
                         var node = networkInterface.Nodes.FirstOrDefault();
 
                         automate.sInterfaceX2 = node?.GetAttribute("Address").ToString();
+                        string sNameConnectedDevice = automate.sName + "/X2";
 
                         Subnet subnet2 = node?.GetAttribute("ConnectedSubnet") as Subnet;
                         if (subnet2 != null)
                         {
-
                             automate.sVlanX2 = subnet2.GetAttribute("Name").ToString();
-                            NodeAssociation nodeSubnet = subnet2.GetAttribute("Nodes") as NodeAssociation;
-                            if (nodeSubnet != null)
+
+                            MyConnexion connexion = projet.oConnexions.Find(oConnexion => oConnexion.sName == automate.sVlanX2);
+                            MyConnexion connexion2 = projet.oConnexions.Find(oConnexion => oConnexion.sName == "Reseau_Usine");
+                            if (connexion != null)
                             {
-                                string sNameConnectedDevice;
-                                foreach (Node nodeX in nodeSubnet)
-                                {
-                                    sNameConnectedDevice = nodeX.GetAttribute("PnDeviceName").ToString().Split('.')[0];
-                                    if (string.Compare(sNameConnectedDevice, automate.sName, StringComparison.OrdinalIgnoreCase) != 0)
-                                    {
-                                        automate.sConnectedDeviceX2 = sNameConnectedDevice;
-                                    }
-                                }
+                                connexion.AddConnectedDevice(sNameConnectedDevice);
+                            }
+                            else if ((automate.sInterfaceX2.Contains("10.127.") || automate.sInterfaceX2.Contains("172.29.")) && connexion2 != null)
+                            {
+                                connexion2.AddConnectedDevice(sNameConnectedDevice);
                             }
                             else
                             {
-                                automate.sConnectedDeviceX2 = "Appareil introuvable";
+                                string connexionName = automate.sVlanX2;
+                                if (automate.sInterfaceX2.Contains("10.127.") || automate.sInterfaceX2.Contains("172.29."))
+                                {
+                                    connexionName = "Reseau_Usine";
+                                }
+                                projet.AddConnexion(new MyConnexion
+                                {
+                                    sName = connexionName,
+                                    oConnectedDevices = new List<string> { sNameConnectedDevice }
+                                });
                             }
                         }
                         else
@@ -835,12 +1171,95 @@ namespace ReceptionDeProjet
                 }
             }
         }
-    }
 
-/// <summary>
-/// Represents a project containing PLCs, HMIs, SCADAs, and related project information.
-/// </summary>
-public class Project
+        private void GetSlaveVariator(MyAutomate automate)
+        {
+            if (oVariators.Find(oVariators => oVariators.sMasterName == automate.sName) != null)
+            {
+                foreach (MyVariator item in oVariators)
+                {
+                    if (item.sMasterName == automate.sName)
+                    {
+                        automate.AddVariator(item);
+                    }
+                }
+            }
+        }
+
+        public void GetSwitchProject(HMATIAOpenness_V16 tiaInterface, MyProject project)
+        {
+            foreach (DeviceGroup deviceGroup in tiaInterface.m_oTiaProject.DeviceGroups)
+            {
+                foreach (Device device in deviceGroup.Devices)
+                {
+                    if (device.GetAttribute("TypeName").ToString().Contains("SCALANCE"))
+                    {
+                        foreach (DeviceItem deviceItem in device.DeviceItems)
+                        {
+                            if (deviceItem.GetAttribute("OrderNumber").ToString().Count() > 1)
+                            {
+                                MySwitch switchDevice = new MySwitch
+                                {
+                                    sName = deviceItem.GetAttribute("Name").ToString(),
+                                    sReference = deviceItem.GetAttribute("OrderNumber").ToString(),
+                                    sGamme = deviceItem.GetAttribute("TypeName").ToString(),
+                                    sFirmware = deviceItem.GetAttribute("FirmwareVersion").ToString()
+                                };
+
+                                foreach (DeviceItem deviceItem1 in deviceItem.DeviceItems)
+                                {
+                                    Console.WriteLine(deviceItem1.GetAttribute("TypeName").ToString());
+                                    if (deviceItem1.GetAttribute("TypeName").ToString().Contains("interface"))
+                                    {
+                                        var networkInterface = deviceItem1.GetService<NetworkInterface>();
+                                        var node = networkInterface.Nodes.FirstOrDefault();
+                                        switchDevice.sInterfaceX1 = node?.GetAttribute("Address").ToString();
+                                        Subnet subnet = node?.GetAttribute("ConnectedSubnet") as Subnet;
+                                        if (subnet != null)
+                                        {
+                                            switchDevice.sVlanX1 = subnet.GetAttribute("Name").ToString();
+
+                                            string sNameConnectedDevice = switchDevice.sName + "/X1";
+
+                                            MyConnexion connexion = project.oConnexions.Find(oConnexion => oConnexion.sName == switchDevice.sVlanX1);
+                                            MyConnexion connexion2 = project.oConnexions.Find(oConnexion => oConnexion.sName == "Reseau_Usine");
+                                            if (connexion != null)
+                                            {
+
+                                                connexion.AddConnectedDevice(sNameConnectedDevice);
+                                            }
+                                            else if ((switchDevice.sInterfaceX1.Contains("10.127.") || switchDevice.sInterfaceX1.Contains("172.29.")) && connexion2 != null)
+                                            {
+                                                connexion2.AddConnectedDevice(sNameConnectedDevice);
+                                            }
+                                            else
+                                            {
+                                                string connexionName = switchDevice.sVlanX1;
+                                                if (switchDevice.sInterfaceX1.Contains("10.127.") || switchDevice.sInterfaceX1.Contains("172.29."))
+                                                {
+                                                    connexionName = "Reseau_Usine";
+                                                }
+                                                project.AddConnexion(new MyConnexion
+                                                {
+                                                    sName = connexionName,
+                                                    oConnectedDevices = new List<string> { sNameConnectedDevice }
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                                project.AddSwitch(switchDevice);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /// <summary>
+    /// Represents a project containing PLCs, HMIs, SCADAs, and related project information.
+    /// </summary>
+    public class MyProject
     {
         /// <summary>
         /// Gets or sets the project name.
@@ -874,31 +1293,37 @@ public class Project
         /// <summary>
         /// Gets the list of PLC automates in the project.
         /// </summary>
-        public List<Automate> oAutomates;
+        public List<MyAutomate> oAutomates;
         /// <summary>
         /// Gets the list of HMIs in the project.
         /// </summary>
-        public List<HMI> oHMIs;
+        public List<MyHmi> oHMIs;
         /// <summary>
         /// Gets the list of SCADAs in the project.
         /// </summary>
-        public List<SCADA> oSCADAs;
+        public List<MyScada> oSCADAs;
+
+        public List<MySwitch> oSwitchs;
+
+        public List<MyConnexion> oConnexions;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Project"/> class.
         /// </summary>
-        public Project()
+        public MyProject()
         {
-            oAutomates = new List<Automate>();
-            oHMIs = new List<HMI>();
-            oSCADAs = new List<SCADA>();
+            oAutomates = new List<MyAutomate>();
+            oHMIs = new List<MyHmi>();
+            oSCADAs = new List<MyScada>();
+            oSwitchs = new List<MySwitch>();
+            oConnexions = new List<MyConnexion>();
         }
 
         /// <summary>
         /// Adds a PLC automate to the project.
         /// </summary>
         /// <param name="automate">The <see cref="Automate"/> to add.</param>
-        public void AddAutomate(Automate automate)
+        public void AddAutomate(MyAutomate automate)
         {
             oAutomates.Add(automate);
         }
@@ -907,7 +1332,7 @@ public class Project
         /// Adds an HMI to the project.
         /// </summary>
         /// <param name="hmi">The <see cref="HMI"/> to add.</param>
-        public void AddHMI(HMI hmi)
+        public void AddHMI(MyHmi hmi)
         {
             oHMIs.Add(hmi);
         }
@@ -916,39 +1341,47 @@ public class Project
         /// Adds a SCADA to the project.
         /// </summary>
         /// <param name="scada">The <see cref="SCADA"/> to add.</param>
-        public void AddSCADA(SCADA scada)
+        public void AddSCADA(MyScada scada)
         {
             oSCADAs.Add(scada);
+        }
+
+        public void AddSwitch(MySwitch switchItem)
+        {
+            oSwitchs.Add(switchItem);
+        }
+        public void AddConnexion(MyConnexion connexion)
+        {
+            oConnexions.Add(connexion);
         }
     }
 
     /// <summary>
     /// Represents a network or endpoint connection.
     /// </summary>
-    public class Connexion
+    public class MyConnexion
     {
         /// <summary>
         /// Gets or sets the connection name.
         /// </summary>
         public string sName { get; set; }
-        /// <summary>
-        /// Gets or sets the endpoint address.
-        /// </summary>
-        public string sEndPoint { get; set; }
-        /// <summary>
-        /// Gets or sets the partner name.
-        /// </summary>
-        public string sPartener { get; set; }
-        /// <summary>
-        /// Gets or sets the connection type.
-        /// </summary>
-        public string sType { get; set; }
+        public List<string> oConnectedDevices;
+        public MyConnexion()
+        {
+            oConnectedDevices = new List<string>();
+        }
+
+        public void AddConnectedDevice(string deviceName)
+        {
+            oConnectedDevices.Add(deviceName);
+        }
+
     }
 
     /// <summary>
     /// Represents a PLC automate with identification, network, and statistical properties.
     /// </summary>
-    public class Automate
+    public class MyAutomate
     {
         #region Identification properties
         /// <summary>
@@ -1093,7 +1526,7 @@ public class Project
         #endregion
 
         #region Tags
-        
+
         public List<MyTag> oTagsIn { get; set; }
         public List<MyTag> oTagsOut { get; set; }
         public List<MyTag> oTagsMem { get; set; }
@@ -1113,10 +1546,12 @@ public class Project
         /// </summary>
         public List<string> ProtectedBlocs;
 
+        public List<MyVariator> oVariators { get; set; }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Automate"/> class.
         /// </summary>
-        public Automate()
+        public MyAutomate()
         {
             oOBs = new List<MyOB>();
             oFCs = new List<MyFC>();
@@ -1124,6 +1559,7 @@ public class Project
             oTagsIn = new List<MyTag>();
             oTagsOut = new List<MyTag>();
             oTagsMem = new List<MyTag>();
+            oVariators = new List<MyVariator>();
         }
 
         /// <summary>
@@ -1165,6 +1601,10 @@ public class Project
         public void AddTagMem(MyTag tag)
         {
             oTagsMem.Add(tag);
+        }
+        public void AddVariator(MyVariator variator)
+        {
+            oVariators.Add(variator);
         }
     }
 
@@ -1295,12 +1735,13 @@ public class Project
         public string sName { get; set; }
         public string sType { get; set; }
         public string sAddress { get; set; }
+        public string sComment { get; set; }
     }
 
     /// <summary>
     /// Represents an HMI device.
     /// </summary>
-    public class HMI
+    public class MyHmi
     {
         /// <summary>
         /// Gets or sets the HMI name.
@@ -1310,11 +1751,7 @@ public class Project
         /// Gets or sets the hardware reference.
         /// </summary>
         public string sReference { get; set; }
-        /// <summary>
-        /// Gets or sets the firmware version.
-        /// </summary>
         public string sFirmware { get; set; }
-
         /// <summary>
         /// Gets or sets the X1 interface address.
         /// </summary>
@@ -1323,6 +1760,7 @@ public class Project
         /// Gets or sets the VLAN associated with X1.
         /// </summary>
         public string sVlanX1 { get; set; }
+        public string sConnectedDeviceX1 { get; set; }
         /// <summary>
         /// Gets or sets the X2 interface address.
         /// </summary>
@@ -1331,13 +1769,46 @@ public class Project
         /// Gets or sets the VLAN associated with X2.
         /// </summary>
         public string sVlanX2 { get; set; }
+        public string sConnectedDeviceX2 { get; set; }
     }
 
     /// <summary>
     /// Represents a SCADA device.
     /// </summary>
-    public class SCADA
+    public class MyScada
     {
+        public string sName { get; set; }
+        public string sReference { get; set; }
+        public string sGamme { get; set; }
+        public string sFirmware { get; set; }
+        public string sInterfaceX1 { get; set; }
+        public string sVlanX1 { get; set; }
+        public string sConnectedDeviceX1 { get; set; }
+        public string sInterfaceX2 { get; set; }
+        public string sVlanX2 { get; set; }
+        public string sConnectedDeviceX2 { get; set; }
+
     }
 
+    public class MyVariator
+    {
+        public string sName { get; set; }
+        public string sReference { get; set; }
+        public string sGamme { get; set; }
+        public string sInterfaceX1 { get; set; }
+        public string sVlanX1 { get; set; }
+        public string sMasterName { get; set; }
+    }
+
+    public class MySwitch
+    {
+        public string sName { get; set; }
+        public string sReference { get; set; }
+        public string sGamme { get; set; }
+        public string sFirmware { get; set; }
+        public string sInterfaceX1 { get; set; }
+        public string sVlanX1 { get; set; }
+    }
 }
+
+

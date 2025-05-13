@@ -1,20 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
 using AideAuDiagnostic.TiaExplorer;
 using Common;
 using GlobalsOPCUA;
 using ReceptionDeProjet;
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace GenerationMAQ
 {
@@ -50,7 +43,7 @@ namespace GenerationMAQ
         /// <summary>
         /// Stores the loaded TIA Project information.
         /// </summary>
-        Project oTiaProject = new Project();
+        MyProject oTiaProject = new MyProject();
 
         /// <summary>
         /// Path to the Export MAQ Excel file.
@@ -154,7 +147,7 @@ namespace GenerationMAQ
             UpdateInfo($"Nombre d'automates : {oTiaProject.oAutomates.Count}");
             UpdateInfo("-");
             UpdateInfo("Device trouvé : ");
-            foreach (Automate plc in oTiaProject.oAutomates)
+            foreach (MyAutomate plc in oTiaProject.oAutomates)
             {
                 UpdateInfo($"  - {plc.sName}");
                 int tagCount = 0;
@@ -165,33 +158,6 @@ namespace GenerationMAQ
                 if(ChkTagIn.Checked) UpdateInfo($"    Nombre de tags IN : {plc.oTagsIn.Count}");
                 if (ChkTagOut.Checked) UpdateInfo($"    Nombre de tags OUT : {plc.oTagsOut.Count}");
                 if (ChkTagMem.Checked) UpdateInfo($"    Nombre de tags MEM : {plc.oTagsMem.Count}");
-
-                if (ChkTagIn.Checked)
-                {
-                    UpdateInfo($"    Tags In :");
-                    foreach (MyTag tag in plc.oTagsIn)
-                    {
-                        UpdateInfo($"      - {tag.sName}");
-                    }
-                }
-
-                if (ChkTagOut.Checked)
-                {
-                    UpdateInfo($"    Tags Out :");
-                    foreach (MyTag tag in plc.oTagsOut)
-                    {
-                        UpdateInfo($"      - {tag.sName}");
-                    }
-                }
-
-                if (ChkTagMem.Checked)
-                {
-                    UpdateInfo($"    Tags Mem :");
-                    foreach (MyTag tag in plc.oTagsMem)
-                    {
-                        UpdateInfo($"      - {tag.sName}");
-                    }
-                }
             }
             BpDownloadFile.Enabled = true;
         }
@@ -239,7 +205,7 @@ namespace GenerationMAQ
                 {
                     var worksheetModel = wb.Worksheet("MODELE");
 
-                    foreach (Automate plc in oTiaProject.oAutomates)
+                    foreach (MyAutomate plc in oTiaProject.oAutomates)
                     {
                         string newSheetName = plc.sName;
 
@@ -251,103 +217,46 @@ namespace GenerationMAQ
                         var newSheet = wb.Worksheets.Add(newSheetName);
                         var worksheet = wb.Worksheet(newSheetName);
 
-                        int startRow = 2;
-                        int currentRow = 0;
+                        worksheetModel.Range("A1:D1").CopyTo(newSheet.Cell("A1"));
+
+                        int currentRow = 2;
 
                         if (ChkTagIn.Checked)
                         {
-                            worksheetModel.Range("A1:C1").CopyTo(newSheet.Cell("A1"));
-                            currentRow = startRow;
-
                             foreach (MyTag tag in plc.oTagsIn)
                             {
                                 worksheet.Cell("A" + currentRow).Value = tag.sAddress;
                                 worksheet.Cell("B" + currentRow).Value = tag.sName;
                                 worksheet.Cell("C" + currentRow).Value = tag.sType;
+                                worksheet.Cell("D" + currentRow).Value = tag.sComment;
 
                                 currentRow++;
                             }
-
-                            if (ChkTagOut.Checked)
-                            {
-                                worksheetModel.Range("D1:F1").CopyTo(newSheet.Cell("D1"));
-                                currentRow = startRow;
-
-                                currentRow = startRow;
-                                foreach (MyTag tag in plc.oTagsOut)
-                                {
-                                    worksheet.Cell("D" + currentRow).Value = tag.sAddress;
-                                    worksheet.Cell("E" + currentRow).Value = tag.sName;
-                                    worksheet.Cell("F" + currentRow).Value = tag.sType;
-                                    currentRow++;
-                                }
-
-                                if (ChkTagMem.Checked)
-                                {
-                                    worksheetModel.Range("G1:I1").CopyTo(newSheet.Cell("G1"));
-                                    currentRow = startRow;
-
-                                    foreach (MyTag tag in plc.oTagsMem)
-                                    {
-                                        worksheet.Cell("G" + currentRow).Value = tag.sAddress;
-                                        worksheet.Cell("H" + currentRow).Value = tag.sName;
-                                        worksheet.Cell("I" + currentRow).Value = tag.sType;
-
-                                        currentRow++;
-                                    }
-                                }
-
-                            }
-                            else if (ChkTagMem.Checked)
-                            {
-                                worksheetModel.Range("G1:I1").CopyTo(newSheet.Cell("D1"));
-                                currentRow = startRow;
-                                foreach (MyTag tag in plc.oTagsMem)
-                                {
-                                    worksheet.Cell("D" + currentRow).Value = tag.sAddress;
-                                    worksheet.Cell("E" + currentRow).Value = tag.sName;
-                                    worksheet.Cell("F" + currentRow).Value = tag.sType;
-                                    currentRow++;
-                                }
-                            }
                         }
-                        else if (ChkTagOut.Checked)
+
+                        if (ChkTagOut.Checked)
                         {
-                            worksheetModel.Range("D1:F1").CopyTo(newSheet.Cell("A1"));
-                            currentRow = startRow;
                             foreach (MyTag tag in plc.oTagsOut)
                             {
                                 worksheet.Cell("A" + currentRow).Value = tag.sAddress;
                                 worksheet.Cell("B" + currentRow).Value = tag.sName;
                                 worksheet.Cell("C" + currentRow).Value = tag.sType;
+                                worksheet.Cell("D" + currentRow).Value = tag.sComment;
                                 currentRow++;
                             }
-                            if (ChkTagMem.Checked)
-                            {
-                                worksheetModel.Range("G1:I1").CopyTo(newSheet.Cell("D1"));
-                                currentRow = startRow;
-                                foreach (MyTag tag in plc.oTagsMem)
-                                {
-                                    worksheet.Cell("D" + currentRow).Value = tag.sAddress;
-                                    worksheet.Cell("E" + currentRow).Value = tag.sName;
-                                    worksheet.Cell("F" + currentRow).Value = tag.sType;
-                                    currentRow++;
-                                }
-                            }
                         }
-                        else if (ChkTagMem.Checked)
+
+                        if (ChkTagMem.Checked)
                         {
-                            worksheetModel.Range("G1:I1").CopyTo(newSheet.Cell("A1"));
-                            currentRow = startRow;
                             foreach (MyTag tag in plc.oTagsMem)
                             {
                                 worksheet.Cell("A" + currentRow).Value = tag.sAddress;
                                 worksheet.Cell("B" + currentRow).Value = tag.sName;
                                 worksheet.Cell("C" + currentRow).Value = tag.sType;
+                                worksheet.Cell("D" + currentRow).Value = tag.sComment;
                                 currentRow++;
                             }
                         }
-
                         int lastColumn = worksheet.LastColumnUsed().ColumnNumber();
 
                         for (int i = 1; i <= lastColumn; i++)

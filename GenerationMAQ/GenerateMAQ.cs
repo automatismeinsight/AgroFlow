@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using OpennessV16;
 using ReceptionDeProjet;
+using Siemens.Engineering;
 using Siemens.Engineering.HW;
 using Siemens.Engineering.HW.Features;
 using Siemens.Engineering.SW;
@@ -23,9 +24,9 @@ namespace GenerationMAQ
             oCompareTiaPLC = new CompareTIA();
         }
 
-        public Project GetMaqInTiaProject(HMATIAOpenness_V16 tiaInterface)
+        public ReceptionDeProjet.MyProject GetMaqInTiaProject(HMATIAOpenness_V16 tiaInterface)
         {
-            var resultProject = new Project
+            var resultProject = new ReceptionDeProjet.MyProject
             {
                 sName = tiaInterface.m_oTiaProject.Name
             };
@@ -47,7 +48,7 @@ namespace GenerationMAQ
                     }
                     try
                     {
-                        var automate = new Automate
+                        var automate = new MyAutomate
                         {
                             sName = device.Name
                         };
@@ -69,24 +70,37 @@ namespace GenerationMAQ
             return resultProject;
         }
 
-        public void GetAllTags(DeviceItem mainModule,Automate automate)
+        public void GetAllTags(DeviceItem mainModule,MyAutomate automate)
         {
             var softwareContainer = mainModule.GetService<SoftwareContainer>();
             var plcSoftware = softwareContainer?.Software as PlcSoftware ?? throw new Exception("Unable to retrieve PlcSoftware for the specified CPU.");
+            
 
             foreach (PlcTagTable oTagTable in plcSoftware.TagTableGroup.TagTables)
             {
                 foreach (PlcTag oTag in oTagTable.Tags)
                 {
+                    string sTagComment = string.Empty;
                     if (oTag.Name != null)
                     {
+                        
+                        foreach (MultilingualTextItem oTagCommentText in oTag.Comment.Items)
+                        {
+                            if (oTagCommentText.Text.ToString() != null && oTagCommentText.Text.Count() > 1)
+                            {
+                                sTagComment = oTagCommentText.Text.ToString();
+                                Console.WriteLine($"Tag comment: {sTagComment}"); // Debugging line
+                            }
+
+                        }
                         if (oTag.LogicalAddress.StartsWith("%I"))
                         {
                             var tag = new MyTag
                             {
                                 sName = oTag.Name,
                                 sAddress = oTag.LogicalAddress,
-                                sType = oTag.DataTypeName.ToString()
+                                sType = oTag.DataTypeName.ToString(),
+                                sComment = sTagComment
                             };
                             automate.AddTagIn(tag);
                         }
@@ -96,7 +110,8 @@ namespace GenerationMAQ
                             {
                                 sName = oTag.Name,
                                 sAddress = oTag.LogicalAddress,
-                                sType = oTag.DataTypeName.ToString()
+                                sType = oTag.DataTypeName.ToString(),
+                                sComment = sTagComment
                             };
                             automate.AddTagOut(tag);
                         }
@@ -106,7 +121,8 @@ namespace GenerationMAQ
                             {
                                 sName = oTag.Name,
                                 sAddress = oTag.LogicalAddress,
-                                sType = oTag.DataTypeName.ToString()
+                                sType = oTag.DataTypeName.ToString(),
+                                sComment = sTagComment
                             };
                             automate.AddTagMem(tag);
                         }
