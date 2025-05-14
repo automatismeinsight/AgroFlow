@@ -50,7 +50,6 @@ Remplacer `1.x.x` par la nouvelle version.
 - **Si nouvelle fonction :**
   - Ajouter un commentaire XML à la méthode/fonction concernée.
   - Ajouter une page de présentation pour la nouvelle fonctionnalité.
-- **Ziper le dossier `AgroFlow\Documentation\Help` puis uploader l’archive sur GitHub (mise à jour de la documentation).**
 
 ---
 
@@ -69,17 +68,22 @@ Remplacer `1.x.x` par la nouvelle version.
 
 ---
 
-## 7. Archivage
-
-- Créer une archive `.zip` nommée :  
-  **AgroFlowSetup.zip**
-
+## 7. Archivage de l’installeur
+- **Installeur :**
+  - Créer une archive `.zip` nommée :  
+    **AgroFlowSetup.zip**
+  - Le fichier à archiver est :  
+    `AgroFlow\AgroFlowSetup\Debug\AgroFlowSetup.msi`
+ - **Documentation :** 
+    - Créer une archive `.zip` du dossier :  
+      `AgroFlow\Documentation\Help`
+    
 ---
 
 ## 8. Déploiement sur GitHub
 
-- Utiliser la fonction **Add File** sur GitHub pour uploader le fichier `.zip`
-- ⚠️ Si le nom `AgroFlowSetup.zip` est respecté, l’ancienne version sera remplacée automatiquement (pas de doublons).
+- Utiliser la fonction **Add File** sur GitHub pour uploader les fichiers `.zip` créés.
+- ⚠️ Si le nom `AgroFlowSetup.zip` est respecté, l’ancienne version sera remplacée automatiquement (pas de doublons). Idem pour `Help.zip`.
 
 ---
 
