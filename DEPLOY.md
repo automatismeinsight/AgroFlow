@@ -50,6 +50,7 @@ Remplacer `1.x.x` par la nouvelle version.
 - **Si nouvelle fonction :**
   - Ajouter un commentaire XML à la méthode/fonction concernée.
   - Ajouter une page de présentation pour la nouvelle fonctionnalité.
+- **Ziper le dossier `AgroFlow\Documentation\Help` puis uploader l’archive sur GitHub (mise à jour de la documentation).**
 
 ---
 
