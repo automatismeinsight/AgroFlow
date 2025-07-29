@@ -53,7 +53,7 @@ namespace InterfaceMain
             WebClient webClient = new WebClient();
             var client = new WebClient();
 
-            if (!webClient.DownloadString("https://raw.githubusercontent.com/SamBzd/AgroFlow/refs/heads/master/Update.txt").Contains("1.3.1"))
+            if (!webClient.DownloadString("https://raw.githubusercontent.com/automatismeinsight/AgroFlow/refs/heads/master/Update.txt").Contains("1.3.3"))
             {
                 if(File.Exists(@".\Help.zip"))
                 {
@@ -73,7 +73,7 @@ namespace InterfaceMain
                         {
                             File.Delete(@".\AgroFlowSetup.msi");
                         }
-                        client.DownloadFile("https://github.com/SamBzd/AgroFlow/raw/refs/heads/master/AgroFlowSetup.zip", @"AgroFlowSetup.zip");
+                        client.DownloadFile("https://github.com/automatismeinsight/AgroFlow/raw/refs/heads/master/AgroFlowSetup.zip", @"AgroFlowSetup.zip");
                         string zipPath = @".\AgroFlowSetup.zip";
                         string extractPath = @".\";
                         ZipFile.ExtractToDirectory(zipPath, extractPath);
@@ -526,7 +526,7 @@ namespace InterfaceMain
                     try
                     {
                         
-                        client.DownloadFile("https://raw.githubusercontent.com/SamBzd/AgroFlow/6d4dec02a5ad27bb83d288bf76f1c28ae34ffbd4/Help.zip", @"Help.zip");
+                        client.DownloadFile("https://github.com/automatismeinsight/AgroFlow/raw/refs/heads/master/Help.zip", @"Help.zip");
                         string zipPath = @".\Help.zip";
                         string extractPath = @".\";
                         ZipFile.ExtractToDirectory(zipPath, extractPath);
