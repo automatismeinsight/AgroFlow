@@ -304,7 +304,7 @@ namespace ReceptionDeProjet
                                 wsi.Cell(currentRowI, 1).Value = inout.sName;
                                 wsi.Cell(currentRowI, 2).Value = inout.sReference;
                                 wsi.Cell(currentRowI, 3).Value = inout.sGamme;
-                                wsi.Cell(currentRowI, 4).Value = inout.sFirmware
+                                wsi.Cell(currentRowI, 4).Value = inout.sFirmware;
                                 wsi.Cell(currentRowI, 5).Value = inout.sInterfaceX1;
                                 wsi.Cell(currentRowI, 6).Value = inout.sVlanX1;
                                 wsi.Cell(currentRowI, 7).Value = inout.sMasterName;
